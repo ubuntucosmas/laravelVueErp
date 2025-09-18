@@ -1,0 +1,147 @@
+<template>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="flex">
+      <!-- Sidebar -->
+      <DynamicSidebar
+        v-model:collapsed="sidebarCollapsed"
+        :navigation-items="navigationItems"
+        :title="sidebarTitle"
+        :subtitle="sidebarSubtitle"
+        @update:collapsed="handleSidebarToggle"
+      />
+
+      <!-- Main Content -->
+      <div class="flex-1 flex flex-col min-h-screen">
+        <!-- Top Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+          <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <!-- Sidebar Toggle Button -->
+                <button
+                  @click="sidebarCollapsed = !sidebarCollapsed"
+                  class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ pageTitle }}</h1>
+              </div>
+
+              <div class="flex items-center space-x-4">
+                <!-- User Info -->
+                <div v-if="user" class="flex items-center space-x-3">
+                  <div class="text-right">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ user.name }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                      {{ user.roles?.join(', ') || 'No Role' }}
+                    </p>
+                  </div>
+                  <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                    <span class="text-sm font-medium text-white">
+                      {{ user.name?.charAt(0)?.toUpperCase() }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Logout Button -->
+                <button
+                  @click="handleLogout"
+                  class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  title="Logout"
+                >
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="flex-1 p-6">
+          <router-view />
+        </main>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import DynamicSidebar from '../components/DynamicSidebar.vue'
+import { useAuth } from '../composables/useAuth'
+import { useRouteGuard } from '../composables/useRouteGuard'
+
+const { user, logout } = useAuth()
+const { getAllowedRoutes } = useRouteGuard()
+const router = useRouter()
+const route = useRoute()
+
+const sidebarCollapsed = ref(false)
+
+const navigationItems = computed(() => {
+  return getAllowedRoutes()
+})
+
+const sidebarTitle = computed(() => {
+  if (!user.value) return 'ERP System'
+
+  const userRoles = user.value.roles || []
+
+  if (userRoles.includes('Super Admin')) {
+    return 'Super Admin Panel'
+  }
+
+  if (userRoles.includes('Admin')) {
+    return 'Admin Panel'
+  }
+
+  if (userRoles.includes('HR')) {
+    return 'HR Panel'
+  }
+
+  return 'ERP System'
+})
+
+const sidebarSubtitle = computed(() => {
+  if (!user.value) return 'Management Dashboard'
+
+  const userRoles = user.value.roles || []
+
+  if (userRoles.includes('Super Admin')) {
+    return 'Full System Access'
+  }
+
+  if (userRoles.includes('Admin')) {
+    return 'System Administration'
+  }
+
+  if (userRoles.includes('HR')) {
+    return 'Human Resources'
+  }
+
+  return 'Management Dashboard'
+})
+
+const pageTitle = computed(() => {
+  return route.meta?.title as string || 'Dashboard'
+})
+
+const handleSidebarToggle = (collapsed: boolean) => {
+  sidebarCollapsed.value = collapsed
+}
+
+const handleLogout = async () => {
+  await logout()
+  router.push('/login')
+}
+
+onMounted(() => {
+  // Initialize sidebar state
+})
+</script>
