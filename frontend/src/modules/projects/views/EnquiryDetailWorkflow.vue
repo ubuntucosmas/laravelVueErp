@@ -77,7 +77,7 @@
           v-if="!selectedProject"
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
         >
-      <!-- Step 1: Enquiry Logged -->
+      <!-- Step 1: Enquiry & Site Survey -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
             :class="getStepBorderClass(1)">
         <div class="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -88,8 +88,8 @@
                 1
               </div>
               <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Enquiry Logged</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Project request</p>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Enquiry & Site Survey</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">Project request & assessment</p>
               </div>
             </div>
             <span :class="getStatusBadgeClass(getStepStatus(1))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
@@ -109,38 +109,12 @@
               <span class="font-medium">Created:</span>
               <span class="text-gray-500">{{ enquiry?.created_at ? formatDate(enquiry.created_at) : 'N/A' }}</span>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 2: Site Survey -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
-            :class="getStepBorderClass(2)">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                    :class="getStepNumberClass(2)">
-                2
-              </div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Site Survey</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Location assessment</p>
-              </div>
-            </div>
-            <span :class="getStatusBadgeClass(getStepStatus(2))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-              {{ getStepStatusText(2) }}
-            </span>
-          </div>
-        </div>
-        <div class="p-4">
-          <div class="space-y-3">
             <div v-if="selectedSurvey" class="text-sm">
-              <span class="font-medium">Date:</span>
+              <span class="font-medium">Survey Date:</span>
               <span class="text-gray-500">{{ formatDate(selectedSurvey.survey_date) }}</span>
             </div>
             <div v-if="selectedSurvey" class="text-sm">
-              <span class="font-medium">Status:</span>
+              <span class="font-medium">Survey Status:</span>
               <span :class="getStatusClass(selectedSurvey.status)">
                 {{ selectedSurvey.status.replace('_', ' ') }}
               </span>
@@ -157,24 +131,23 @@
         </div>
       </div>
 
-
-      <!-- Step 4: Material Specification -->
+      <!-- Step 2: Material Specification -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
-            :class="getStepBorderClass(4)">
+            :class="getStepBorderClass(2)">
         <div class="p-4 border-b border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                    :class="getStepNumberClass(4)">
-                4
+                    :class="getStepNumberClass(2)">
+                2
               </div>
               <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Material Specification</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Requirements list</p>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Design Concept and Material Specification</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">Creative work & requirements</p>
               </div>
             </div>
-            <span :class="getStatusBadgeClass(getStepStatus(4))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-              {{ getStepStatusText(4) }}
+            <span :class="getStatusBadgeClass(getStepStatus(2))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+              {{ getStepStatusText(2) }}
             </span>
           </div>
         </div>
@@ -194,23 +167,23 @@
         </div>
       </div>
 
-      <!-- Step 5: Budget Creation -->
+      <!-- Step 3: Budget & Quote Preparation -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
-            :class="getStepBorderClass(5)">
+            :class="getStepBorderClass(3)">
         <div class="p-4 border-b border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                    :class="getStepNumberClass(5)">
-                5
+                    :class="getStepNumberClass(3)">
+                3
               </div>
               <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Budget Creation</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Cost calculation</p>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Budget & Quote Preparation</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">Cost calculation & quotation</p>
               </div>
             </div>
-            <span :class="getStatusBadgeClass(getStepStatus(5))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-              {{ getStepStatusText(5) }}
+            <span :class="getStatusBadgeClass(getStepStatus(3))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+              {{ getStepStatusText(3) }}
             </span>
           </div>
         </div>
@@ -220,35 +193,6 @@
               <span class="font-medium">Total Cost:</span>
               <span class="text-gray-500">KES {{ materialTotalCost.toLocaleString() }}</span>
             </div>
-            <button class="w-full bg-yellow-600 hover:bg-yellow-700 text-white text-sm py-2 px-4 rounded-md transition-colors">
-              Create Budget
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 6: Quote Preparation -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
-            :class="getStepBorderClass(6)">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                    :class="getStepNumberClass(6)">
-                6
-              </div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Quote Preparation</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Formal quotation</p>
-              </div>
-            </div>
-            <span :class="getStatusBadgeClass(getStepStatus(6))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-              {{ getStepStatusText(6) }}
-            </span>
-          </div>
-        </div>
-        <div class="p-4">
-          <div class="space-y-3">
             <div class="text-sm">
               <span class="font-medium">Quotation:</span>
               <span v-if="selectedQuotation" :class="getQuotationStatusClass(selectedQuotation.status)">
@@ -256,47 +200,15 @@
               </span>
               <span v-else class="text-gray-500">Not created</span>
             </div>
-            <button class="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm py-2 px-4 rounded-md transition-colors">
-              Prepare Quote
+            <button class="w-full bg-yellow-600 hover:bg-yellow-700 text-white text-sm py-2 px-4 rounded-md transition-colors">
+              Create Budget & Quote
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Step 7: Quote Approval -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
-            :class="getStepBorderClass(7)">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                    :class="getStepNumberClass(7)">
-                7
-              </div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Quote Approval</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Client acceptance</p>
-              </div>
-            </div>
-            <span :class="getStatusBadgeClass(getStepStatus(7))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-              {{ getStepStatusText(7) }}
-            </span>
-          </div>
-        </div>
-        <div class="p-4">
-          <div class="space-y-3">
-            <div class="text-sm">
-              <span class="font-medium">Status:</span>
-              <span class="text-gray-500">Waiting for client</span>
-            </div>
-            <button class="w-full bg-red-600 hover:bg-red-700 text-white text-sm py-2 px-4 rounded-md transition-colors">
-              Send to Client
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Step 7: Project Conversion -->
+      <!-- Step 4: Project Conversion -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
            :class="getStepBorderClass(10)">
         <div class="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -312,7 +224,7 @@
               </div>
             </div>
             <span :class="getStatusBadgeClass(getStepStatus(10))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-              {{ getStepStatusText(10) }}
+              {{ getStepStatusText(4) }}
             </span>
           </div>
         </div>
@@ -708,12 +620,12 @@
 
             <!-- Phase 10: Archival & Reporting -->
             <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
-                 :class="getStepBorderClass(10)">
+                 :class="getStepBorderClass(4)">
               <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                         :class="getStepNumberClass(10)">
+                         :class="getStepNumberClass(4)">
                       10
                     </div>
                     <div>
@@ -783,7 +695,7 @@
           </button>
           <button
             @click="nextStep"
-            :disabled="currentDetailStep >= 7"
+            :disabled="currentDetailStep >= 4"
             class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next →
@@ -900,11 +812,11 @@
           </div>
         </div>
 
-        <!-- Materials & Quotation Details -->
-        <div v-if="currentDetailStep === 3" class="space-y-6">
+        <!-- Design Concept and Materials Details -->
+        <div v-if="currentDetailStep === 2" class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 class="font-medium text-gray-900 dark:text-white mb-3">Materials List</h4>
+              <h4 class="font-medium text-gray-900 dark:text-white mb-3">Design Concept & Materials</h4>
               <div class="space-y-2">
                 <div class="flex justify-between">
                   <span class="text-sm text-gray-600 dark:text-gray-400">Total Items:</span>
@@ -942,6 +854,53 @@
               class="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
             >
               Manage Materials & Create Quotation
+            </button>
+          </div>
+        </div>
+
+        <!-- Budget & Quote Preparation Details -->
+        <div v-if="currentDetailStep === 3" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 class="font-medium text-gray-900 dark:text-white mb-3">Budget Information</h4>
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600 dark:text-gray-400">Material Cost:</span>
+                  <span class="text-sm font-medium">KES {{ materialTotalCost.toLocaleString() }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600 dark:text-gray-400">Additional Costs:</span>
+                  <span class="text-sm font-medium">KES 0</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600 dark:text-gray-400">Total Budget:</span>
+                  <span class="text-sm font-medium">KES {{ materialTotalCost.toLocaleString() }}</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h4 class="font-medium text-gray-900 dark:text-white mb-3">Quote Status</h4>
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600 dark:text-gray-400">Status:</span>
+                  <span v-if="selectedQuotation" :class="getQuotationStatusClass(selectedQuotation.status)" class="text-sm font-medium">
+                    {{ selectedQuotation.status }}
+                  </span>
+                  <span v-else class="text-sm font-medium text-gray-500">Not created</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600 dark:text-gray-400">Quote Amount:</span>
+                  <span v-if="selectedQuotation" class="text-sm font-medium">
+                    KES {{ selectedQuotation.total_amount.toLocaleString() }}
+                  </span>
+                  <span v-else class="text-sm font-medium text-gray-500">Not calculated</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-center">
+            <button class="px-6 py-3 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors">
+              Create Budget & Prepare Quote
             </button>
           </div>
         </div>
@@ -1146,13 +1105,10 @@ const workflowOffset = ref(0) // 0 = enquiry workflow, -100 = project workflow
 
 // Workflow step statuses (reactive)
 const stepStatuses = ref({
-  1: 'completed', // Enquiry Logged
-  2: 'pending',   // Site Survey
-  3: 'pending',   // Material Specification
-  4: 'pending',   // Budget Creation
-  5: 'pending',   // Quote Preparation
-  6: 'pending',   // Quote Approval
-  7: 'pending'    // Project Conversion
+  1: 'completed', // Enquiry & Site Survey
+  2: 'pending',   // Material Specification
+  3: 'pending',   // Budget & Quote Preparation
+  4: 'pending'    // Project Conversion
 })
 
 // Mock data for demonstration
@@ -1162,24 +1118,16 @@ const materialTotalCost = ref(250000)
 // Computed properties
 const overallProgress = computed(() => {
   let completed = 0
-  // Step 1: Enquiry Logged - always completed if enquiry exists
+  // Step 1: Enquiry & Site Survey - always completed if enquiry exists
   if (enquiry.value) completed++
-  // Step 2: Site Survey - completed if survey exists and is completed
-  if (selectedSurvey.value && selectedSurvey.value.status === 'completed') completed++
-  // Step 3: Design Development - check status
-  if (stepStatuses.value[3] === 'completed') completed++
-  // Step 4: Material Specification - check if materials exist
+  // Step 2: Material Specification - check if materials exist
   if (materialItemsCount.value > 0) completed++
-  // Step 5: Budget Creation - check status
-  if (stepStatuses.value[5] === 'completed') completed++
-  // Step 6: Quote Preparation - check if quotation exists
+  // Step 3: Budget & Quote Preparation - check if quotation exists
   if (selectedQuotation.value) completed++
-  // Step 7: Quote Approval - check if quotation is approved
-  if (selectedQuotation.value && selectedQuotation.value.status === 'approved') completed++
-  // Step 7: Project Conversion - check if project exists
+  // Step 4: Project Conversion - check if project exists
   if (selectedProject.value) completed++
 
-  return Math.round((completed / 7) * 100)
+  return Math.round((completed / 4) * 100)
 })
 
 
@@ -1377,15 +1325,12 @@ const remainingPhases = computed(() => {
 
 const getCurrentStepTitle = () => {
   const titles = [
-    'Enquiry Logged',
-    'Site Survey',
-    'Material Specification',
-    'Budget Creation',
-    'Quote Preparation',
-    'Quote Approval',
+    'Enquiry & Site Survey',
+    'Design Concept and Material Specification',
+    'Budget & Quote Preparation',
     'Project Conversion'
   ]
-  return titles[currentDetailStep.value - 1] || 'Enquiry Logged'
+  return titles[currentDetailStep.value - 1] || 'Enquiry & Site Survey'
 }
 
 const formatDate = (date: string) => {
@@ -1404,7 +1349,7 @@ const updateStepStatus = (stepNumber: number, status: string) => {
 
   // Update enquiry status based on step completion
   if (enquiry.value) {
-    if (stepNumber === 7 && status === 'completed') {
+    if (stepNumber === 4 && status === 'completed') {
       enquiry.value.status = 'converted_to_project'
     } else if (stepNumber >= 1 && status === 'completed') {
       enquiry.value.status = 'design_completed'
@@ -1415,7 +1360,7 @@ const updateStepStatus = (stepNumber: number, status: string) => {
 }
 
 const nextStep = () => {
-  if (currentDetailStep.value < 7) {
+  if (currentDetailStep.value < 4) {
     // Update the status of current step to completed
     updateStepStatus(currentDetailStep.value, 'completed')
 
@@ -1423,7 +1368,7 @@ const nextStep = () => {
     currentDetailStep.value++
 
     // Update the status of new current step to in_progress
-    if (currentDetailStep.value <= 7) {
+    if (currentDetailStep.value <= 4) {
       updateStepStatus(currentDetailStep.value, 'in_progress')
     }
   }
