@@ -1,7 +1,14 @@
-import { ref, watch, readonly } from 'vue'
+import { ref, watch, readonly, inject, type InjectionKey } from 'vue'
 
 export type Theme = 'light' | 'dark'
 
+export const ThemeKey: InjectionKey<{
+  theme: Readonly<import('vue').Ref<Theme>>
+  toggleTheme: () => void
+  setTheme: (theme: Theme) => void
+}> = Symbol('Theme')
+
+// Global theme state
 const theme = ref<Theme>((localStorage.getItem('theme') as Theme) || 'light')
 
 // Apply theme to document
@@ -24,6 +31,29 @@ watch(theme, (newTheme) => {
 })
 
 export const useTheme = () => {
+  // Try to inject global theme, fallback to local
+  const injected = inject(ThemeKey)
+  if (injected) {
+    return injected
+  }
+
+  const toggleTheme = () => {
+    theme.value = theme.value === 'light' ? 'dark' : 'light'
+  }
+
+  const setTheme = (newTheme: Theme) => {
+    theme.value = newTheme
+  }
+
+  return {
+    theme: readonly(theme),
+    toggleTheme,
+    setTheme
+  }
+}
+
+// Provider function for global theme
+export const provideTheme = () => {
   const toggleTheme = () => {
     theme.value = theme.value === 'light' ? 'dark' : 'light'
   }

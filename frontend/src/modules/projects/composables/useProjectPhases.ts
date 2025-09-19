@@ -5,184 +5,353 @@ import type { ProjectPhase } from '../types'
 const phaseTemplates = {
   standard: [
     {
-      id: 'client-engagement',
-      name: 'Client Engagement & Briefing',
-      icon: 'bi-folder-symlink',
-      summary: 'Initial client meetings and requirements gathering',
+      id: 'procurement',
+      name: 'Procurement & Material Sourcing',
+      icon: 'bi-cart-plus',
+      summary: 'Source and acquire all required materials and supplies',
       status: 'Not Started' as const,
       isRequired: true,
       order: 1,
-      description: 'Schedule and conduct initial client meetings to understand project requirements and objectives.',
-      requiredActions: ['Schedule initial meeting', 'Prepare project brief', 'Gather client requirements', 'Document project scope'],
-      forms: ['client-briefing-form', 'requirements-gathering-form'],
-      estimatedDuration: 3,
-      assignedRole: 'Project Officer',
-      offsetStart: 0,
-      offsetEnd: 5,
+      description: 'Procure all materials and supplies required for production according to the approved material specification.',
+      requiredActions: ['Create purchase orders', 'Contact suppliers', 'Track delivery schedules', 'Verify material quality'],
+      forms: ['purchase-order-form', 'supplier-contact-form', 'material-receipt-form'],
+      estimatedDuration: 5,
+      assignedRole: 'Procurement Officer',
       tasks: [
         {
-          name: 'Receive Client Brief',
-          description: 'Capture client needs via email, call, or physical visit.',
+          name: 'Material Procurement',
+          description: 'Order all required materials from approved suppliers.',
           deliverables: [
-            'Customer Service captures client needs.',
-            'Assign a Project Officer (PO).',
-            'Log new project entry in system.'
+            'Create purchase orders for all materials.',
+            'Confirm supplier availability and lead times.',
+            'Track order status and delivery dates.'
           ]
         },
         {
-          name: 'Analyze Requirements',
-          description: 'Review and allocate project internally.',
+          name: 'Material Receipt & Inspection',
+          description: 'Receive and inspect delivered materials.',
           deliverables: [
-            'Team leads and PO review client brief.',
-            'Allocate project to relevant departments.',
-            'Schedule internal project briefing.'
-          ]
-        },
-        {
-          name: 'Confirm Project Scope',
-          description: 'Align with client on deliverables and expectations.',
-          deliverables: [
-            'Document project deliverables.',
-            'Share requirements summary for client confirmation.',
-            'Use official communication channels for confirmation.'
+            'Verify material quality and specifications.',
+            'Document any discrepancies.',
+            'Store materials appropriately.'
           ]
         }
       ]
     },
     {
-      id: 'design-development',
-      name: 'Design & Concept Development',
-      icon: 'bi-brush',
-      summary: 'Creative development and design concepts',
+      id: 'pre-production',
+      name: 'Pre-Production Planning',
+      icon: 'bi-clipboard-check',
+      summary: 'Planning and preparation for production',
       status: 'Not Started' as const,
       isRequired: true,
       order: 2,
-      description: 'Create design concepts, mood boards, and initial mockups for client approval.',
-      requiredActions: ['Create mood boards', 'Develop design concepts', 'Prepare initial mockups', 'Client design presentation'],
-      forms: ['design-brief-form', 'concept-development-form', 'design-approval-form'],
-      dependencies: ['client-engagement'],
-      estimatedDuration: 7,
-      assignedRole: 'Design Officer'
+      description: 'Plan production schedule, allocate resources, and prepare workspace for manufacturing.',
+      requiredActions: ['Create production schedule', 'Allocate team members', 'Prepare workspace', 'Review material availability'],
+      forms: ['production-schedule-form', 'resource-allocation-form', 'workspace-prep-form'],
+      dependencies: ['procurement'],
+      estimatedDuration: 3,
+      assignedRole: 'Production Manager',
+      tasks: [
+        {
+          name: 'Production Planning',
+          description: 'Create detailed production schedule and workflow.',
+          deliverables: [
+            'Develop production timeline.',
+            'Assign team members to tasks.',
+            'Prepare production workspace.'
+          ]
+        },
+        {
+          name: 'Resource Allocation',
+          description: 'Ensure all necessary tools and equipment are available.',
+          deliverables: [
+            'Check equipment availability.',
+            'Schedule maintenance if needed.',
+            'Prepare safety equipment.'
+          ]
+        }
+      ]
     },
     {
-      id: 'budget-quotation',
-      name: 'Budget & Quotation',
-      icon: 'bi-cash-coin',
-      summary: 'Financial planning and client quotation',
+      id: 'manufacturing',
+      name: 'Manufacturing & Assembly',
+      icon: 'bi-gear',
+      summary: 'Core production and manufacturing work',
       status: 'Not Started' as const,
       isRequired: true,
       order: 3,
-      description: 'Prepare detailed budget breakdown and client quotation for approval.',
-      requiredActions: ['Calculate material costs', 'Add labor costs', 'Include contingencies', 'Prepare quotation document'],
-      forms: ['budget-breakdown-form', 'quotation-form', 'cost-estimation-form'],
-      dependencies: ['design-development'],
-      estimatedDuration: 3,
-      assignedRole: 'Project Lead'
+      description: 'Execute the actual manufacturing and assembly of project components.',
+      requiredActions: ['Start manufacturing process', 'Monitor progress', 'Document production steps', 'Handle quality issues'],
+      forms: ['production-log-form', 'quality-issue-form', 'progress-report-form'],
+      dependencies: ['pre-production'],
+      estimatedDuration: 10,
+      assignedRole: 'Production Team',
+      tasks: [
+        {
+          name: 'Manufacturing Execution',
+          description: 'Produce items according to specifications.',
+          deliverables: [
+            'Follow production procedures.',
+            'Monitor quality standards.',
+            'Document production progress.'
+          ]
+        },
+        {
+          name: 'Assembly & Finishing',
+          description: 'Complete final assembly and finishing work.',
+          deliverables: [
+            'Assemble components.',
+            'Apply finishing touches.',
+            'Prepare for quality inspection.'
+          ]
+        }
+      ]
     },
     {
-      id: 'client-approval',
-      name: 'Client Approval',
-      icon: 'bi-check-circle',
-      summary: 'Client review and approval of designs and quotation',
+      id: 'quality-control',
+      name: 'Quality Control & Testing',
+      icon: 'bi-check-square',
+      summary: 'Quality assurance and testing',
       status: 'Not Started' as const,
       isRequired: true,
       order: 4,
-      description: 'Present final designs and quotation to client for approval before proceeding to production.',
-      requiredActions: ['Schedule approval meeting', 'Present designs and quote', 'Address client feedback', 'Obtain client signature'],
-      forms: ['approval-meeting-form', 'client-feedback-form', 'approval-document'],
-      dependencies: ['budget-quotation'],
+      description: 'Conduct quality control checks and testing to ensure products meet specifications.',
+      requiredActions: ['Perform quality inspections', 'Test functionality', 'Document issues', 'Approve for next stage'],
+      forms: ['quality-inspection-form', 'testing-report-form', 'defect-report-form'],
+      dependencies: ['manufacturing'],
       estimatedDuration: 2,
-      assignedRole: 'Project Lead'
+      assignedRole: 'Quality Control Officer',
+      tasks: [
+        {
+          name: 'Quality Inspection',
+          description: 'Inspect finished products for quality.',
+          deliverables: [
+            'Check dimensions and specifications.',
+            'Test functionality.',
+            'Document any defects.'
+          ]
+        },
+        {
+          name: 'Quality Approval',
+          description: 'Approve products for packaging and delivery.',
+          deliverables: [
+            'Sign off on quality standards.',
+            'Prepare quality certificates.',
+            'Authorize next steps.'
+          ]
+        }
+      ]
     },
     {
-      id: 'production',
-      name: 'Production',
-      icon: 'bi-gear',
-      summary: 'Manufacturing and assembly of project components',
+      id: 'packaging',
+      name: 'Packaging & Preparation',
+      icon: 'bi-box',
+      summary: 'Final packaging and delivery preparation',
       status: 'Not Started' as const,
       isRequired: true,
       order: 5,
-      description: 'Execute production according to approved designs and specifications.',
-      requiredActions: ['Create work orders', 'Monitor production progress', 'Quality control checks', 'Final assembly'],
-      forms: ['work-order-form', 'production-log-form', 'quality-control-form'],
-      dependencies: ['client-approval'],
-      estimatedDuration: 14,
-      assignedRole: 'Production Manager'
+      description: 'Package finished products and prepare for delivery or installation.',
+      requiredActions: ['Package products safely', 'Prepare shipping documents', 'Coordinate delivery', 'Final quality check'],
+      forms: ['packaging-checklist-form', 'shipping-document-form', 'delivery-coordination-form'],
+      dependencies: ['quality-control'],
+      estimatedDuration: 2,
+      assignedRole: 'Production Team',
+      tasks: [
+        {
+          name: 'Packaging',
+          description: 'Package products for safe transport.',
+          deliverables: [
+            'Use appropriate packaging materials.',
+            'Protect fragile components.',
+            'Label packages correctly.'
+          ]
+        },
+        {
+          name: 'Documentation',
+          description: 'Prepare all necessary documentation.',
+          deliverables: [
+            'Create delivery notes.',
+            'Prepare installation guides.',
+            'Complete export documents if needed.'
+          ]
+        }
+      ]
     },
     {
-      id: 'logistics',
-      name: 'Logistics',
+      id: 'logistics-delivery',
+      name: 'Logistics & Delivery',
       icon: 'bi-truck',
-      summary: 'Coordination of transportation, storage, and delivery',
+      summary: 'Transportation and delivery coordination',
       status: 'Not Started' as const,
-      isRequired: false,
+      isRequired: true,
       order: 6,
-      description: 'Plan and execute transportation and delivery logistics for the completed project.',
-      requiredActions: ['Plan transportation routes', 'Coordinate delivery schedule', 'Track shipment progress', 'Arrange storage if needed'],
-      forms: ['logistics-plan-form', 'delivery-schedule-form', 'shipment-tracking-form'],
-      dependencies: ['production'],
+      description: 'Coordinate transportation and delivery of packaged products to client location.',
+      requiredActions: ['Arrange transportation', 'Track delivery progress', 'Confirm safe delivery', 'Handle delivery issues'],
+      forms: ['transportation-form', 'delivery-tracking-form', 'delivery-confirmation-form'],
+      dependencies: ['packaging'],
       estimatedDuration: 3,
-      assignedRole: 'Logistics Coordinator'
+      assignedRole: 'Logistics Coordinator',
+      tasks: [
+        {
+          name: 'Transportation Planning',
+          description: 'Arrange appropriate transportation method.',
+          deliverables: [
+            'Select transportation provider.',
+            'Schedule delivery time.',
+            'Prepare shipping documents.'
+          ]
+        },
+        {
+          name: 'Delivery Execution',
+          description: 'Monitor and confirm successful delivery.',
+          deliverables: [
+            'Track shipment progress.',
+            'Confirm delivery receipt.',
+            'Handle any delivery issues.'
+          ]
+        }
+      ]
     },
     {
-      id: 'event-setup',
-      name: 'Event Setup & Execution',
+      id: 'installation-setup',
+      name: 'Installation & Setup',
       icon: 'bi-tools',
-      summary: 'On-site setup and implementation',
+      summary: 'On-site installation and setup',
       status: 'Not Started' as const,
       isRequired: false,
       order: 7,
-      description: 'On-site installation and setup of the completed project.',
-      requiredActions: ['Schedule installation team', 'On-site setup and assembly', 'Testing and calibration', 'Safety checks'],
-      forms: ['installation-schedule-form', 'setup-report-form', 'safety-checklist-form'],
-      dependencies: ['logistics'],
-      estimatedDuration: 2,
-      assignedRole: 'Installation Team'
+      description: 'Install and set up products at client location if required.',
+      requiredActions: ['Schedule installation team', 'On-site setup', 'Testing and calibration', 'Client training'],
+      forms: ['installation-schedule-form', 'setup-report-form', 'training-record-form'],
+      dependencies: ['logistics-delivery'],
+      estimatedDuration: 4,
+      assignedRole: 'Installation Team',
+      tasks: [
+        {
+          name: 'Site Preparation',
+          description: 'Prepare installation site.',
+          deliverables: [
+            'Assess installation location.',
+            'Prepare necessary tools.',
+            'Ensure safety compliance.'
+          ]
+        },
+        {
+          name: 'Installation & Testing',
+          description: 'Install and test the products.',
+          deliverables: [
+            'Complete installation.',
+            'Test functionality.',
+            'Provide client training.'
+          ]
+        }
+      ]
     },
     {
       id: 'client-handover',
-      name: 'Client Handover',
+      name: 'Client Handover & Training',
       icon: 'bi-clipboard-check',
-      summary: 'Final delivery to client with training and documentation',
+      summary: 'Final delivery and client training',
       status: 'Not Started' as const,
       isRequired: true,
       order: 8,
-      description: 'Complete project handover with training, documentation, and sign-off procedures.',
-      requiredActions: ['Client training session', 'Documentation delivery', 'System walkthrough', 'Final sign-off'],
-      forms: ['training-record-form', 'handover-document', 'client-signoff-form'],
-      dependencies: ['event-setup'],
-      estimatedDuration: 1,
-      assignedRole: 'Project Lead'
+      description: 'Complete final handover with documentation, training, and client sign-off.',
+      requiredActions: ['Client walkthrough', 'Documentation delivery', 'Training session', 'Final sign-off'],
+      forms: ['handover-checklist-form', 'training-certificate-form', 'client-signoff-form'],
+      dependencies: ['installation-setup'],
+      estimatedDuration: 2,
+      assignedRole: 'Project Lead',
+      tasks: [
+        {
+          name: 'Client Training',
+          description: 'Train client on product usage.',
+          deliverables: [
+            'Conduct training session.',
+            'Provide user manuals.',
+            'Answer client questions.'
+          ]
+        },
+        {
+          name: 'Final Handover',
+          description: 'Complete project handover.',
+          deliverables: [
+            'Deliver all documentation.',
+            'Obtain client sign-off.',
+            'Confirm client satisfaction.'
+          ]
+        }
+      ]
     },
     {
-      id: 'set-down-return',
-      name: 'Set Down & Return',
+      id: 'post-production',
+      name: 'Post-Production & Cleanup',
       icon: 'bi-arrow-return-left',
-      summary: 'Post-event activities and equipment return',
+      summary: 'Post-delivery activities and cleanup',
       status: 'Not Started' as const,
       isRequired: false,
       order: 9,
-      description: 'Post-event activities including equipment return, cleanup, and storage.',
-      requiredActions: ['Equipment inventory check', 'Transportation back to storage', 'Equipment cleaning', 'Storage organization'],
-      forms: ['equipment-return-form', 'inventory-checklist-form', 'storage-log-form'],
+      description: 'Handle post-delivery activities, cleanup, and return of any temporary equipment.',
+      requiredActions: ['Equipment return', 'Site cleanup', 'Client follow-up', 'Documentation completion'],
+      forms: ['equipment-return-form', 'cleanup-report-form', 'client-feedback-form'],
       dependencies: ['client-handover'],
-      estimatedDuration: 2,
-      assignedRole: 'Operations Team'
+      estimatedDuration: 3,
+      assignedRole: 'Operations Team',
+      tasks: [
+        {
+          name: 'Equipment Return',
+          description: 'Return any temporary equipment.',
+          deliverables: [
+            'Collect all equipment.',
+            'Inspect for damage.',
+            'Return to storage.'
+          ]
+        },
+        {
+          name: 'Site Cleanup',
+          description: 'Clean up installation site.',
+          deliverables: [
+            'Remove packaging materials.',
+            'Clean work area.',
+            'Restore site to original condition.'
+          ]
+        }
+      ]
     },
     {
-      id: 'archival-reporting',
-      name: 'Archival & Reporting',
+      id: 'project-closure',
+      name: 'Project Closure & Reporting',
       icon: 'bi-archive',
-      summary: 'Final project review, documentation, and lessons learned',
+      summary: 'Final documentation and project closure',
       status: 'Not Started' as const,
       isRequired: true,
       order: 10,
-      description: 'Complete final project review, documentation, and lessons learned for future reference.',
-      requiredActions: ['Project performance review', 'Documentation archiving', 'Lessons learned session', 'Final report preparation'],
-      forms: ['project-review-form', 'lessons-learned-form', 'final-report-form'],
-      dependencies: ['set-down-return'],
-      estimatedDuration: 1,
-      assignedRole: 'Project Lead'
+      description: 'Complete final documentation, reporting, and formal project closure.',
+      requiredActions: ['Final reporting', 'Documentation archiving', 'Client feedback collection', 'Project closure'],
+      forms: ['final-report-form', 'client-feedback-form', 'closure-checklist-form'],
+      dependencies: ['post-production'],
+      estimatedDuration: 2,
+      assignedRole: 'Project Lead',
+      tasks: [
+        {
+          name: 'Final Documentation',
+          description: 'Complete all project documentation.',
+          deliverables: [
+            'Compile project reports.',
+            'Archive all documents.',
+            'Update project database.'
+          ]
+        },
+        {
+          name: 'Project Review',
+          description: 'Review project performance.',
+          deliverables: [
+            'Collect team feedback.',
+            'Document lessons learned.',
+            'Prepare final report.'
+          ]
+        }
+      ]
     }
   ],
 

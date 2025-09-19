@@ -75,34 +75,30 @@
         <!-- Enquiry Workflow Cards -->
         <div
           v-if="!selectedProject"
-          class="grid grid-cols-1 lg:grid-cols-4 gap-4"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
         >
-      <!-- Step 1: Enquiry Details -->
+      <!-- Step 1: Enquiry Logged -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
-           :class="getStepBorderClass(1)">
+            :class="getStepBorderClass(1)">
         <div class="p-4 border-b border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                   :class="getStepNumberClass(1)">
+                    :class="getStepNumberClass(1)">
                 1
               </div>
               <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Enquiry Details</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Client information</p>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Enquiry Logged</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">Project request</p>
               </div>
             </div>
-            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-              Completed
+            <span :class="getStatusBadgeClass(getStepStatus(1))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+              {{ getStepStatusText(1) }}
             </span>
           </div>
         </div>
         <div class="p-4">
           <div class="space-y-3">
-            <div class="text-sm">
-              <span class="font-medium">Client:</span>
-              <span class="text-gray-500">{{ enquiry?.client?.name }}</span>
-            </div>
             <div class="text-sm">
               <span class="font-medium">Priority:</span>
               <span :class="getPriorityClass(enquiry?.priority)">
@@ -110,8 +106,8 @@
               </span>
             </div>
             <div class="text-sm">
-              <span class="font-medium">Status:</span>
-              <span class="text-gray-500">{{ enquiry?.status?.replace('_', ' ') }}</span>
+              <span class="font-medium">Created:</span>
+              <span class="text-gray-500">{{ enquiry?.created_at ? formatDate(enquiry.created_at) : 'N/A' }}</span>
             </div>
           </div>
         </div>
@@ -119,12 +115,12 @@
 
       <!-- Step 2: Site Survey -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
-           :class="getStepBorderClass(2)">
+            :class="getStepBorderClass(2)">
         <div class="p-4 border-b border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                   :class="getStepNumberClass(2)">
+                    :class="getStepNumberClass(2)">
                 2
               </div>
               <div>
@@ -161,70 +157,20 @@
         </div>
       </div>
 
-      <!-- Step 3: Materials & Quotation -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
-           :class="getStepBorderClass(3)">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                   :class="getStepNumberClass(3)">
-                3
-              </div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Materials & Quote</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Cost estimation</p>
-              </div>
-            </div>
-            <span :class="getStatusBadgeClass(getStepStatus(3))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-              {{ getStepStatusText(3) }}
-            </span>
-          </div>
-        </div>
-        <div class="p-4">
-          <div class="space-y-3">
-            <div class="text-sm">
-              <span class="font-medium">Materials:</span>
-              <span class="text-gray-500">{{ materialItemsCount }} items</span>
-            </div>
-            <div class="text-sm">
-              <span class="font-medium">Quotation:</span>
-              <span v-if="selectedQuotation" :class="getQuotationStatusClass(selectedQuotation.status)">
-                {{ selectedQuotation.status }}
-              </span>
-              <span v-else class="text-gray-500">Not created</span>
-            </div>
-            <div class="text-sm">
-              <span class="font-medium">Total:</span>
-              <span v-if="selectedQuotation" class="text-gray-500">
-                KES {{ selectedQuotation.total_amount.toLocaleString() }}
-              </span>
-              <span v-else class="text-gray-500">Not calculated</span>
-            </div>
-            <button
-              @click="openMaterialsModal"
-              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm py-2 px-4 rounded-md transition-colors"
-              :disabled="!canAccessMaterials"
-            >
-              Manage Materials & Quote
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Step 4: Project Conversion -->
+      <!-- Step 4: Material Specification -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
-           :class="getStepBorderClass(4)">
+            :class="getStepBorderClass(4)">
         <div class="p-4 border-b border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                   :class="getStepNumberClass(4)">
+                    :class="getStepNumberClass(4)">
                 4
               </div>
               <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Project Ready</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Production start</p>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Material Specification</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">Requirements list</p>
               </div>
             </div>
             <span :class="getStatusBadgeClass(getStepStatus(4))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
@@ -234,15 +180,147 @@
         </div>
         <div class="p-4">
           <div class="space-y-3">
-            <div v-if="selectedProject" class="text-sm">
-              <span class="font-medium">Project:</span>
-              <span class="text-gray-500">Project Created</span>
+            <div class="text-sm">
+              <span class="font-medium">Materials:</span>
+              <span class="text-gray-500">{{ materialItemsCount }} items</span>
             </div>
-            <div v-if="selectedProject" class="text-sm">
-              <span class="font-medium">Status:</span>
-              <span class="text-green-600 bg-green-100 px-2 py-1 rounded text-xs">
-                In Progress
+            <button
+              @click="openMaterialsModal"
+              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm py-2 px-4 rounded-md transition-colors"
+            >
+              Manage Materials
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Budget Creation -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
+            :class="getStepBorderClass(5)">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                    :class="getStepNumberClass(5)">
+                5
+              </div>
+              <div>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Budget Creation</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">Cost calculation</p>
+              </div>
+            </div>
+            <span :class="getStatusBadgeClass(getStepStatus(5))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+              {{ getStepStatusText(5) }}
+            </span>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="space-y-3">
+            <div class="text-sm">
+              <span class="font-medium">Total Cost:</span>
+              <span class="text-gray-500">KES {{ materialTotalCost.toLocaleString() }}</span>
+            </div>
+            <button class="w-full bg-yellow-600 hover:bg-yellow-700 text-white text-sm py-2 px-4 rounded-md transition-colors">
+              Create Budget
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: Quote Preparation -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
+            :class="getStepBorderClass(6)">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                    :class="getStepNumberClass(6)">
+                6
+              </div>
+              <div>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Quote Preparation</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">Formal quotation</p>
+              </div>
+            </div>
+            <span :class="getStatusBadgeClass(getStepStatus(6))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+              {{ getStepStatusText(6) }}
+            </span>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="space-y-3">
+            <div class="text-sm">
+              <span class="font-medium">Quotation:</span>
+              <span v-if="selectedQuotation" :class="getQuotationStatusClass(selectedQuotation.status)">
+                {{ selectedQuotation.status }}
               </span>
+              <span v-else class="text-gray-500">Not created</span>
+            </div>
+            <button class="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm py-2 px-4 rounded-md transition-colors">
+              Prepare Quote
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7: Quote Approval -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
+            :class="getStepBorderClass(7)">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                    :class="getStepNumberClass(7)">
+                7
+              </div>
+              <div>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Quote Approval</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">Client acceptance</p>
+              </div>
+            </div>
+            <span :class="getStatusBadgeClass(getStepStatus(7))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+              {{ getStepStatusText(7) }}
+            </span>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="space-y-3">
+            <div class="text-sm">
+              <span class="font-medium">Status:</span>
+              <span class="text-gray-500">Waiting for client</span>
+            </div>
+            <button class="w-full bg-red-600 hover:bg-red-700 text-white text-sm py-2 px-4 rounded-md transition-colors">
+              Send to Client
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7: Project Conversion -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
+           :class="getStepBorderClass(10)">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                   :class="getStepNumberClass(10)">
+                10
+              </div>
+              <div>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Project Conversion</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400">Production ready</p>
+              </div>
+            </div>
+            <span :class="getStatusBadgeClass(getStepStatus(10))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+              {{ getStepStatusText(10) }}
+            </span>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="space-y-3">
+            <div v-if="selectedProject" class="text-sm">
+              <span class="font-medium">Project ID:</span>
+              <span class="text-gray-500">#{{ Date.now() }}</span>
             </div>
             <button
               @click="startProduction"
@@ -705,7 +783,7 @@
           </button>
           <button
             @click="nextStep"
-            :disabled="currentDetailStep >= 4"
+            :disabled="currentDetailStep >= 7"
             class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next →
@@ -1068,10 +1146,13 @@ const workflowOffset = ref(0) // 0 = enquiry workflow, -100 = project workflow
 
 // Workflow step statuses (reactive)
 const stepStatuses = ref({
-  1: 'completed', // Enquiry Details always completed
+  1: 'completed', // Enquiry Logged
   2: 'pending',   // Site Survey
-  3: 'pending',   // Materials & Quotation
-  4: 'pending'    // Project Conversion
+  3: 'pending',   // Material Specification
+  4: 'pending',   // Budget Creation
+  5: 'pending',   // Quote Preparation
+  6: 'pending',   // Quote Approval
+  7: 'pending'    // Project Conversion
 })
 
 // Mock data for demonstration
@@ -1081,13 +1162,24 @@ const materialTotalCost = ref(250000)
 // Computed properties
 const overallProgress = computed(() => {
   let completed = 0
+  // Step 1: Enquiry Logged - always completed if enquiry exists
   if (enquiry.value) completed++
+  // Step 2: Site Survey - completed if survey exists and is completed
   if (selectedSurvey.value && selectedSurvey.value.status === 'completed') completed++
+  // Step 3: Design Development - check status
+  if (stepStatuses.value[3] === 'completed') completed++
+  // Step 4: Material Specification - check if materials exist
   if (materialItemsCount.value > 0) completed++
+  // Step 5: Budget Creation - check status
+  if (stepStatuses.value[5] === 'completed') completed++
+  // Step 6: Quote Preparation - check if quotation exists
+  if (selectedQuotation.value) completed++
+  // Step 7: Quote Approval - check if quotation is approved
   if (selectedQuotation.value && selectedQuotation.value.status === 'approved') completed++
+  // Step 7: Project Conversion - check if project exists
   if (selectedProject.value) completed++
 
-  return Math.round((completed / 5) * 100)
+  return Math.round((completed / 7) * 100)
 })
 
 
@@ -1285,12 +1377,15 @@ const remainingPhases = computed(() => {
 
 const getCurrentStepTitle = () => {
   const titles = [
-    'Enquiry Details',
+    'Enquiry Logged',
     'Site Survey',
-    'Materials & Quotation',
+    'Material Specification',
+    'Budget Creation',
+    'Quote Preparation',
+    'Quote Approval',
     'Project Conversion'
   ]
-  return titles[currentDetailStep.value - 1] || 'Enquiry Details'
+  return titles[currentDetailStep.value - 1] || 'Enquiry Logged'
 }
 
 const formatDate = (date: string) => {
@@ -1309,10 +1404,10 @@ const updateStepStatus = (stepNumber: number, status: string) => {
 
   // Update enquiry status based on step completion
   if (enquiry.value) {
-    if (stepNumber === 4 && status === 'completed') {
+    if (stepNumber === 7 && status === 'completed') {
       enquiry.value.status = 'converted_to_project'
-    } else if (stepNumber >= 2 && status === 'completed') {
-      enquiry.value.status = 'approved'
+    } else if (stepNumber >= 1 && status === 'completed') {
+      enquiry.value.status = 'design_completed'
     }
   }
 
@@ -1320,7 +1415,7 @@ const updateStepStatus = (stepNumber: number, status: string) => {
 }
 
 const nextStep = () => {
-  if (currentDetailStep.value < 4) {
+  if (currentDetailStep.value < 7) {
     // Update the status of current step to completed
     updateStepStatus(currentDetailStep.value, 'completed')
 
@@ -1328,7 +1423,7 @@ const nextStep = () => {
     currentDetailStep.value++
 
     // Update the status of new current step to in_progress
-    if (currentDetailStep.value <= 4) {
+    if (currentDetailStep.value <= 7) {
       updateStepStatus(currentDetailStep.value, 'in_progress')
     }
   }
@@ -1421,322 +1516,311 @@ const startProduction = () => {
     current_phase: 0,
     phases: [
       {
-        name: 'Client Engagement & Briefing',
-        icon: 'bi-folder-symlink',
-        summary: 'Initial client meetings, project briefs, and requirements gathering. This phase sets the foundation for the entire project.',
-        status: 'Completed',
+        name: 'Procurement & Material Sourcing',
+        icon: 'bi-cart-plus',
+        summary: 'Source and acquire all required materials and supplies for production.',
+        status: 'Not Started',
         estimatedDuration: 5,
-        assignedRole: 'Project Officer',
-        id: 'client-engagement',
+        assignedRole: 'Procurement Officer',
+        id: 'procurement',
         isRequired: true,
         order: 1,
-        offsetStart: 0,
-        offsetEnd: 5,
         tasks: [
           {
-            name: 'Receive Client Brief',
-            description: 'Capture client needs via email, call, or physical visit.',
+            name: 'Material Procurement',
+            description: 'Order all required materials from approved suppliers.',
             deliverables: [
-              'Customer Service captures client needs.',
-              'Assign a Project Officer (PO).',
-              'Log new project entry in system.'
+              'Create purchase orders for all materials.',
+              'Confirm supplier availability and lead times.',
+              'Track order status and delivery dates.'
             ]
           },
           {
-            name: 'Analyze Requirements',
-            description: 'Review and allocate project internally.',
+            name: 'Material Receipt & Inspection',
+            description: 'Receive and inspect delivered materials.',
             deliverables: [
-              'Team leads and PO review client brief.',
-              'Allocate project to relevant departments.',
-              'Schedule internal project briefing.'
-            ]
-          },
-          {
-            name: 'Confirm Project Scope',
-            description: 'Align with client on deliverables and expectations.',
-            deliverables: [
-              'Document project deliverables.',
-              'Share requirements summary for client confirmation.',
-              'Use official communication channels for confirmation.'
+              'Verify material quality and specifications.',
+              'Document any discrepancies.',
+              'Store materials appropriately.'
             ]
           }
         ]
       },
       {
-        name: 'Design & Concept Development',
-        icon: 'bi-brush',
-        summary: 'Creative development, mood boards, and initial design concepts. This is where ideas take visual form.',
-        status: 'Completed',
-        estimatedDuration: 9,
-        assignedRole: 'Design Officer',
-        id: 'design-development',
+        name: 'Pre-Production Planning',
+        icon: 'bi-clipboard-check',
+        summary: 'Planning and preparation for production execution.',
+        status: 'Not Started',
+        estimatedDuration: 3,
+        assignedRole: 'Production Manager',
+        id: 'pre-production',
         isRequired: true,
         order: 2,
-        offsetStart: 6,
-        offsetEnd: 15,
         tasks: [
           {
-            name: 'Initial Design Creation',
-            description: 'Create and share initial design concepts.',
+            name: 'Production Planning',
+            description: 'Create detailed production schedule and workflow.',
             deliverables: [
-              'Designer creates initial concepts.',
-              'Share internally and with client.',
-              'Collect feedback via email or portal.'
+              'Develop production timeline.',
+              'Assign team members to tasks.',
+              'Prepare production workspace.'
             ]
           },
           {
-            name: 'Final Design Approval',
-            description: 'Refine and approve final design.',
+            name: 'Resource Allocation',
+            description: 'Ensure all necessary tools and equipment are available.',
             deliverables: [
-              'Incorporate revisions from feedback.',
-              'Client provides sign-off.',
-              'Document final designs in ERP.'
-            ]
-          },
-          {
-            name: 'Material & Cost Listing',
-            description: 'Estimate material needs and costs.',
-            deliverables: [
-              'List all required materials.',
-              'Rough cost estimation.',
-              'Finalize and approve materials list internally.'
+              'Check equipment availability.',
+              'Schedule maintenance if needed.',
+              'Prepare safety equipment.'
             ]
           }
         ]
       },
       {
-        name: 'Procurement & Inventory Management',
-        icon: 'bi-list-task',
-        summary: 'Ensure necessary stock is available and handle procurement of materials.',
-        status: 'Completed',
-        estimatedDuration: 4,
-        assignedRole: 'Procurement Officer',
-        id: 'procurement-inventory',
+        name: 'Manufacturing & Assembly',
+        icon: 'bi-gear',
+        summary: 'Core production and manufacturing work execution.',
+        status: 'Not Started',
+        estimatedDuration: 10,
+        assignedRole: 'Production Team',
+        id: 'manufacturing',
         isRequired: true,
         order: 3,
-        offsetStart: 16,
-        offsetEnd: 20,
         tasks: [
           {
-            name: 'Inventory Check',
-            description: 'Ensure necessary stock is available.',
+            name: 'Manufacturing Execution',
+            description: 'Produce items according to specifications.',
             deliverables: [
-              'Store manager checks available stock.'
+              'Follow production procedures.',
+              'Monitor quality standards.',
+              'Document production progress.'
             ]
           },
           {
-            name: 'Procurement Process',
-            description: 'Raise and track procurement of materials.',
+            name: 'Assembly & Finishing',
+            description: 'Complete final assembly and finishing work.',
             deliverables: [
-              'Raise purchase request.',
-              'Approve via Procurement Officer.',
-              'Track supplier delivery status.'
-            ]
-          },
-          {
-            name: 'Inventory Ready for Production',
-            description: 'Prepare materials for use.',
-            deliverables: [
-              'Receive and verify materials.',
-              'Notify production team.'
+              'Assemble components.',
+              'Apply finishing touches.',
+              'Prepare for quality inspection.'
             ]
           }
         ]
       },
       {
-        name: 'Quotation & Budget Approval',
-        icon: 'bi-cash-coin',
-        summary: 'Financial planning, cost estimation, and client quotations.',
-        status: 'Completed',
-        estimatedDuration: 4,
-        assignedRole: 'Project Lead',
-        id: 'quotation-budget',
+        name: 'Quality Control & Testing',
+        icon: 'bi-check-square',
+        summary: 'Quality assurance and testing of finished products.',
+        status: 'Not Started',
+        estimatedDuration: 2,
+        assignedRole: 'Quality Control Officer',
+        id: 'quality-control',
         isRequired: true,
         order: 4,
-        offsetStart: 21,
-        offsetEnd: 25,
         tasks: [
           {
-            name: 'Budget Confirmation',
-            description: 'Validate cost and prepare client quotation.',
+            name: 'Quality Inspection',
+            description: 'Inspect finished products for quality.',
             deliverables: [
-              'Cross-check cost with scope.',
-              'Generate and send quotation.'
+              'Check dimensions and specifications.',
+              'Test functionality.',
+              'Document any defects.'
             ]
           },
           {
-            name: 'Approval & TAT',
-            description: 'Follow up and confirm client approval.',
+            name: 'Quality Approval',
+            description: 'Approve products for packaging and delivery.',
             deliverables: [
-              'Follow up within 45 minutes (or as needed).',
-              'Confirm client approval.',
-              'Mark status as "Quote Approved".'
+              'Sign off on quality standards.',
+              'Prepare quality certificates.',
+              'Authorize next steps.'
             ]
           }
         ]
       },
       {
-        name: 'Production',
-        icon: 'bi-gear',
-        summary: 'Manufacturing and assembly of project components. Tracks work orders, progress, and quality control.',
-        status: 'In Progress',
-        estimatedDuration: 4,
-        assignedRole: 'Production Manager',
-        id: 'production',
+        name: 'Packaging & Preparation',
+        icon: 'bi-box',
+        summary: 'Final packaging and delivery preparation.',
+        status: 'Not Started',
+        estimatedDuration: 2,
+        assignedRole: 'Production Team',
+        id: 'packaging',
         isRequired: true,
         order: 5,
-        offsetStart: 26,
-        offsetEnd: 30,
         tasks: [
           {
-            name: 'Execute Production',
-            description: 'Fabricate/brand as per approved design.',
+            name: 'Packaging',
+            description: 'Package products for safe transport.',
             deliverables: [
-              'Log time and material usage.'
+              'Use appropriate packaging materials.',
+              'Protect fragile components.',
+              'Label packages correctly.'
             ]
           },
           {
-            name: 'Quality Control',
-            description: 'Ensure deliverables meet standards.',
+            name: 'Documentation',
+            description: 'Prepare all necessary documentation.',
             deliverables: [
-              'QA team inspects output.',
-              'Retouch if needed.',
-              'Approve for delivery.'
-            ]
-          },
-          {
-            name: 'Packing & Handover for Setup',
-            description: 'Prepare items for delivery.',
-            deliverables: [
-              'Package final items.',
-              'Update delivery docket.',
-              'Handover to logistics.'
+              'Create delivery notes.',
+              'Prepare installation guides.',
+              'Complete export documents if needed.'
             ]
           }
         ]
       },
       {
-        name: 'Event Setup & Execution',
+        name: 'Logistics & Delivery',
+        icon: 'bi-truck',
+        summary: 'Transportation and delivery coordination.',
+        status: 'Not Started',
+        estimatedDuration: 3,
+        assignedRole: 'Logistics Coordinator',
+        id: 'logistics-delivery',
+        isRequired: true,
+        order: 6,
+        tasks: [
+          {
+            name: 'Transportation Planning',
+            description: 'Arrange appropriate transportation method.',
+            deliverables: [
+              'Select transportation provider.',
+              'Schedule delivery time.',
+              'Prepare shipping documents.'
+            ]
+          },
+          {
+            name: 'Delivery Execution',
+            description: 'Monitor and confirm successful delivery.',
+            deliverables: [
+              'Track shipment progress.',
+              'Confirm delivery receipt.',
+              'Handle any delivery issues.'
+            ]
+          }
+        ]
+      },
+      {
+        name: 'Installation & Setup',
         icon: 'bi-tools',
-        summary: 'On-site setup and implementation. Includes installation schedules and site reports.',
+        summary: 'On-site installation and setup if required.',
         status: 'Not Started',
         estimatedDuration: 4,
         assignedRole: 'Installation Team',
-        id: 'event-setup',
-        isRequired: true,
-        order: 6,
-        offsetStart: 31,
-        offsetEnd: 35,
-        tasks: [
-          {
-            name: 'Site Delivery',
-            description: 'Transport and confirm safe arrival of items.',
-            deliverables: [
-              'Load and transport items to venue.',
-              'Confirm arrival and condition.'
-            ]
-          },
-          {
-            name: 'Setup Execution',
-            description: 'Install and test setup on-site.',
-            deliverables: [
-              'Install branding/equipment as per design.',
-              'Test all components.',
-              'Confirm readiness with client.'
-            ]
-          }
-        ]
-      },
-      {
-        name: 'Set Down & Return',
-        icon: 'bi-arrow-return-left',
-        summary: 'Post-event activities, including equipment return and storage.',
-        status: 'Not Started',
-        estimatedDuration: 4,
-        assignedRole: 'Operations Team',
-        id: 'set-down-return',
+        id: 'installation-setup',
         isRequired: false,
         order: 7,
-        offsetStart: 36,
-        offsetEnd: 40,
         tasks: [
           {
-            name: 'Dismantling',
-            description: 'Safely uninstall and collect materials.',
+            name: 'Site Preparation',
+            description: 'Prepare installation site.',
             deliverables: [
-              'Uninstall props/equipment.',
-              'Account for all items.'
+              'Assess installation location.',
+              'Prepare necessary tools.',
+              'Ensure safety compliance.'
             ]
           },
           {
-            name: 'Returns & Storage',
-            description: 'Return items to workshop and update records.',
+            name: 'Installation & Testing',
+            description: 'Install and test the products.',
             deliverables: [
-              'Transport items back.',
-              'Inspect for damage.',
-              'Update return condition.'
+              'Complete installation.',
+              'Test functionality.',
+              'Provide client training.'
             ]
           }
         ]
       },
       {
-        name: 'Client Handover & Feedback',
+        name: 'Client Handover & Training',
         icon: 'bi-clipboard-check',
-        summary: 'Final delivery to client. Includes training, documentation, and sign-off procedures.',
+        summary: 'Final delivery and client training.',
         status: 'Not Started',
         estimatedDuration: 2,
         assignedRole: 'Project Lead',
         id: 'client-handover',
         isRequired: true,
         order: 8,
-        offsetStart: 41,
-        offsetEnd: 43,
         tasks: [
           {
-            name: 'Final Handover',
-            description: 'Wrap up project and submit final report.',
+            name: 'Client Training',
+            description: 'Train client on product usage.',
             deliverables: [
-              'Submit final project report.',
-              'Provide soft copies or photos.'
+              'Conduct training session.',
+              'Provide user manuals.',
+              'Answer client questions.'
             ]
           },
           {
-            name: 'Feedback Collection',
-            description: 'Collect feedback and assess satisfaction.',
+            name: 'Final Handover',
+            description: 'Complete project handover.',
             deliverables: [
-              'Debrief session with client.',
-              'Record satisfaction and lessons learned.'
+              'Deliver all documentation.',
+              'Obtain client sign-off.',
+              'Confirm client satisfaction.'
             ]
           }
         ]
       },
       {
-        name: 'Archival & Reporting',
-        icon: 'bi-archive',
-        summary: 'Final project review, documentation, and lessons learned. Formally closes out the project.',
+        name: 'Post-Production & Cleanup',
+        icon: 'bi-arrow-return-left',
+        summary: 'Post-delivery activities and cleanup.',
         status: 'Not Started',
-        estimatedDuration: 1,
-        assignedRole: 'Project Lead',
-        id: 'archival-reporting',
-        isRequired: true,
+        estimatedDuration: 3,
+        assignedRole: 'Operations Team',
+        id: 'post-production',
+        isRequired: false,
         order: 9,
-        offsetStart: 44,
-        offsetEnd: 45,
         tasks: [
           {
-            name: 'Close Project',
-            description: 'Mark project complete and archive.',
+            name: 'Equipment Return',
+            description: 'Return any temporary equipment.',
             deliverables: [
-              'Mark Project as complete.',
-              'Archive all related documentation.'
+              'Collect all equipment.',
+              'Inspect for damage.',
+              'Return to storage.'
             ]
           },
           {
-            name: 'Analytics & Reports',
-            description: 'Generate insights for management review.',
+            name: 'Site Cleanup',
+            description: 'Clean up installation site.',
             deliverables: [
-              'Create cost, time, and material usage reports.',
-              'Send summary to management.'
+              'Remove packaging materials.',
+              'Clean work area.',
+              'Restore site to original condition.'
+            ]
+          }
+        ]
+      },
+      {
+        name: 'Project Closure & Reporting',
+        icon: 'bi-archive',
+        summary: 'Final documentation and project closure.',
+        status: 'Not Started',
+        estimatedDuration: 2,
+        assignedRole: 'Project Lead',
+        id: 'project-closure',
+        isRequired: true,
+        order: 10,
+        tasks: [
+          {
+            name: 'Final Documentation',
+            description: 'Complete all project documentation.',
+            deliverables: [
+              'Compile project reports.',
+              'Archive all documents.',
+              'Update project database.'
+            ]
+          },
+          {
+            name: 'Project Review',
+            description: 'Review project performance.',
+            deliverables: [
+              'Collect team feedback.',
+              'Document lessons learned.',
+              'Prepare final report.'
             ]
           }
         ]
@@ -1783,7 +1867,7 @@ const updatePhaseStatus = (phaseId: string, status: string) => {
 
   const phaseIndex = selectedProject.value.phases.findIndex(phase => phase.id === phaseId)
   if (phaseIndex >= 0) {
-    selectedProject.value.phases[phaseIndex].status = status as any
+    selectedProject.value.phases[phaseIndex].status = status as ProjectPhase['status']
     console.log(`Updated phase ${phaseId} to status: ${status}`)
   }
 }

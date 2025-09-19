@@ -1,358 +1,271 @@
-# Employee-User Management System Architecture
+# Module Folder Structure Documentation
 
 ## Overview
 
-This document outlines the architecture for a comprehensive employee-user management system where HR creates employee records and Admin creates corresponding system user accounts with role-based access control.
+This document provides a comprehensive breakdown of the folder structures for the Admin, HR, and Projects modules in both the backend (Laravel) and frontend (Vue.js) applications. It includes internal organization, file types, relationships, and naming conventions.
 
-## Current System Architecture
+## Backend Module Structure
 
-### Database Schema
+### Admin Module
+**Location:** `backend/app/Modules/Admin/`
 
-#### Core Tables
+```
+Admin/
+├── Http/
+│   └── Controllers/
+│       ├── PermissionController.php
+│       ├── RoleController.php
+│       └── UserController.php
+```
 
-**Users Table**
-- `id` (Primary Key)
-- `name` (string)
-- `email` (string, unique)
-- `password` (hashed)
-- `employee_id` (Foreign Key to employees, nullable)
-- `department_id` (Foreign Key to departments, nullable)
-- `is_active` (boolean, default true)
-- `last_login_at` (timestamp, nullable)
-- `created_at`, `updated_at`
+**File Types:**
+- **Controllers:** PHP classes handling HTTP requests for permissions, roles, and users
+- **Features:** CRUD operations for system administration entities
 
-**Employees Table**
-- `id` (Primary Key)
-- `first_name` (string)
-- `last_name` (string)
-- `email` (string, unique)
-- `phone` (string, nullable)
-- `department_id` (Foreign Key to departments)
-- `position` (string)
-- `hire_date` (date)
-- `salary` (decimal)
-- `status` (enum: active, inactive, terminated)
-- `created_at`, `updated_at`
+**Key Characteristics:**
+- Uses Spatie Permission package for role-based access control
+- Controllers follow RESTful conventions with index, show, store, update, destroy methods
+- JSON responses with consistent structure
 
-**Departments Table**
-- `id` (Primary Key)
-- `name` (string, unique)
-- `description` (text, nullable)
-- `manager_id` (Foreign Key to employees, nullable)
-- `budget` (decimal, nullable)
-- `location` (string, nullable)
-- `created_at`, `updated_at`
+### HR Module
+**Location:** `backend/app/Modules/HR/`
 
-#### RBAC Tables (Spatie Permission Package)
+```
+HR/
+├── Http/
+│   └── Controllers/
+│       ├── DepartmentController.php
+│       └── EmployeeController.php
+├── Models/
+│   ├── Department.php
+│   └── Employee.php
+```
 
-**Roles Table**
-- `id` (Primary Key)
-- `name` (string)
-- `guard_name` (string)
-- `description` (text, nullable)
-- `created_at`, `updated_at`
+**File Types:**
+- **Controllers:** PHP classes for department and employee management
+- **Models:** Eloquent models with relationships and business logic
 
-**Permissions Table**
-- `id` (Primary Key)
-- `name` (string)
-- `guard_name` (string)
-- `created_at`, `updated_at`
+**Key Characteristics:**
+- Full CRUD operations with validation
+- Relationships: Departments have managers and employees
+- Pagination and filtering support
+- Soft delete protection for departments with employees
 
-**Role-Permission Relationships**
-- `role_has_permissions` (many-to-many)
-- `model_has_roles` (polymorphic many-to-many)
-- `model_has_permissions` (polymorphic many-to-many)
+### Projects Module
+**Note:** No backend Projects module currently exists. This may be implemented in future development phases.
 
-### Current Data Flow
+## Frontend Module Structure
 
+### Admin Module
+**Location:** `frontend/src/modules/admin/`
+
+```
+admin/
+├── dashboard/
+│   └── AdminDashboard.vue
+├── departmentManagement/
+│   ├── DepartmentManagement.vue
+│   ├── components/
+│   │   └── DepartmentForm.vue
+│   ├── composables/
+│   │   └── useDepartments.ts
+│   └── types/
+│       └── department.ts
+├── employeeManagement/
+│   ├── EmployeeManagement.vue
+│   ├── composables/
+│   │   └── useEmployees.ts
+│   └── types/
+│       └── employee.ts
+├── roleManagement/
+│   ├── RoleManagement.vue
+│   ├── composables/
+│   │   └── useRoles.ts
+│   └── types/
+│       └── role.ts
+├── shared/
+│   ├── composables/
+│   │   └── useApi.ts
+│   └── types/
+│       └── common.ts
+└── userManagement/
+    ├── UserManagement.vue
+    ├── components/
+    │   └── UserForm.vue
+    ├── composables/
+    │   └── useUsers.ts
+    └── types/
+        └── user.ts
+```
+
+**File Types:**
+- **Views (.vue):** Main page components for each management section
+- **Components (.vue):** Reusable UI components (forms, etc.)
+- **Composables (.ts):** Vue 3 composition functions for data management
+- **Types (.ts):** TypeScript interfaces and type definitions
+
+### HR Module
+**Location:** `frontend/src/modules/hr/`
+
+```
+hr/
+├── composables/
+│   ├── useEmployees.ts
+│   └── useUsers.ts
+├── types/
+│   └── employee.ts
+└── views/
+    ├── EmployeeManagement.vue
+    └── HRDashboard.vue
+```
+
+**File Types:**
+- **Views (.vue):** Dashboard and management pages
+- **Composables (.ts):** Data fetching and state management
+- **Types (.ts):** Employee data structures
+
+### Projects Module
+**Location:** `frontend/src/modules/projects/`
+
+```
+projects/
+├── components/
+│   ├── QuickActions.vue
+│   ├── WorkflowGuide.vue
+│   └── WorkflowStep.vue
+├── composables/
+│   ├── useClients.ts
+│   ├── useEnquiries.ts
+│   ├── useProjectPhases.ts
+│   └── useProjects.ts
+├── types/
+│   ├── client.ts
+│   ├── enquiry.ts
+│   ├── index.ts
+│   ├── materials.ts
+│   ├── project.ts
+│   ├── quotation.ts
+│   └── siteSurvey.ts
+└── views/
+    ├── ClientsManagement.vue
+    ├── EnquiriesManagement.vue
+    ├── EnquiryDetailWorkflow.vue
+    ├── MaterialsManagement.vue
+    ├── ProjectsDashboard.vue
+    ├── ProjectsManagement.vue
+    ├── SiteSurveysManagement.vue
+```
+
+**File Types:**
+- **Views (.vue):** Management pages for different project aspects
+- **Components (.vue):** Workflow and action components
+- **Composables (.ts):** Specialized data management for project lifecycle
+- **Types (.ts):** Comprehensive type definitions for project entities
+
+## Module Hierarchies
+
+### Backend Module Hierarchy
 ```mermaid
 graph TD
-    A[HR Creates Employee] --> B[Employee Record Saved]
-    B --> C[Employee Available for User Creation]
-    C --> D[Admin Selects Employee]
-    D --> E[Admin Creates User Account]
-    E --> F[User Account Linked to Employee]
-    F --> G[Roles Assigned to User]
-    G --> H[User Can Login with Credentials]
+    A[backend/app/Modules/] --> B[Admin]
+    A --> C[HR]
+    B --> D[Http/Controllers]
+    D --> E[PermissionController.php]
+    D --> F[RoleController.php]
+    D --> G[UserController.php]
+    C --> H[Http/Controllers]
+    C --> I[Models]
+    H --> J[DepartmentController.php]
+    H --> K[EmployeeController.php]
+    I --> L[Department.php]
+    I --> M[Employee.php]
 ```
 
-### Key Relationships
-
-1. **Employee-Department**: One-to-Many (Employee belongs to Department)
-2. **Department-Manager**: One-to-One (Department has one Manager via manager_id)
-3. **User-Employee**: One-to-One (User linked to Employee via employee_id)
-4. **User-Department**: Many-to-One (Users belong to Department)
-5. **User-Roles**: Many-to-Many (Users can have multiple roles)
-6. **Role-Permissions**: Many-to-Many (Roles have multiple permissions)
-
-## Proposed Architecture Improvements
-
-### Enhanced User-Employee Relationship Model
-
-#### Business Rules
-
-1. **Employee Creation**: HR creates employee records with basic information
-2. **User Account Creation**: Admin creates user accounts from existing employee records
-3. **One-to-One Relationship**: Each employee can have at most one user account
-4. **Department Consistency**: User department should match employee department
-5. **Email Uniqueness**: Employee email must be unique across system
-6. **Status Synchronization**: User active status should reflect employee status
-
-#### Data Integrity Constraints
-
-```sql
--- Ensure employee emails are unique
-ALTER TABLE employees ADD CONSTRAINT unique_employee_email UNIQUE (email);
-
--- Ensure user-employee relationship integrity
-ALTER TABLE users ADD CONSTRAINT fk_user_employee
-FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL;
-
--- Ensure department consistency (trigger or application logic)
--- User department should match employee department when employee_id is set
-```
-
-### Role-Based Access Control (RBAC) Structure
-
-#### Proposed Role Hierarchy
-
-**Super Admin**
-- Full system access
-- Can manage all users, roles, permissions
-- Can override any restriction
-
-**Admin**
-- Manage users and roles
-- Create user accounts from employees
-- Assign roles to users
-- View all employee data
-- Manage departments
-
-**HR Manager**
-- Create and manage employee records
-- View employee information
-- Manage departments (limited)
-- Cannot create user accounts
-
-**HR Staff**
-- View employee records
-- Create new employee records
-- Limited editing capabilities
-
-**Department Manager**
-- View employees in their department
-- Limited employee management
-- Access to department-specific reports
-
-**Employee**
-- View own profile
-- Limited self-service capabilities
-
-#### Permission Structure
-
-**User Management Permissions**
-- `users.create` - Create user accounts
-- `users.read` - View user information
-- `users.update` - Update user information
-- `users.delete` - Delete user accounts
-- `users.assign_roles` - Assign roles to users
-
-**Employee Management Permissions**
-- `employees.create` - Create employee records
-- `employees.read` - View employee information
-- `employees.update` - Update employee information
-- `employees.delete` - Delete employee records
-
-**Department Management Permissions**
-- `departments.create` - Create departments
-- `departments.read` - View department information
-- `departments.update` - Update department information
-- `departments.delete` - Delete departments
-
-**Role Management Permissions**
-- `roles.create` - Create roles
-- `roles.read` - View roles
-- `roles.update` - Update roles
-- `roles.delete` - Delete roles
-- `roles.assign_permissions` - Assign permissions to roles
-
-## Workflow Diagrams
-
-### Employee to User Creation Process
-
+### Frontend Module Hierarchy
 ```mermaid
-sequenceDiagram
-    participant HR
-    participant Admin
-    participant System
-
-    HR->>System: Create Employee Record
-    System->>HR: Employee Created Successfully
-
-    Admin->>System: Request Available Employees
-    System->>Admin: Return Employees Without User Accounts
-
-    Admin->>System: Select Employee for User Creation
-    System->>Admin: Pre-populate User Form with Employee Data
-
-    Admin->>System: Submit User Creation (password, roles)
-    System->>System: Validate Data & Create User Account
-    System->>Admin: User Created Successfully
-
-    System->>System: Link User to Employee Record
-    System->>System: Assign Roles to User
-    System->>System: Send Welcome Email (optional)
+graph TD
+    A[frontend/src/modules/] --> B[admin]
+    A --> C[hr]
+    A --> D[projects]
+    B --> E[dashboard]
+    B --> F[departmentManagement]
+    B --> G[employeeManagement]
+    B --> H[roleManagement]
+    B --> I[shared]
+    B --> J[userManagement]
+    F --> K[components]
+    F --> L[composables]
+    F --> M[types]
+    C --> N[composables]
+    C --> O[types]
+    C --> P[views]
+    D --> Q[components]
+    D --> R[composables]
+    D --> S[types]
+    D --> T[views]
 ```
 
-### User Authentication Flow
+## Relationships Between Modules
 
+### Data Flow Relationships
 ```mermaid
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant API
-    participant Database
-
-    User->>Frontend: Login Attempt
-    Frontend->>API: POST /login (email, password)
-    API->>Database: Verify Credentials
-    Database->>API: User Data + Roles/Permissions
-
-    API->>API: Generate JWT Token
-    API->>Frontend: Return Token + User Info
-
-    Frontend->>Frontend: Store Token
-    Frontend->>User: Redirect to Dashboard
-
-    User->>Frontend: Access Protected Route
-    Frontend->>API: Request with Authorization Header
-    API->>API: Validate Token & Check Permissions
-    API->>Frontend: Return Authorized Data
+graph TD
+    A[Admin Module] --> B[Users & Roles]
+    A --> C[Departments]
+    B --> D[HR Module]
+    C --> D
+    D --> E[Employees]
+    E --> F[Projects Module]
+    F --> G[Clients]
+    F --> H[Enquiries]
+    H --> I[Projects]
+    I --> J[Project Phases]
 ```
 
-## API Endpoint Design
+### Key Relationships:
+1. **Admin → HR:** Admin manages departments and user roles that HR uses for employee assignments
+2. **HR → Projects:** Employees from HR are assigned to projects
+3. **Projects Flow:** Clients → Enquiries → Projects → Phases
+4. **Shared Resources:** Common types and API utilities shared across modules
 
-### Employee Management Endpoints
+## Naming Conventions
 
-```http
-GET    /api/hr/employees          # List employees (HR/Admin)
-POST   /api/hr/employees          # Create employee (HR)
-GET    /api/hr/employees/{id}     # Get employee details
-PUT    /api/hr/employees/{id}     # Update employee (HR)
-DELETE /api/hr/employees/{id}     # Delete employee (HR)
+### File Naming
+- **Views:** PascalCase with descriptive names (e.g., `AdminDashboard.vue`, `EmployeeManagement.vue`)
+- **Components:** PascalCase (e.g., `DepartmentForm.vue`, `QuickActions.vue`)
+- **Composables:** camelCase with `use` prefix (e.g., `useEmployees.ts`, `useProjects.ts`)
+- **Types:** camelCase matching the entity (e.g., `employee.ts`, `project.ts`)
+- **Backend Controllers:** PascalCase with `Controller` suffix (e.g., `DepartmentController.php`)
+- **Backend Models:** PascalCase (e.g., `Department.php`)
 
-GET    /api/admin/employees/available # Get employees without users (Admin)
-```
+### Directory Naming
+- **Modules:** lowercase (e.g., `admin`, `hr`, `projects`)
+- **Subdirectories:** camelCase for feature-specific folders (e.g., `departmentManagement`, `userManagement`)
+- **Special folders:** lowercase (e.g., `components`, `composables`, `types`, `views`)
 
-### User Management Endpoints
+## Organization Principles
 
-```http
-GET    /api/admin/users           # List users (Admin)
-POST   /api/admin/users           # Create user from employee (Admin)
-GET    /api/admin/users/{id}      # Get user details (Admin)
-PUT    /api/admin/users/{id}      # Update user (Admin)
-DELETE /api/admin/users/{id}      # Delete user (Admin)
+### Separation of Concerns
+- **Views:** Presentation logic and user interactions
+- **Components:** Reusable UI elements
+- **Composables:** Business logic and data management
+- **Types:** Data structure definitions
 
-POST   /api/admin/users/{id}/roles # Assign roles to user (Admin)
-DELETE /api/admin/users/{id}/roles/{roleId} # Remove role from user (Admin)
-```
+### Feature-Based Organization
+- Each module encapsulates related functionality
+- Clear boundaries between admin, HR, and projects domains
+- Shared utilities in dedicated folders
 
-### Authentication Endpoints
+### Consistency Across Modules
+- Similar structure patterns across all modules
+- Standardized naming conventions
+- Consistent API response formats
+- Reusable composables and components
 
-```http
-POST   /api/login                 # User login
-POST   /api/logout                # User logout
-POST   /api/register              # Initial admin registration
-GET    /api/user                  # Get current user info
-POST   /api/forgot-password       # Password reset request
-POST   /api/reset-password        # Password reset
-```
+### Scalability Considerations
+- Modular structure allows easy addition of new features
+- TypeScript provides type safety and better IDE support
+- Composition API enables reusable logic
+- Clear separation facilitates testing and maintenance
 
-## Frontend User Experience Flow
-
-### HR Employee Creation Flow
-
-1. **Dashboard Access**: HR logs in and accesses HR dashboard
-2. **Employee Management**: Navigate to Employee Management section
-3. **Create Employee**: Click "Add Employee" button
-4. **Form Completion**: Fill employee details (name, email, department, position, etc.)
-5. **Validation**: System validates data and checks for duplicates
-6. **Confirmation**: Employee record created successfully
-7. **Availability**: Employee now available for user account creation by Admin
-
-### Admin User Creation Flow
-
-1. **Dashboard Access**: Admin logs in and accesses Admin dashboard
-2. **User Management**: Navigate to User Management section
-3. **Create User**: Click "Add User" button
-4. **Employee Selection**: Select from available employees (dropdown/search)
-5. **Auto-population**: Form auto-fills with employee data
-6. **Password Setup**: Enter password and confirmation
-7. **Role Assignment**: Select appropriate roles
-8. **Department Confirmation**: Confirm department (auto-populated)
-9. **Validation**: System validates all data
-10. **Creation**: User account created and linked to employee
-11. **Notification**: Success message and user credentials summary
-
-## Security Measures
-
-### Authentication & Authorization
-
-1. **JWT Tokens**: Stateless authentication with refresh tokens
-2. **Password Policies**: Minimum 8 characters, complexity requirements
-3. **Session Management**: Automatic logout on inactivity
-4. **Rate Limiting**: Prevent brute force attacks
-5. **CSRF Protection**: Token-based CSRF prevention
-
-### Data Protection
-
-1. **Password Hashing**: Bcrypt with appropriate cost factor
-2. **Sensitive Data Encryption**: Encrypt sensitive employee data
-3. **Audit Logging**: Log all user creation, role assignments, and access
-4. **Data Validation**: Comprehensive input validation and sanitization
-5. **SQL Injection Prevention**: Parameterized queries and ORM usage
-
-### Access Control
-
-1. **Role-Based Permissions**: Granular permission system
-2. **Middleware Protection**: Route-level access control
-3. **Data Filtering**: Users only see authorized data
-4. **Principle of Least Privilege**: Minimum required permissions
-
-## Implementation Plan
-
-### Phase 1: Core Infrastructure
-- [ ] Database schema finalization
-- [ ] Basic authentication system
-- [ ] Role and permission setup
-- [ ] Basic CRUD operations for employees and users
-
-### Phase 2: HR Module Enhancement
-- [ ] Employee management interface
-- [ ] Department management
-- [ ] Employee status tracking
-- [ ] Basic reporting
-
-### Phase 3: Admin Module Enhancement
-- [ ] User creation from employees
-- [ ] Role assignment interface
-- [ ] User management dashboard
-- [ ] Bulk operations
-
-### Phase 4: Integration & Security
-- [ ] API integration between HR and Admin modules
-- [ ] Security hardening
-- [ ] Audit logging
-- [ ] Performance optimization
-
-### Phase 5: Advanced Features
-- [ ] Email notifications
-- [ ] Password reset functionality
-- [ ] User onboarding workflow
-- [ ] Advanced reporting and analytics
-
-## Conclusion
-
-This architecture provides a robust foundation for employee-user management with clear separation of concerns between HR and Admin roles. The system ensures data integrity, security, and scalability while maintaining a user-friendly experience for all stakeholders.
-
-The modular design allows for easy maintenance and future enhancements, with comprehensive audit trails and security measures to protect sensitive employee and user data.
+This modular architecture ensures maintainability, scalability, and clear separation of business domains while maintaining consistency across the application.
