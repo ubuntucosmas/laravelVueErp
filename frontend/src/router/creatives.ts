@@ -1,6 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
 import MainLayout from '../layouts/MainLayout.vue'
-import CreativesDashboard from '../modules/creatives/views/CreativesDashboard.vue'
 import DesignDashboard from '../modules/creatives/views/DesignDashboard.vue'
 
 export const creativesRoutes: RouteRecordRaw[] = [
@@ -15,9 +14,7 @@ export const creativesRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: '',
-        name: 'creatives-dashboard',
-        component: CreativesDashboard,
-        meta: { title: 'Creatives & Design Dashboard' }
+        redirect: '/creatives/design'
       },
       {
         path: 'design',

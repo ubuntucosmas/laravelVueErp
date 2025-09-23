@@ -47,7 +47,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useAuth } from '@/composables/useAuth'
 import { useRouteGuard } from '@/composables/useRouteGuard'
 
 interface NavigationItem {
@@ -65,8 +64,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:collapsed'])
 
-const { permissions, user } = useAuth()
-const { getAllowedRoutes } = useRouteGuard()
+const { getAllowedRoutes, getPanelTitle, getPanelSubtitle } = useRouteGuard()
 
 const navigationItems = computed((): NavigationItem[] => {
   const routes = getAllowedRoutes()
@@ -78,90 +76,10 @@ const navigationItems = computed((): NavigationItem[] => {
 })
 
 const getSidebarTitle = (): string => {
-  if (!user.value) return 'ERP System'
-
-  const userRoles = user.value.roles || []
-
-  if (userRoles.includes('Super Admin')) {
-    return 'Super Admin Panel'
-  }
-
-  if (userRoles.includes('Admin')) {
-    return 'Admin Panel'
-  }
-
-  if (userRoles.includes('HR')) {
-    return 'HR Panel'
-  }
-
-  // Check for projects department or roles
-  const projectsRoles = ['Project Officer', 'Project Lead', 'Project Manager']
-  const hasProjectsAccess = userRoles.includes('Super Admin') ||
-    (permissions.value?.user_department && permissions.value.user_department.name.toLowerCase() === 'projects') ||
-    projectsRoles.some(role => userRoles.includes(role))
-
-  if (hasProjectsAccess) {
-    return 'Projects Panel'
-  }
-
-  // Check for client service department or roles
-  const clientServiceRoles = ['Client Service']
-  const hasClientServiceAccess = userRoles.includes('Super Admin') ||
-    (permissions.value?.user_department && permissions.value.user_department.name.toLowerCase() === 'client service') ||
-    clientServiceRoles.some(role => userRoles.includes(role))
-
-  if (hasClientServiceAccess) {
-    return 'Client Service Panel'
-  }
-
-  if (permissions.value?.user_department) {
-    return permissions.value.user_department.name
-  }
-
-  return 'ERP System'
+  return getPanelTitle()
 }
 
 const getSidebarSubtitle = (): string => {
-  if (!user.value) return 'Management Dashboard'
-
-  const userRoles = user.value.roles || []
-
-  if (userRoles.includes('Super Admin')) {
-    return 'Full System Access'
-  }
-
-  if (userRoles.includes('Admin')) {
-    return 'System Administration'
-  }
-
-  if (userRoles.includes('HR')) {
-    return 'Human Resources'
-  }
-
-  // Check for projects department or roles
-  const projectsRoles = ['Project Officer', 'Project Lead', 'Project Manager']
-  const hasProjectsAccess = userRoles.includes('Super Admin') ||
-    (permissions.value?.user_department && permissions.value.user_department.name.toLowerCase() === 'projects') ||
-    projectsRoles.some(role => userRoles.includes(role))
-
-  if (hasProjectsAccess) {
-    return 'Project Management'
-  }
-
-  // Check for client service department or roles
-  const clientServiceRoles = ['Client Service']
-  const hasClientServiceAccess = userRoles.includes('Super Admin') ||
-    (permissions.value?.user_department && permissions.value.user_department.name.toLowerCase() === 'client service') ||
-    clientServiceRoles.some(role => userRoles.includes(role))
-
-  if (hasClientServiceAccess) {
-    return 'Client Acquisition & Marketing'
-  }
-
-  if (permissions.value?.user_department) {
-    return 'Department Dashboard'
-  }
-
-  return 'Management Dashboard'
+  return getPanelSubtitle()
 }
 </script>

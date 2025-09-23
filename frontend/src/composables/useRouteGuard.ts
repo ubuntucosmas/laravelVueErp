@@ -168,9 +168,9 @@ export function useRouteGuard() {
       return
     }
 
-    // Creatives/Designers go to Creatives dashboard
+    // Creatives/Designers go to Design dashboard
     if (userRoles.includes('Designer')) {
-      router.push('/creatives')
+      router.push('/creatives/design')
       return
     }
 
@@ -282,6 +282,96 @@ export function useRouteGuard() {
     return routes
   }
 
+  const getPanelTitle = (): string => {
+    if (!user.value) return 'ERP System'
+
+    const userRoles = user.value.roles || []
+
+    // Super Admin
+    if (userRoles.includes('Super Admin')) {
+      return 'Super Admin Panel'
+    }
+
+    // Admin
+    if (userRoles.includes('Admin')) {
+      return 'Admin Panel'
+    }
+
+    // HR
+    if (userRoles.includes('HR')) {
+      return 'HR Panel'
+    }
+
+    // Check feature access in priority order
+    if (canAccessProjects()) {
+      return 'Projects Panel'
+    }
+
+    if (canAccessClientService()) {
+      return 'Client Service Panel'
+    }
+
+    if (canAccessCreatives()) {
+      return 'Creatives Panel'
+    }
+
+    if (canAccessFinance(['Accounts', 'Costing'])) {
+      return 'Finance Panel'
+    }
+
+    // Department fallback
+    if (permissions.value?.user_department) {
+      return permissions.value.user_department.name
+    }
+
+    return 'ERP System'
+  }
+
+  const getPanelSubtitle = (): string => {
+    if (!user.value) return 'Management Dashboard'
+
+    const userRoles = user.value.roles || []
+
+    // Super Admin
+    if (userRoles.includes('Super Admin')) {
+      return 'Full System Access'
+    }
+
+    // Admin
+    if (userRoles.includes('Admin')) {
+      return 'System Administration'
+    }
+
+    // HR
+    if (userRoles.includes('HR')) {
+      return 'Human Resources'
+    }
+
+    // Check feature access in priority order
+    if (canAccessProjects()) {
+      return 'Project Management'
+    }
+
+    if (canAccessClientService()) {
+      return 'Client Acquisition & Marketing'
+    }
+
+    if (canAccessCreatives()) {
+      return 'Creative Design & Production'
+    }
+
+    if (canAccessFinance(['Accounts', 'Costing'])) {
+      return 'Financial Management'
+    }
+
+    // Department fallback
+    if (permissions.value?.user_department) {
+      return 'Department Dashboard'
+    }
+
+    return 'Management Dashboard'
+  }
+
   return {
     canAccessRoute,
     canAccessDepartment,
@@ -290,6 +380,8 @@ export function useRouteGuard() {
     canAccessCreatives,
     canAccessFinance,
     redirectToAppropriateRoute,
-    getAllowedRoutes
+    getAllowedRoutes,
+    getPanelTitle,
+    getPanelSubtitle
   }
 }
