@@ -22,6 +22,12 @@ class DatabaseSeeder extends Seeder
         // Finally seed roles and permissions
         $this->call(RoleAndPermissionSeeder::class);
 
+        // Seed Creatives department and Designer role
+        $this->call([
+            CreativesDepartmentSeeder::class,
+            DesignerRoleSeeder::class,
+        ]);
+
         // Create a default admin user
         $adminUser = \App\Models\User::factory()->create([
             'name' => 'System Administrator',
@@ -31,5 +37,15 @@ class DatabaseSeeder extends Seeder
 
         // Assign Super Admin role
         $adminUser->assignRole('Super Admin');
+
+        // Create department-specific users
+        $this->call([
+            SuperAdminUserSeeder::class,
+            AdminUserSeeder::class,
+            HRUserSeeder::class,
+            ClientServiceUserSeeder::class,
+            DesignerUserSeeder::class,
+            FinanceRolesSeeder::class,
+        ]);
     }
 }

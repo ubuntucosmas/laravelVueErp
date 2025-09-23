@@ -38,7 +38,7 @@
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage employee records, salaries, and organizational details</p>
       </div>
       <button
-        @click="openCreateModal"
+        @click="showCreateModal = true"
         class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-lg font-medium transition-colors"
       >
         Add Employee
@@ -827,12 +827,16 @@ const viewEmployee = (employee: Employee) => {
   showModal.value = true
 }
 
-const openCreateModal = async () => {
-  // Ensure departments are loaded
-  if (availableDepartments.value.length === 0) {
-    await fetchDepartments()
-  }
+const openCreateModal = () => {
+  // Open modal immediately
   showCreateModal.value = true
+
+  // Load departments in background if not loaded
+  if (availableDepartments.value.length === 0) {
+    fetchDepartments().catch(error => {
+      console.error('Failed to load departments:', error)
+    })
+  }
 }
 
 const editEmployee = async (employee: Employee) => {

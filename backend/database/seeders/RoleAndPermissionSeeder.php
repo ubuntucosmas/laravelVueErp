@@ -63,6 +63,12 @@ class RoleAndPermissionSeeder extends Seeder
             'hr.view_employees', 'hr.manage_payroll', 'hr.create_position'
         ]);
 
+        $clientServiceRole = Role::firstOrCreate(['name' => 'Client Service'], ['description' => 'Client acquisition and enquiry management']);
+        $clientServiceRole->givePermissionTo([
+            'user.read', 'department.read',
+            'project.create', 'project.read', 'project.update' // For managing clients and enquiries
+        ]);
+
         $managerRole = Role::firstOrCreate(['name' => 'Manager'], ['description' => 'Department management']);
         $managerRole->givePermissionTo([
             'user.read', 'user.update', 'department.read',

@@ -1,69 +1,8 @@
 import { ref, computed } from 'vue'
 import type { Client, CreateClientData, UpdateClientData } from '../types'
 
-// Dummy data
-const dummyClients: Client[] = [
-  {
-    id: 1,
-    FullName: 'ABC Corporation Ltd',
-    ContactPerson: 'John Doe',
-    Email: 'contact@abc.com',
-    Phone: '+254 700 123 456',
-    AltContact: '+254 700 123 457',
-    Address: '123 Business Avenue, Westlands',
-    City: 'Nairobi',
-    County: 'Nairobi',
-    PostalAddress: 'P.O. Box 12345-00100',
-    CustomerType: 'company',
-    LeadSource: 'Website',
-    PreferredContact: 'email',
-    Industry: 'Technology',
-    registration_date: '2024-01-15',
-    status: 'active',
-    created_at: '2024-01-15T10:00:00Z',
-    updated_at: '2024-01-15T10:00:00Z'
-  },
-  {
-    id: 2,
-    FullName: 'XYZ Events Ltd',
-    ContactPerson: 'Jane Smith',
-    Email: 'info@xyz.com',
-    Phone: '+254 711 987 654',
-    AltContact: '+254 711 987 655',
-    Address: '456 Event Plaza, Kilimani',
-    City: 'Nairobi',
-    County: 'Nairobi',
-    PostalAddress: 'P.O. Box 67890-00200',
-    CustomerType: 'company',
-    LeadSource: 'Referral',
-    PreferredContact: 'phone',
-    Industry: 'Events',
-    registration_date: '2024-02-20',
-    status: 'active',
-    created_at: '2024-02-20T14:30:00Z',
-    updated_at: '2024-02-20T14:30:00Z'
-  },
-  {
-    id: 3,
-    FullName: 'Mike Johnson',
-    ContactPerson: 'Mike Johnson',
-    Email: 'mike.johnson@email.com',
-    Phone: '+254 722 555 789',
-    AltContact: '+254 722 555 790',
-    Address: '789 Residential Road, Koinange',
-    City: 'Kisumu',
-    County: 'Kisumu',
-    PostalAddress: 'P.O. Box 54321-40100',
-    CustomerType: 'individual',
-    LeadSource: 'Social Media',
-    PreferredContact: 'email',
-    Industry: 'Consulting',
-    registration_date: '2024-03-10',
-    status: 'inactive',
-    created_at: '2024-03-10T09:15:00Z',
-    updated_at: '2024-03-10T09:15:00Z'
-  }
-]
+// Import shared dummy data from ClientService module
+import { dummyClients } from '../../clientService/composables/useClients'
 
 const clients = ref<Client[]>([...dummyClients])
 const loading = ref(false)

@@ -1,6 +1,6 @@
 <template>
   <aside :class="[
-    'border-r shadow-sm bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 overflow-hidden',
+    'sticky top-0 border-r shadow-sm bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 overflow-hidden',
     collapsed ? 'w-16' : 'w-64'
   ]" style="transition: width 0.3s ease-in-out;">
     <div :class="[
@@ -104,6 +104,16 @@ const getSidebarTitle = (): string => {
     return 'Projects Panel'
   }
 
+  // Check for client service department or roles
+  const clientServiceRoles = ['Client Service']
+  const hasClientServiceAccess = userRoles.includes('Super Admin') ||
+    (permissions.value?.user_department && permissions.value.user_department.name.toLowerCase() === 'client service') ||
+    clientServiceRoles.some(role => userRoles.includes(role))
+
+  if (hasClientServiceAccess) {
+    return 'Client Service Panel'
+  }
+
   if (permissions.value?.user_department) {
     return permissions.value.user_department.name
   }
@@ -136,6 +146,16 @@ const getSidebarSubtitle = (): string => {
 
   if (hasProjectsAccess) {
     return 'Project Management'
+  }
+
+  // Check for client service department or roles
+  const clientServiceRoles = ['Client Service']
+  const hasClientServiceAccess = userRoles.includes('Super Admin') ||
+    (permissions.value?.user_department && permissions.value.user_department.name.toLowerCase() === 'client service') ||
+    clientServiceRoles.some(role => userRoles.includes(role))
+
+  if (hasClientServiceAccess) {
+    return 'Client Acquisition & Marketing'
   }
 
   if (permissions.value?.user_department) {

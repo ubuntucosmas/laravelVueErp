@@ -131,6 +131,8 @@ class User extends Authenticatable
         $permissions = [
             'can_access_admin' => $this->hasRole(['Super Admin', 'Admin']),
             'can_access_hr' => $this->hasRole(['Super Admin', 'Manager', 'Employee']),
+            'can_access_creatives' => $this->hasRole(['Super Admin', 'Designer']) ||
+                                     ($this->department && strtolower($this->department->name) === 'creatives'),
             'can_manage_users' => $this->can('user.create') || $this->can('user.update'),
             'can_manage_employees' => $this->can('employee.read'),
             'can_manage_departments' => $this->can('department.read'),

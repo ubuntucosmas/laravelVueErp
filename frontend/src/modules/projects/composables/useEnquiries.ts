@@ -1,75 +1,8 @@
 import { ref, computed } from 'vue'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types'
 
-// Dummy data
-const dummyEnquiries: Enquiry[] = [
-  {
-    id: 1,
-    client_id: 1,
-    client: {
-      id: 1,
-      name: 'ABC Corporation',
-      email: 'contact@abc.com'
-    },
-    title: 'Corporate Event Booth Setup',
-    description: 'Need a professional booth setup for our annual corporate event',
-    project_scope: 'Complete booth design, construction, and setup for 200 attendees',
-    priority: 'high',
-    status: 'new',
-    estimated_budget: 50000,
-    created_by: 1,
-    created_by_user: {
-      id: 1,
-      name: 'Project Officer 1'
-    },
-    created_at: '2024-09-01T10:00:00Z',
-    updated_at: '2024-09-01T10:00:00Z'
-  },
-  {
-    id: 2,
-    client_id: 2,
-    client: {
-      id: 2,
-      name: 'XYZ Events',
-      email: 'info@xyz.com'
-    },
-    title: 'Wedding Exhibition Display',
-    description: 'Custom display for wedding exhibition',
-    project_scope: 'Elegant display booth with lighting and branding',
-    priority: 'medium',
-    status: 'site_survey_completed',
-    estimated_budget: 25000,
-    created_by: 2,
-    created_by_user: {
-      id: 2,
-      name: 'Project Officer 2'
-    },
-    created_at: '2024-09-05T14:30:00Z',
-    updated_at: '2024-09-10T16:45:00Z'
-  },
-  {
-    id: 3,
-    client_id: 1,
-    client: {
-      id: 1,
-      name: 'ABC Corporation',
-      email: 'contact@abc.com'
-    },
-    title: 'Product Launch Event',
-    description: 'Product launch event setup',
-    project_scope: 'Stage setup, lighting, sound system, and branding',
-    priority: 'urgent',
-    status: 'converted_to_project',
-    estimated_budget: 75000,
-    created_by: 1,
-    created_by_user: {
-      id: 1,
-      name: 'Project Officer 1'
-    },
-    created_at: '2024-08-20T09:15:00Z',
-    updated_at: '2024-09-15T11:20:00Z'
-  }
-]
+// Import shared dummy data from ClientService module
+import { dummyEnquiries } from '../../clientService/composables/useEnquiries'
 
 const enquiries = ref<Enquiry[]>([...dummyEnquiries])
 const loading = ref(false)
@@ -138,7 +71,7 @@ export function useEnquiries() {
       const newEnquiry: Enquiry = {
         id: Math.max(...enquiries.value.map(e => e.id)) + 1,
         ...data,
-        status: 'new',
+        status: 'enquiry_logged',
         created_by: 1, // Current user
         created_by_user: {
           id: 1,
@@ -227,12 +160,12 @@ export function useEnquiries() {
     // - Has materials list created
     // - Has quotation approved
 
-    return enquiry.status === 'approved'
+    return enquiry.status === 'quote_approved'
   }
 
-  const newEnquiries = computed(() => enquiries.value.filter(enquiry => enquiry.status === 'new'))
+  const newEnquiries = computed(() => enquiries.value.filter(enquiry => enquiry.status === 'enquiry_logged'))
   const inProgressEnquiries = computed(() => enquiries.value.filter(enquiry =>
-    ['in_progress', 'site_survey_completed', 'design_completed', 'materials_created', 'quoted'].includes(enquiry.status)
+    ['site_survey_completed', 'design_completed', 'design_approved', 'materials_specified', 'budget_created', 'quote_prepared'].includes(enquiry.status)
   ))
   const convertedEnquiries = computed(() => enquiries.value.filter(enquiry => enquiry.status === 'converted_to_project'))
   const totalEnquiries = computed(() => enquiries.value.length)

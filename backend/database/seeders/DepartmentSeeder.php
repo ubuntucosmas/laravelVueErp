@@ -60,6 +60,12 @@ class DepartmentSeeder extends Seeder
                 'description' => 'Inventory management and stock control',
                 'budget' => 120000.00,
                 'location' => 'Warehouse'
+            ],
+            [
+                'name' => 'Client Service',
+                'description' => 'Client acquisition, enquiry management, and marketing',
+                'budget' => 180000.00,
+                'location' => 'Main Office'
             ]
         ];
 

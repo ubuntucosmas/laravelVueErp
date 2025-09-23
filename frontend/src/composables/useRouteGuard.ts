@@ -70,6 +70,78 @@ export function useRouteGuard() {
     return projectsRoles.some(role => userRoles.includes(role))
   }
 
+  const canAccessClientService = (): boolean => {
+    if (!isLoggedIn.value || !user.value) {
+      return false
+    }
+
+    const userRoles = user.value.roles || []
+
+    // Super Admin can access everything
+    if (userRoles.includes('Super Admin')) {
+      return true
+    }
+
+    // Check if user has Client Service role
+    if (userRoles.includes('Client Service')) {
+      return true
+    }
+
+    // Check if user belongs to client service department
+    if (permissions.value?.user_department) {
+      const deptName = permissions.value.user_department.name.toLowerCase()
+      if (deptName === 'client service' || deptName === 'client-service') {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  const canAccessCreatives = (): boolean => {
+    if (!isLoggedIn.value || !user.value) {
+      return false
+    }
+
+    const userRoles = user.value.roles || []
+
+    // Super Admin can access everything
+    if (userRoles.includes('Super Admin')) {
+      return true
+    }
+
+    // Check if user has Designer role
+    if (userRoles.includes('Designer')) {
+      return true
+    }
+
+    // Check if user belongs to Creatives department
+    if (permissions.value?.user_department) {
+      const deptName = permissions.value.user_department.name.toLowerCase()
+      if (deptName === 'creatives' || deptName === 'creative' || deptName === 'design') {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  const canAccessFinance = (requiredRoles: string[]): boolean => {
+    if (!isLoggedIn.value || !user.value) {
+      return false
+    }
+
+    const userRoles = user.value.roles || []
+
+    // Super Admin can access everything
+    if (userRoles.includes('Super Admin')) {
+      return true
+    }
+
+    // Check if user has any of the required roles
+    return requiredRoles.some(role => userRoles.includes(role))
+  }
+
   const redirectToAppropriateRoute = () => {
     if (!isLoggedIn.value || !user.value) {
       router.push('/login')
@@ -93,6 +165,12 @@ export function useRouteGuard() {
     // HR goes to HR dashboard
     if (userRoles.includes('HR')) {
       router.push('/hr')
+      return
+    }
+
+    // Creatives/Designers go to Creatives dashboard
+    if (userRoles.includes('Designer')) {
+      router.push('/creatives')
       return
     }
 
@@ -159,7 +237,45 @@ export function useRouteGuard() {
         { name: 'projects-dashboard', path: '/projects', label: 'Projects Dashboard', icon: '📊' },
         { name: 'projects-clients', path: '/projects/clients', label: 'Client Management', icon: '👥' },
         { name: 'projects-enquiries', path: '/projects/enquiries', label: 'Enquiries', icon: '📝' },
-        { name: 'projects-list', path: '/projects/projects', label: 'Approved Projects', icon: '✅' }
+        { name: 'projects-list', path: '/projects/projects', label: 'Approved Projects', icon: '✅' },
+        { name: 'projects-close-out-report', path: '/projects/close-out-report', label: 'Close-Out Report', icon: '📋' }
+      )
+    }
+
+    // Add client service routes for authorized users
+    if (canAccessClientService()) {
+      routes.push(
+        { name: 'client-service-dashboard', path: '/client-service', label: 'Client Service Dashboard', icon: '📊' },
+        { name: 'client-service-clients', path: '/client-service/clients', label: 'Client Management', icon: '👥' },
+        { name: 'client-service-enquiries', path: '/client-service/enquiries', label: 'Enquiry Management', icon: '📝' }
+      )
+    }
+
+    // Add creatives routes for authorized users
+    if (canAccessCreatives()) {
+      routes.push(
+        { name: 'design-dashboard', path: '/creatives/design', label: 'Design Department', icon: '📐' },
+        { name: 'creatives-enquiries', path: '/creatives/enquiries', label: 'Enquiries', icon: '📝' },
+        { name: 'creatives-element-templates', path: '/creatives/element-templates', label: 'Element Templates', icon: '📋' },
+
+        // TODO: Add individual management routes when components are created
+        // { name: 'creatives-designs', path: '/creatives/designs', label: 'Designs', icon: '📐' },
+        // { name: 'creatives-mockups', path: '/creatives/mockups', label: 'Mockups', icon: '🏗️' },
+        // { name: 'creatives-renders', path: '/creatives/renders', label: 'Renders', icon: '🎬' },
+        // { name: 'creatives-materials', path: '/creatives/materials', label: 'Materials', icon: '📦' }
+      )
+    }
+
+    // Add finance routes for authorized users
+    if (canAccessFinance(['Accounts', 'Costing'])) {
+      routes.push(
+        { name: 'finance-dashboard', path: '/finance', label: 'Finance Dashboard', icon: '📊' },
+        { name: 'finance-budgeting', path: '/finance/budgeting', label: 'Budget Management', icon: '💰' },
+        { name: 'finance-costing', path: '/finance/costing', label: 'Cost Analysis', icon: '🧮' },
+        { name: 'finance-invoicing', path: '/finance/invoicing', label: 'Invoice Management', icon: '📄' },
+        { name: 'finance-reporting', path: '/finance/reporting', label: 'Financial Reports', icon: '📈' },
+        { name: 'finance-enquiries', path: '/finance/enquiries', label: 'Project Enquiries', icon: '📋' },
+        { name: 'finance-analytics', path: '/finance/analytics', label: 'Financial Analytics', icon: '📉' }
       )
     }
 
@@ -170,6 +286,9 @@ export function useRouteGuard() {
     canAccessRoute,
     canAccessDepartment,
     canAccessProjects,
+    canAccessClientService,
+    canAccessCreatives,
+    canAccessFinance,
     redirectToAppropriateRoute,
     getAllowedRoutes
   }

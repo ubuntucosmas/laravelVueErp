@@ -6,6 +6,9 @@ import { mainRoutes } from './main'
 import { adminRoutes } from './admin'
 import { hrRoutes } from './hr'
 import { projectsRoutes } from './projects'
+import { clientServiceRoutes } from './clientService'
+import { creativesRoutes } from './creatives'
+import financeRoutes from './finance'
 
 // Combine all routes
 const routes: RouteRecordRaw[] = [
@@ -13,6 +16,9 @@ const routes: RouteRecordRaw[] = [
   ...adminRoutes,
   ...hrRoutes,
   ...projectsRoutes,
+  ...clientServiceRoutes,
+  ...creativesRoutes,
+  ...financeRoutes,
 ]
 
 const router = createRouter({
@@ -64,6 +70,42 @@ router.beforeEach(async (to, from, next) => {
 
     if (!canAccessProjects()) {
       console.log('Access denied to projects - redirecting to dashboard')
+      next('/dashboard')
+      return
+    }
+  }
+
+  // Check client service access
+  if (to.meta.requiresClientServiceAccess) {
+    const { useRouteGuard } = await import('@/composables/useRouteGuard')
+    const { canAccessClientService } = useRouteGuard()
+
+    if (!canAccessClientService()) {
+      console.log('Access denied to client service - redirecting to dashboard')
+      next('/dashboard')
+      return
+    }
+  }
+
+  // Check creatives access
+  if (to.meta.requiresCreativesAccess) {
+    const { useRouteGuard } = await import('@/composables/useRouteGuard')
+    const { canAccessCreatives } = useRouteGuard()
+
+    if (!canAccessCreatives()) {
+      console.log('Access denied to creatives - redirecting to dashboard')
+      next('/dashboard')
+      return
+    }
+  }
+
+  // Check finance access
+  if (to.path.startsWith('/finance') && to.path !== '/finance') {
+    const { useRouteGuard } = await import('@/composables/useRouteGuard')
+    const { canAccessFinance } = useRouteGuard()
+
+    if (!canAccessFinance(['Accounts', 'Costing'])) {
+      console.log('Access denied to finance - redirecting to dashboard')
       next('/dashboard')
       return
     }

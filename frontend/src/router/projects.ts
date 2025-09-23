@@ -49,14 +49,21 @@ export const projectsRoutes: RouteRecordRaw[] = [
         }
       },
 
-      // Redirect removed routes to enquiries
       {
         path: 'site-surveys',
-        redirect: '/projects/enquiries'
+        name: 'projects-site-surveys',
+        component: () => import('../modules/projects/views/SiteSurveysManagement.vue'),
+        meta: { title: 'Site Surveys Management' }
       },
       {
         path: 'materials',
         redirect: '/projects/enquiries'
+      },
+      {
+        path: 'close-out-report/:projectId?',
+        name: 'projects-close-out-report',
+        component: () => import('../modules/projects/views/ProjectCloseOutReport.vue'),
+        meta: { title: 'Project Close-Out Report' }
       }
     ],
   },

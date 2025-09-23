@@ -183,6 +183,13 @@
                   View
                 </button>
                 <button
+                  v-if="canAccessTasks(enquiry)"
+                  @click="navigateToDepartmentTasks(enquiry)"
+                  class="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300 mr-3"
+                >
+                  Tasks
+                </button>
+                <button
                   v-if="canConvertToProject(enquiry)"
                   @click="convertToProject(enquiry.id)"
                   class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 mr-3"
@@ -319,11 +326,13 @@ import { useRouter } from 'vue-router'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types'
 import { useEnquiries } from '../composables/useEnquiries'
 import { useClients } from '../composables/useClients'
+import { useDepartmentWorkflow } from '../composables/useDepartmentWorkflow'
 
 const router = useRouter()
 
 const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry, convertToProject, canConvertToProject, newEnquiries, inProgressEnquiries, convertedEnquiries } = useEnquiries()
 const { clients, fetchClients } = useClients()
+const { navigateToDepartmentWorkflow, getAvailablePhases, getNextAvailablePhase } = useDepartmentWorkflow()
 
 const filters = ref({ search: '', priority: '', client_id: '' })
 const activeTab = ref('all')
@@ -414,6 +423,56 @@ const editEnquiry = (enquiry: Enquiry) => {
 const viewEnquiryDetails = (enquiry: Enquiry) => {
   // Navigate to the detailed workflow view
   router.push(`/projects/enquiries/${enquiry.id}`)
+}
+
+const canAccessTasks = (enquiry: Enquiry) => {
+  // Check if user has permission to access tasks for this enquiry
+  // For now, allow access if enquiry has a department assigned
+  return enquiry.department_id || enquiry.assigned_department
+}
+
+const navigateToDepartmentTasks = (enquiry: Enquiry) => {
+  // Use the department workflow composable for intelligent routing
+  const department = enquiry.department?.name || enquiry.assigned_department
+
+  if (department) {
+    // Try to navigate using the department workflow system
+    const success = navigateToDepartmentWorkflow(enquiry, department.toLowerCase())
+
+    if (success) {
+      return
+    }
+  }
+
+  // Fallback to manual routing if department workflow fails
+  const departmentLower = department?.toLowerCase() || ''
+
+  if (departmentLower.includes('creative')) {
+    // Route to Design Concept phase for creatives
+    router.push(`/projects/enquiries/${enquiry.id}?phase=design_concept&department=creatives`)
+  } else if (departmentLower.includes('design')) {
+    // Route to Material Specification phase for design
+    router.push(`/projects/enquiries/${enquiry.id}?phase=material_specification&department=design`)
+  } else if (departmentLower.includes('survey') || departmentLower.includes('site')) {
+    // Route to Site Survey phase
+    router.push(`/projects/enquiries/${enquiry.id}?phase=survey&department=survey`)
+  } else if (departmentLower.includes('procurement')) {
+    // Route to Procurement phase
+    router.push(`/projects/enquiries/${enquiry.id}?phase=procurement&department=procurement`)
+  } else if (departmentLower.includes('project')) {
+    // Route to Project Management phase
+    router.push(`/projects/enquiries/${enquiry.id}?phase=project_management&department=projects`)
+  } else {
+    // Default to general workflow view with intelligent phase detection
+    const availablePhases = getAvailablePhases(enquiry)
+    const nextPhase = getNextAvailablePhase(enquiry)
+
+    if (nextPhase) {
+      router.push(`/projects/enquiries/${enquiry.id}?phase=${nextPhase.phase}&department=${nextPhase.department}`)
+    } else {
+      router.push(`/projects/enquiries/${enquiry.id}`)
+    }
+  }
 }
 
 const updateStatus = async (enquiry: Enquiry, status: Enquiry['status']) => {
