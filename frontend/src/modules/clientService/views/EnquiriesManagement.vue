@@ -61,7 +61,7 @@
           <option value="">All Status</option>
           <option value="client_registered">Client Registered</option>
           <option value="enquiry_logged">Enquiry Logged</option>
-          <option value="site_survey_completed">Site Survey Done</option>
+          <option value="site_survey_completed">Site Survey Completed</option>
           <option value="design_completed">Design Completed</option>
           <option value="design_approved">Design Approved</option>
           <option value="materials_specified">Materials Specified</option>
@@ -70,16 +70,6 @@
           <option value="quote_approved">Quote Approved</option>
           <option value="converted_to_project">Converted to Project</option>
           <option value="cancelled">Cancelled</option>
-        </select>
-        <select
-          v-model="filters.priority"
-          class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        >
-          <option value="">All Priority</option>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-          <option value="urgent">Urgent</option>
         </select>
         <button
           @click="applyFilters"
@@ -112,7 +102,7 @@
                 Client
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Priority
+                Contact Person
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Status
@@ -124,26 +114,26 @@
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             <tr v-for="enquiry in enquiries" :key="enquiry.id">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ enquiry.title }}</div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">{{ enquiry.description.substring(0, 50) }}...</div>
-                <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  {{ new Date(enquiry.created_at).toLocaleDateString() }}
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                {{ enquiry.client?.name || 'N/A' }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="getPriorityColor(enquiry.priority)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                  {{ enquiry.priority }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="getStatusColor(enquiry.status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                  {{ getStatusLabel(enquiry.status) }}
-                </span>
-              </td>
+               <td class="px-6 py-4 whitespace-nowrap">
+                 <div class="text-sm font-medium text-gray-900 dark:text-white">{{ enquiry.project_name }}</div>
+                 <div class="text-sm text-gray-500 dark:text-gray-400">{{ (enquiry.project_deliverables || '').substring(0, 50) }}{{ (enquiry.project_deliverables || '').length > 50 ? '...' : '' }}</div>
+                 <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                   {{ new Date(enquiry.created_at).toLocaleDateString() }}
+                 </div>
+               </td>
+               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                 {{ enquiry.client_name }}
+               </td>
+               <td class="px-6 py-4 whitespace-nowrap">
+                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                   {{ enquiry.contact_person }}
+                 </span>
+               </td>
+               <td class="px-6 py-4 whitespace-nowrap">
+                 <span :class="getStatusColor(enquiry.status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                   {{ getStatusLabel(enquiry.status) }}
+                 </span>
+               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button
                   @click="editEnquiry(enquiry)"
@@ -179,75 +169,137 @@
         </h2>
 
         <form @submit.prevent="handleFormSubmit" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client *</label>
-            <select
-              v-model="enquiryFormData.client_id"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="">Select a client</option>
-              <option v-for="client in clients" :key="client.id" :value="client.id">
-                {{ client.FullName }}
-              </option>
-            </select>
-          </div>
+           <div class="grid grid-cols-2 gap-4">
+             <div>
+               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date Received *</label>
+               <input
+                 v-model="enquiryFormData.date_received"
+                 type="date"
+                 required
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+               />
+             </div>
+             <div>
+               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Expected Delivery Date</label>
+               <input
+                 v-model="enquiryFormData.expected_delivery_date"
+                 type="date"
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+               />
+             </div>
+           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Title *</label>
-            <input
-              v-model="enquiryFormData.title"
-              type="text"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-          </div>
+           <div>
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client Name *</label>
+             <input
+               v-model="enquiryFormData.client_name"
+               type="text"
+               required
+               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+             />
+           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description *</label>
-            <textarea
-              v-model="enquiryFormData.description"
-              required
-              rows="3"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            ></textarea>
-          </div>
+           <div>
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Name *</label>
+             <input
+               v-model="enquiryFormData.project_name"
+               type="text"
+               required
+               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+             />
+           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Scope *</label>
-            <textarea
-              v-model="enquiryFormData.project_scope"
-              required
-              rows="3"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            ></textarea>
-          </div>
+           <div>
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Deliverables *</label>
+             <textarea
+               v-model="enquiryFormData.project_deliverables"
+               required
+               rows="3"
+               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+             ></textarea>
+           </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority *</label>
-              <select
-                v-model="enquiryFormData.priority"
-                required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estimated Budget</label>
-              <input
-                v-model.number="enquiryFormData.estimated_budget"
-                type="number"
-                min="0"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-          </div>
-        </form>
+           <div class="grid grid-cols-2 gap-4">
+             <div>
+               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person *</label>
+               <input
+                 v-model="enquiryFormData.contact_person"
+                 type="text"
+                 required
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+               />
+             </div>
+             <div>
+               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status *</label>
+               <select
+                 v-model="enquiryFormData.status"
+                 required
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+               >
+                 <option value="client_registered">Client Registered</option>
+                 <option value="enquiry_logged">Enquiry Logged</option>
+                 <option value="site_survey_completed">Site Survey Completed</option>
+                 <option value="design_completed">Design Completed</option>
+                 <option value="design_approved">Design Approved</option>
+                 <option value="materials_specified">Materials Specified</option>
+                 <option value="budget_created">Budget Created</option>
+                 <option value="quote_prepared">Quote Prepared</option>
+                 <option value="quote_approved">Quote Approved</option>
+                 <option value="converted_to_project">Converted to Project</option>
+                 <option value="cancelled">Cancelled</option>
+               </select>
+             </div>
+           </div>
+
+           <div class="grid grid-cols-2 gap-4">
+             <div>
+               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assigned PO</label>
+               <input
+                 v-model="enquiryFormData.assigned_po"
+                 type="text"
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+               />
+             </div>
+             <div>
+               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Venue</label>
+               <input
+                 v-model="enquiryFormData.venue"
+                 type="text"
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+               />
+             </div>
+           </div>
+
+           <div>
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up Notes</label>
+             <textarea
+               v-model="enquiryFormData.follow_up_notes"
+               rows="2"
+               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+             ></textarea>
+           </div>
+
+           <div class="grid grid-cols-2 gap-4">
+             <div>
+               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                 <input
+                   v-model="enquiryFormData.site_survey_skipped"
+                   type="checkbox"
+                   class="mr-2"
+                 />
+                 Skip Site Survey
+               </label>
+             </div>
+             <div v-if="enquiryFormData.site_survey_skipped">
+               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Skip Reason</label>
+               <input
+                 v-model="enquiryFormData.site_survey_skip_reason"
+                 type="text"
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+               />
+             </div>
+           </div>
+         </form>
 
         <div v-if="formError" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
           {{ formError }}
@@ -283,23 +335,27 @@
 import { ref, onMounted } from 'vue'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types/enquiry'
 import { useEnquiries } from '../composables/useEnquiries'
-import { useClients } from '../composables/useClients'
 
 const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry, convertToProject, canConvertToProject } = useEnquiries()
-const { clients, fetchClients } = useClients()
-const filters = ref({ search: '', status: '', priority: '', client_id: undefined as number | undefined })
+const filters = ref({ search: '', status: '', client_name: '' })
 const showCreateModal = ref(false)
 const editingEnquiry = ref<Enquiry | null>(null)
 const saving = ref(false)
 const formError = ref('')
 const formSuccess = ref('')
 const enquiryFormData = ref<CreateEnquiryData>({
-  client_id: 0,
-  title: '',
-  description: '',
-  project_scope: '',
-  priority: 'medium',
-  estimated_budget: undefined
+  date_received: new Date().toISOString().split('T')[0],
+  expected_delivery_date: '',
+  client_name: '',
+  project_name: '',
+  project_deliverables: '',
+  contact_person: '',
+  status: 'enquiry_logged',
+  assigned_po: '',
+  follow_up_notes: '',
+  venue: '',
+  site_survey_skipped: false,
+  site_survey_skip_reason: ''
 })
 
 const applyFilters = () => {
@@ -309,18 +365,24 @@ const applyFilters = () => {
 const editEnquiry = (enquiry: Enquiry) => {
   editingEnquiry.value = enquiry
   enquiryFormData.value = {
-    client_id: enquiry.client_id,
-    title: enquiry.title,
-    description: enquiry.description,
-    project_scope: enquiry.project_scope,
-    priority: enquiry.priority,
-    estimated_budget: enquiry.estimated_budget
+    date_received: enquiry.date_received,
+    expected_delivery_date: enquiry.expected_delivery_date || '',
+    client_name: enquiry.client_name,
+    project_name: enquiry.project_name,
+    project_deliverables: enquiry.project_deliverables,
+    contact_person: enquiry.contact_person,
+    status: enquiry.status,
+    assigned_po: enquiry.assigned_po || '',
+    follow_up_notes: enquiry.follow_up_notes || '',
+    venue: enquiry.venue || '',
+    site_survey_skipped: enquiry.site_survey_skipped,
+    site_survey_skip_reason: enquiry.site_survey_skip_reason || ''
   }
   showCreateModal.value = true
 }
 
 const viewEnquiryDetails = (enquiry: Enquiry) => {
-  console.log('View enquiry details:', enquiry.title)
+  console.log('View enquiry details:', enquiry.project_name)
   // Could navigate to enquiry detail view
 }
 
@@ -330,19 +392,26 @@ const closeModal = () => {
   formError.value = ''
   formSuccess.value = ''
   enquiryFormData.value = {
-    client_id: 0,
-    title: '',
-    description: '',
-    project_scope: '',
-    priority: 'medium',
-    estimated_budget: undefined
+    date_received: new Date().toISOString().split('T')[0],
+    expected_delivery_date: '',
+    client_name: '',
+    project_name: '',
+    project_deliverables: '',
+    contact_person: '',
+    status: 'enquiry_logged',
+    assigned_po: '',
+    follow_up_notes: '',
+    venue: '',
+    site_survey_skipped: false,
+    site_survey_skip_reason: ''
   }
 }
 
 const handleFormSubmit = async () => {
   // Basic validation
-  if (!enquiryFormData.value.client_id || !enquiryFormData.value.title ||
-      !enquiryFormData.value.description || !enquiryFormData.value.project_scope) {
+  if (!enquiryFormData.value.date_received || !enquiryFormData.value.client_name ||
+      !enquiryFormData.value.project_name || !enquiryFormData.value.project_deliverables ||
+      !enquiryFormData.value.contact_person) {
     formError.value = 'Please fill in all required fields'
     return
   }
@@ -418,18 +487,7 @@ const getStatusLabel = (status: string) => {
   return labels[status] || status
 }
 
-const getPriorityColor = (priority: string) => {
-  const colors: Record<string, string> = {
-    'low': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
-    'medium': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    'high': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-    'urgent': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-  }
-  return colors[priority] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-}
-
 onMounted(async () => {
-  await fetchClients()
   await fetchEnquiries()
 })
 </script>

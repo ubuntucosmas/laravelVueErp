@@ -8,6 +8,9 @@ use App\Modules\HR\Http\Controllers\DepartmentController;
 use App\Modules\Admin\Http\Controllers\UserController;
 use App\Modules\Admin\Http\Controllers\RoleController;
 use App\Modules\Admin\Http\Controllers\PermissionController;
+use App\Modules\ClientService\Http\Controllers\ClientController;
+use App\Modules\ClientService\Http\Controllers\EnquiryController as ClientServiceEnquiryController;
+use App\Modules\Projects\Http\Controllers\EnquiryController;
 
 // Authentication routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -48,4 +51,32 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('roles', RoleController::class);
         Route::apiResource('permissions', PermissionController::class);
     });
+
+    // ClientService Module Routes
+    Route::prefix('clientservice')->group(function () {
+        // Client management
+        Route::get('clients', [ClientController::class, 'index']);
+        Route::get('clients/{client}', [ClientController::class, 'show']);
+        Route::post('clients', [ClientController::class, 'store']);
+        Route::put('clients/{client}', [ClientController::class, 'update']);
+        Route::patch('clients/{client}/toggle-status', [ClientController::class, 'toggleStatus']);
+
+        // Enquiry management
+        Route::get('enquiries', [ClientServiceEnquiryController::class, 'index']);
+        Route::get('enquiries/{enquiry}', [ClientServiceEnquiryController::class, 'show']);
+        Route::post('enquiries', [ClientServiceEnquiryController::class, 'store']);
+        Route::put('enquiries/{enquiry}', [ClientServiceEnquiryController::class, 'update']);
+        Route::delete('enquiries/{enquiry}', [ClientServiceEnquiryController::class, 'destroy']);
+    });
+
+    // Projects Module Routes
+    // Route::prefix('projects')->group(function () {
+    //     // Enquiry management
+    //     Route::get('enquiries', [EnquiryController::class, 'index']);
+    //     Route::get('enquiries/{enquiry}', [EnquiryController::class, 'show']);
+    //     Route::post('enquiries', [EnquiryController::class, 'store']);
+    //     Route::put('enquiries/{enquiry}/phases/{phase}', [EnquiryController::class, 'updatePhase']);
+    //     Route::post('enquiries/{enquiry}/approve-quote', [EnquiryController::class, 'approveQuote']);
+    //     Route::post('enquiries/{enquiry}/convert', [EnquiryController::class, 'convertToProject']);
+    // });
 });

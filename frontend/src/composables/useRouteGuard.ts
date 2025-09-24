@@ -235,7 +235,6 @@ export function useRouteGuard() {
     if (canAccessProjects()) {
       routes.push(
         { name: 'projects-dashboard', path: '/projects', label: 'Projects Dashboard', icon: '📊' },
-        { name: 'projects-clients', path: '/projects/clients', label: 'Client Management', icon: '👥' },
         { name: 'projects-enquiries', path: '/projects/enquiries', label: 'Enquiries', icon: '📝' },
         { name: 'projects-list', path: '/projects/projects', label: 'Approved Projects', icon: '✅' },
         { name: 'projects-close-out-report', path: '/projects/close-out-report', label: 'Close-Out Report', icon: '📋' }

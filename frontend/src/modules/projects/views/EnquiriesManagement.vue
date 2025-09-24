@@ -84,8 +84,8 @@
           class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
           <option value="">All Clients</option>
-          <option v-for="client in clients" :key="client.id" :value="client.id">
-            {{ client.name }}
+          <option v-for="client in activeClients" :key="client.id" :value="client.id">
+            {{ client.FullName }}
           </option>
         </select>
         <button
@@ -119,7 +119,7 @@
                 Client
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Priority
+                Contact Person
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Status
@@ -134,41 +134,38 @@
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             <tr v-for="enquiry in filteredEnquiries" :key="enquiry.id">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 h-10 w-10">
-                    <div class="h-10 w-10 rounded-full bg-yellow-500 flex items-center justify-center">
-                      <span class="text-sm font-medium text-white">{{ enquiry.title.charAt(0) }}</span>
-                    </div>
-                  </div>
-                  <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ enquiry.title }}</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ enquiry.created_at.split('T')[0] }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                {{ enquiry.client?.name }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span
-                  :class="getPriorityClass(enquiry.priority)"
-                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                >
-                  {{ enquiry.priority }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span
-                  :class="getStatusClass(enquiry.status)"
-                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                >
-                  {{ enquiry.status.replace('_', ' ') }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                {{ enquiry.estimated_budget ? 'KES ' + enquiry.estimated_budget.toLocaleString() : 'N/A' }}
-              </td>
+               <td class="px-6 py-4 whitespace-nowrap">
+                 <div class="flex items-center">
+                   <div class="flex-shrink-0 h-10 w-10">
+                     <div class="h-10 w-10 rounded-full bg-yellow-500 flex items-center justify-center">
+                       <span class="text-sm font-medium text-white">{{ enquiry.project_name.charAt(0) }}</span>
+                     </div>
+                   </div>
+                   <div class="ml-4">
+                     <div class="text-sm font-medium text-gray-900 dark:text-white">{{ enquiry.project_name }}</div>
+                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ enquiry.created_at.split('T')[0] }}</div>
+                   </div>
+                 </div>
+               </td>
+               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                 {{ enquiry.client_name }}
+               </td>
+               <td class="px-6 py-4 whitespace-nowrap">
+                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                   {{ enquiry.contact_person }}
+                 </span>
+               </td>
+               <td class="px-6 py-4 whitespace-nowrap">
+                 <span
+                   :class="getStatusClass(enquiry.status)"
+                   class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                 >
+                   {{ enquiry.status.replace('_', ' ') }}
+                 </span>
+               </td>
+               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                 {{ enquiry.enquiry_number }}
+               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button
                   @click="editEnquiry(enquiry)"
@@ -227,8 +224,8 @@
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">Select Client</option>
-                <option v-for="client in clients" :key="client.id" :value="client.id">
-                  {{ client.name }}
+                <option v-for="client in activeClients" :key="client.id" :value="client.id">
+                  {{ client.FullName }}
                 </option>
               </select>
             </div>
@@ -325,13 +322,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types'
 import { useEnquiries } from '../composables/useEnquiries'
-import { useClients } from '../composables/useClients'
+import { useClients } from '../../clientService/composables/useClients'
 import { useDepartmentWorkflow } from '../composables/useDepartmentWorkflow'
 
 const router = useRouter()
 
 const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry, convertToProject, canConvertToProject, newEnquiries, inProgressEnquiries, convertedEnquiries } = useEnquiries()
-const { clients, fetchClients } = useClients()
+const { activeClients, fetchClients } = useClients()
 const { navigateToDepartmentWorkflow, getAvailablePhases, getNextAvailablePhase } = useDepartmentWorkflow()
 
 const filters = ref({ search: '', priority: '', client_id: '' })
@@ -342,6 +339,19 @@ const saving = ref(false)
 const formError = ref('')
 const formSuccess = ref('')
 const enquiryFormData = ref<CreateEnquiryData>({
+  date_received: new Date().toISOString().split('T')[0],
+  expected_delivery_date: '',
+  client_name: '',
+  project_name: '',
+  project_deliverables: '',
+  contact_person: '',
+  status: 'enquiry_logged',
+  assigned_po: '',
+  follow_up_notes: '',
+  venue: '',
+  site_survey_skipped: false,
+  site_survey_skip_reason: '',
+  // Legacy fields for backward compatibility
   client_id: 0,
   title: '',
   description: '',
@@ -410,11 +420,24 @@ const getStatusClass = (status: string) => {
 const editEnquiry = (enquiry: Enquiry) => {
   editingEnquiry.value = enquiry
   enquiryFormData.value = {
-    client_id: enquiry.client_id,
-    title: enquiry.title,
-    description: enquiry.description,
-    project_scope: enquiry.project_scope,
-    priority: enquiry.priority,
+    date_received: enquiry.date_received,
+    expected_delivery_date: enquiry.expected_delivery_date || '',
+    client_name: enquiry.client_name,
+    project_name: enquiry.project_name,
+    project_deliverables: enquiry.project_deliverables,
+    contact_person: enquiry.contact_person,
+    status: enquiry.status,
+    assigned_po: enquiry.assigned_po || '',
+    follow_up_notes: enquiry.follow_up_notes || '',
+    venue: enquiry.venue || '',
+    site_survey_skipped: enquiry.site_survey_skipped,
+    site_survey_skip_reason: enquiry.site_survey_skip_reason || '',
+    // Legacy fields for backward compatibility
+    client_id: enquiry.client_id || 0,
+    title: enquiry.project_name,
+    description: enquiry.project_deliverables,
+    project_scope: enquiry.project_deliverables,
+    priority: enquiry.priority || 'medium',
     estimated_budget: enquiry.estimated_budget
   }
   showCreateModal.value = true
@@ -486,6 +509,19 @@ const closeModal = () => {
   formError.value = ''
   formSuccess.value = ''
   enquiryFormData.value = {
+    date_received: new Date().toISOString().split('T')[0],
+    expected_delivery_date: '',
+    client_name: '',
+    project_name: '',
+    project_deliverables: '',
+    contact_person: '',
+    status: 'enquiry_logged',
+    assigned_po: '',
+    follow_up_notes: '',
+    venue: '',
+    site_survey_skipped: false,
+    site_survey_skip_reason: '',
+    // Legacy fields for backward compatibility
     client_id: 0,
     title: '',
     description: '',
@@ -497,8 +533,9 @@ const closeModal = () => {
 
 const handleFormSubmit = async () => {
   // Basic validation
-  if (!enquiryFormData.value.client_id || !enquiryFormData.value.title ||
-      !enquiryFormData.value.description || !enquiryFormData.value.project_scope) {
+  if (!enquiryFormData.value.date_received || !enquiryFormData.value.client_name ||
+      !enquiryFormData.value.project_name || !enquiryFormData.value.project_deliverables ||
+      !enquiryFormData.value.contact_person) {
     formError.value = 'Please fill in all required fields'
     return
   }

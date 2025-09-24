@@ -1,104 +1,76 @@
 import { ref, computed } from 'vue'
 import type { Client, CreateClientData, UpdateClientData } from '../types/client'
+import api from '@/plugins/axios'
 
-// Dummy data - exported for shared use with Projects module
-export const dummyClients: Client[] = [
-  {
-    id: 1,
-    FullName: 'ABC Corporation Ltd',
-    ContactPerson: 'John Doe',
-    Email: 'contact@abc.com',
-    Phone: '+254 700 123 456',
-    AltContact: '+254 700 123 457',
-    Address: '123 Business Avenue, Westlands',
-    City: 'Nairobi',
-    County: 'Nairobi',
-    PostalAddress: 'P.O. Box 12345-00100',
-    CustomerType: 'company',
-    LeadSource: 'Website',
-    PreferredContact: 'email',
-    Industry: 'Technology',
-    registration_date: '2024-01-15',
-    status: 'active',
-    created_at: '2024-01-15T10:00:00Z',
-    updated_at: '2024-01-15T10:00:00Z'
-  },
-  {
-    id: 2,
-    FullName: 'XYZ Events Ltd',
-    ContactPerson: 'Jane Smith',
-    Email: 'info@xyz.com',
-    Phone: '+254 711 987 654',
-    AltContact: '+254 711 987 655',
-    Address: '456 Event Plaza, Kilimani',
-    City: 'Nairobi',
-    County: 'Nairobi',
-    PostalAddress: 'P.O. Box 67890-00200',
-    CustomerType: 'company',
-    LeadSource: 'Referral',
-    PreferredContact: 'phone',
-    Industry: 'Events',
-    registration_date: '2024-02-20',
-    status: 'active',
-    created_at: '2024-02-20T14:30:00Z',
-    updated_at: '2024-02-20T14:30:00Z'
-  },
-  {
-    id: 3,
-    FullName: 'Mike Johnson',
-    ContactPerson: 'Mike Johnson',
-    Email: 'mike.johnson@email.com',
-    Phone: '+254 722 555 789',
-    AltContact: '+254 722 555 790',
-    Address: '789 Residential Road, Koinange',
-    City: 'Kisumu',
-    County: 'Kisumu',
-    PostalAddress: 'P.O. Box 54321-40100',
-    CustomerType: 'individual',
-    LeadSource: 'Social Media',
-    PreferredContact: 'email',
-    Industry: 'Consulting',
-    registration_date: '2024-03-10',
-    status: 'inactive',
-    created_at: '2024-03-10T09:15:00Z',
-    updated_at: '2024-03-10T09:15:00Z'
-  }
-]
-
-const clients = ref<Client[]>([...dummyClients])
+const clients = ref<Client[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
 export function useClients() {
+  const getErrorMessage = (err: any): string => {
+    if (!err.response) {
+      return "Network error. Please check your connection.";
+    }
+    switch (err.response.status) {
+      case 401:
+        return "Authentication required. Please log in.";
+      case 403:
+        return "Access denied.";
+      case 404:
+        return "Clients not found.";
+      case 422:
+        return "Validation error.";
+      case 500:
+        return "Server error.";
+      default:
+        return `Failed to fetch clients: ${err.response.status}`;
+    }
+  }
+
   const fetchClients = async (filters?: { search?: string; status?: string }) => {
     loading.value = true
     error.value = null
 
+    if (!localStorage.getItem('auth_token')) {
+      error.value = "Authentication required. Please log in.";
+      loading.value = false;
+      return;
+    }
+
+    console.log('Fetching clients with token:', localStorage.getItem('auth_token'))
+
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
+      const response = await api.get('/api/clientservice/clients', { params: filters })
+      const backendClients = response.data.data?.data || response.data.data || response.data
 
-      let filteredClients = [...dummyClients]
+      const mappedClients: Client[] = backendClients.map((backendClient: any) => ({
+        id: backendClient.id,
+        FullName: backendClient.full_name,
+        ContactPerson: backendClient.contact_person,
+        Email: backendClient.email,
+        Phone: backendClient.phone,
+        AltContact: backendClient.alt_contact,
+        Address: backendClient.address,
+        City: backendClient.city,
+        County: backendClient.county,
+        PostalAddress: backendClient.postal_address,
+        CustomerType: backendClient.customer_type,
+        LeadSource: backendClient.lead_source,
+        PreferredContact: backendClient.preferred_contact,
+        Industry: backendClient.industry,
+        companyName: backendClient.company_name,
+        isActive: backendClient.is_active,
+        registration_date: backendClient.registration_date,
+        status: backendClient.status,
+        created_at: backendClient.created_at,
+        updated_at: backendClient.updated_at
+      }))
 
-      if (filters?.search) {
-        const search = filters.search.toLowerCase()
-        filteredClients = filteredClients.filter(client =>
-          client.FullName.toLowerCase().includes(search) ||
-          client.Email.toLowerCase().includes(search) ||
-          client.ContactPerson.toLowerCase().includes(search) ||
-          client.Phone.includes(search) ||
-          client.Industry?.toLowerCase().includes(search)
-        )
-      }
-
-      if (filters?.status) {
-        filteredClients = filteredClients.filter(client => client.status === filters.status)
-      }
-
-      clients.value = filteredClients
-    } catch (err) {
-      error.value = 'Failed to fetch clients'
+      clients.value = mappedClients
+    } catch (err: any) {
+      error.value = getErrorMessage(err)
       console.error('Error fetching clients:', err)
+      console.log('Error details:', err.response?.status, err.response?.data)
     } finally {
       loading.value = false
     }
@@ -108,27 +80,111 @@ export function useClients() {
     return clients.value.find(client => client.id === id)
   }
 
+  const fetchClient = async (id: number): Promise<Client> => {
+    loading.value = true
+    error.value = null
+
+    if (!localStorage.getItem('auth_token')) {
+      error.value = "Authentication required. Please log in.";
+      loading.value = false;
+      throw new Error("Authentication required. Please log in.");
+    }
+
+    try {
+      const response = await api.get(`/api/clientservice/clients/${id}`)
+      const backendClient = response.data.data
+
+      const mappedClient: Client = {
+        id: backendClient.id,
+        FullName: backendClient.full_name,
+        ContactPerson: backendClient.contact_person,
+        Email: backendClient.email,
+        Phone: backendClient.phone,
+        AltContact: backendClient.alt_contact,
+        Address: backendClient.address,
+        City: backendClient.city,
+        County: backendClient.county,
+        PostalAddress: backendClient.postal_address,
+        CustomerType: backendClient.customer_type,
+        LeadSource: backendClient.lead_source,
+        PreferredContact: backendClient.preferred_contact,
+        Industry: backendClient.industry,
+        companyName: backendClient.company_name,
+        isActive: backendClient.is_active,
+        registration_date: backendClient.registration_date,
+        status: backendClient.status,
+        created_at: backendClient.created_at,
+        updated_at: backendClient.updated_at
+      }
+
+      return mappedClient
+    } catch (err: any) {
+      error.value = getErrorMessage(err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const createClient = async (data: CreateClientData): Promise<Client> => {
     loading.value = true
     error.value = null
 
-    try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
+    if (!localStorage.getItem('auth_token')) {
+      error.value = "Authentication required. Please log in.";
+      loading.value = false;
+      throw new Error("Authentication required. Please log in.");
+    }
 
+    try {
+      const mappedData = {
+        full_name: data.FullName,
+        contact_person: data.ContactPerson,
+        email: data.Email,
+        phone: data.Phone,
+        alt_contact: data.AltContact,
+        address: data.Address,
+        city: data.City,
+        county: data.County,
+        postal_address: data.PostalAddress,
+        customer_type: data.CustomerType,
+        lead_source: data.LeadSource,
+        preferred_contact: data.PreferredContact,
+        industry: data.Industry,
+        registration_date: new Date().toISOString().split('T')[0]
+      }
+
+      const response = await api.post('/api/clientservice/clients', mappedData)
+      const backendClient = response.data.data
+
+      // Map back to frontend camelCase
       const newClient: Client = {
-        id: Math.max(...clients.value.map(c => c.id)) + 1,
-        ...data,
-        registration_date: new Date().toISOString().split('T')[0],
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        id: backendClient.id,
+        FullName: backendClient.full_name,
+        ContactPerson: backendClient.contact_person,
+        Email: backendClient.email,
+        Phone: backendClient.phone,
+        AltContact: backendClient.alt_contact,
+        Address: backendClient.address,
+        City: backendClient.city,
+        County: backendClient.county,
+        PostalAddress: backendClient.postal_address,
+        CustomerType: backendClient.customer_type,
+        LeadSource: backendClient.lead_source,
+        PreferredContact: backendClient.preferred_contact,
+        Industry: backendClient.industry,
+        companyName: backendClient.company_name,
+        isActive: backendClient.is_active,
+        registration_date: backendClient.registration_date,
+        status: backendClient.status,
+        created_at: backendClient.created_at,
+        updated_at: backendClient.updated_at
       }
 
       clients.value.push(newClient)
       return newClient
-    } catch (err) {
-      error.value = 'Failed to create client'
+    } catch (err: any) {
+      error.value = getErrorMessage(err)
       throw err
     } finally {
       loading.value = false
@@ -139,25 +195,72 @@ export function useClients() {
     loading.value = true
     error.value = null
 
-    try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
+    if (!localStorage.getItem('auth_token')) {
+      error.value = "Authentication required. Please log in.";
+      loading.value = false;
+      throw new Error("Authentication required. Please log in.");
+    }
 
-      const index = clients.value.findIndex(client => client.id === id)
-      if (index === -1) {
+    try {
+      // Get the existing client to preserve registration_date
+      const existingClient = clients.value.find(client => client.id === id)
+      if (!existingClient) {
         throw new Error('Client not found')
       }
 
-      const updatedClient = {
-        ...clients.value[index],
-        ...data,
-        updated_at: new Date().toISOString()
+      const mappedData = {
+        full_name: data.FullName,
+        contact_person: data.ContactPerson,
+        email: data.Email,
+        phone: data.Phone,
+        alt_contact: data.AltContact,
+        address: data.Address,
+        city: data.City,
+        county: data.County,
+        postal_address: data.PostalAddress,
+        customer_type: data.CustomerType,
+        lead_source: data.LeadSource,
+        preferred_contact: data.PreferredContact,
+        industry: data.Industry,
+        company_name: data.companyName,
+        registration_date: existingClient.registration_date
       }
 
-      clients.value[index] = updatedClient
+      const response = await api.put(`/api/clientservice/clients/${id}`, mappedData)
+      const backendClient = response.data.data
+
+      // Map back to frontend camelCase
+      const updatedClient: Client = {
+        id: backendClient.id,
+        FullName: backendClient.full_name,
+        ContactPerson: backendClient.contact_person,
+        Email: backendClient.email,
+        Phone: backendClient.phone,
+        AltContact: backendClient.alt_contact,
+        Address: backendClient.address,
+        City: backendClient.city,
+        County: backendClient.county,
+        PostalAddress: backendClient.postal_address,
+        CustomerType: backendClient.customer_type,
+        LeadSource: backendClient.lead_source,
+        PreferredContact: backendClient.preferred_contact,
+        Industry: backendClient.industry,
+        companyName: backendClient.company_name,
+        isActive: backendClient.is_active,
+        registration_date: backendClient.registration_date,
+        status: backendClient.status,
+        created_at: backendClient.created_at,
+        updated_at: backendClient.updated_at
+      }
+
+      const index = clients.value.findIndex(client => client.id === id)
+      if (index !== -1) {
+        clients.value[index] = updatedClient
+      }
+
       return updatedClient
-    } catch (err) {
-      error.value = 'Failed to update client'
+    } catch (err: any) {
+      error.value = getErrorMessage(err)
       throw err
     } finally {
       loading.value = false
@@ -186,7 +289,58 @@ export function useClients() {
     }
   }
 
-  const activeClients = computed(() => clients.value.filter(client => client.status === 'active'))
+  const toggleClientStatus = async (clientId: number): Promise<Client> => {
+    loading.value = true
+    error.value = null
+
+    if (!localStorage.getItem('auth_token')) {
+      error.value = "Authentication required. Please log in.";
+      loading.value = false;
+      throw new Error("Authentication required. Please log in.");
+    }
+
+    try {
+      const response = await api.patch(`/api/clientservice/clients/${clientId}/toggle-status`)
+      const backendClient = response.data.data
+
+      const updatedClient: Client = {
+        id: backendClient.id,
+        FullName: backendClient.full_name,
+        ContactPerson: backendClient.contact_person,
+        Email: backendClient.email,
+        Phone: backendClient.phone,
+        AltContact: backendClient.alt_contact,
+        Address: backendClient.address,
+        City: backendClient.city,
+        County: backendClient.county,
+        PostalAddress: backendClient.postal_address,
+        CustomerType: backendClient.customer_type,
+        LeadSource: backendClient.lead_source,
+        PreferredContact: backendClient.preferred_contact,
+        Industry: backendClient.industry,
+        companyName: backendClient.company_name,
+        isActive: backendClient.is_active,
+        registration_date: backendClient.registration_date,
+        status: backendClient.status,
+        created_at: backendClient.created_at,
+        updated_at: backendClient.updated_at
+      }
+
+      const index = clients.value.findIndex(client => client.id === clientId)
+      if (index !== -1) {
+        clients.value[index] = updatedClient
+      }
+
+      return updatedClient
+    } catch (err: any) {
+      error.value = getErrorMessage(err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const activeClients = computed(() => clients.value.filter(client => client.isActive))
   const totalClients = computed(() => clients.value.length)
 
   return {
@@ -195,9 +349,11 @@ export function useClients() {
     error,
     fetchClients,
     getClient,
+    fetchClient,
     createClient,
     updateClient,
     deleteClient,
+    toggleClientStatus,
     activeClients,
     totalClients
   }

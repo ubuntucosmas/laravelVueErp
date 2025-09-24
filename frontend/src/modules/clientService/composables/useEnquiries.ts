@@ -1,22 +1,23 @@
 import { ref, computed } from 'vue'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types/enquiry'
+import api from '@/plugins/axios'
 
 // Dummy data - exported for shared use with Projects module
 export const dummyEnquiries: Enquiry[] = [
   {
     id: 1,
-    client_id: 1,
-    client: {
-      id: 1,
-      name: 'ABC Corporation',
-      email: 'contact@abc.com'
-    },
-    title: 'Corporate Event Booth Setup',
-    description: 'Need a professional booth setup for our annual corporate event',
-    project_scope: 'Complete booth design, construction, and setup for 200 attendees',
-    priority: 'high',
+    date_received: '2024-09-01',
+    expected_delivery_date: '2024-09-15',
+    client_name: 'ABC Corporation',
+    project_name: 'Corporate Event Booth Setup',
+    project_deliverables: 'Complete booth design, construction, and setup for 200 attendees',
+    contact_person: 'John Doe',
     status: 'enquiry_logged',
-    estimated_budget: 50000,
+    assigned_po: 'PO12345',
+    follow_up_notes: 'Client prefers email communication',
+    enquiry_number: 'ENQ-2024-0001',
+    venue: 'Convention Center',
+    site_survey_skipped: false,
     created_by: 1,
     created_by_user: {
       id: 1,
@@ -27,18 +28,17 @@ export const dummyEnquiries: Enquiry[] = [
   },
   {
     id: 2,
-    client_id: 2,
-    client: {
-      id: 2,
-      name: 'XYZ Events',
-      email: 'info@xyz.com'
-    },
-    title: 'Wedding Exhibition Display',
-    description: 'Custom display for wedding exhibition',
-    project_scope: 'Elegant display booth with lighting and branding',
-    priority: 'medium',
+    date_received: '2024-09-05',
+    expected_delivery_date: '2024-09-20',
+    client_name: 'XYZ Events',
+    project_name: 'Wedding Exhibition Display',
+    project_deliverables: 'Elegant display booth with lighting and branding',
+    contact_person: 'Jane Smith',
     status: 'client_registered',
-    estimated_budget: 25000,
+    enquiry_number: 'ENQ-2024-0002',
+    venue: 'Exhibition Hall',
+    site_survey_skipped: true,
+    site_survey_skip_reason: 'Client provided detailed specifications',
     created_by: 2,
     created_by_user: {
       id: 2,
@@ -49,18 +49,17 @@ export const dummyEnquiries: Enquiry[] = [
   },
   {
     id: 3,
-    client_id: 1,
-    client: {
-      id: 1,
-      name: 'ABC Corporation',
-      email: 'contact@abc.com'
-    },
-    title: 'Product Launch Event',
-    description: 'Product launch event setup',
-    project_scope: 'Stage setup, lighting, sound system, and branding',
-    priority: 'urgent',
+    date_received: '2024-08-20',
+    expected_delivery_date: '2024-09-10',
+    client_name: 'ABC Corporation',
+    project_name: 'Product Launch Event',
+    project_deliverables: 'Stage setup, lighting, sound system, and branding',
+    contact_person: 'Mike Johnson',
     status: 'converted_to_project',
-    estimated_budget: 75000,
+    assigned_po: 'PO67890',
+    enquiry_number: 'ENQ-2024-0003',
+    venue: 'Grand Hotel Ballroom',
+    site_survey_skipped: false,
     created_by: 1,
     created_by_user: {
       id: 1,
@@ -79,43 +78,19 @@ export function useEnquiries() {
   const fetchEnquiries = async (filters?: {
     search?: string;
     status?: string;
-    priority?: string;
-    client_id?: number
+    client_name?: string
   }) => {
     loading.value = true
     error.value = null
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      let filteredEnquiries = [...dummyEnquiries]
-
-      if (filters?.search) {
-        const search = filters.search.toLowerCase()
-        filteredEnquiries = filteredEnquiries.filter(enquiry =>
-          enquiry.title.toLowerCase().includes(search) ||
-          enquiry.description.toLowerCase().includes(search) ||
-          enquiry.client?.name.toLowerCase().includes(search)
-        )
-      }
-
-      if (filters?.status) {
-        filteredEnquiries = filteredEnquiries.filter(enquiry => enquiry.status === filters.status)
-      }
-
-      if (filters?.priority) {
-        filteredEnquiries = filteredEnquiries.filter(enquiry => enquiry.priority === filters.priority)
-      }
-
-      if (filters?.client_id) {
-        filteredEnquiries = filteredEnquiries.filter(enquiry => enquiry.client_id === filters.client_id)
-      }
-
-      enquiries.value = filteredEnquiries
+      const response = await api.get('/api/clientservice/enquiries', { params: filters })
+      enquiries.value = response.data.data.data || []
     } catch (err) {
       error.value = 'Failed to fetch enquiries'
       console.error('Error fetching enquiries:', err)
+      // Fallback to dummy data if API fails
+      enquiries.value = [...dummyEnquiries]
     } finally {
       loading.value = false
     }
@@ -132,21 +107,8 @@ export function useEnquiries() {
     error.value = null
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      const newEnquiry: Enquiry = {
-        id: Math.max(...enquiries.value.map(e => e.id)) + 1,
-        ...data,
-        status: 'enquiry_logged',
-        created_by: 1, // Current user
-        created_by_user: {
-          id: 1,
-          name: 'Current User'
-        },
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
+      const response = await api.post('/api/clientservice/enquiries', data)
+      const newEnquiry = response.data.data
 
       enquiries.value.push(newEnquiry)
       return newEnquiry

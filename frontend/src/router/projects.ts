@@ -18,12 +18,6 @@ export const projectsRoutes: RouteRecordRaw[] = [
         meta: { title: 'Projects Dashboard' }
       },
       {
-        path: 'clients',
-        name: 'projects-clients',
-        component: () => import('../modules/projects/views/ClientsManagement.vue'),
-        meta: { title: 'Client Management' }
-      },
-      {
         path: 'enquiries',
         name: 'projects-enquiries',
         component: () => import('../modules/projects/views/EnquiriesManagement.vue'),

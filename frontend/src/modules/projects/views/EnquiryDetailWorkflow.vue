@@ -10,7 +10,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="!enquiry && enquiries.length > 0" class="bg-red-100 dark:bg-red-900 p-8 rounded-lg text-center">
+    <!-- <div v-else-if="!enquiry && enquiries.length > 0" class="bg-red-100 dark:bg-red-900 p-8 rounded-lg text-center">
       <div class="w-16 h-16 bg-red-200 dark:bg-red-800 rounded-full flex items-center justify-center mx-auto mb-4">
         <svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
@@ -29,7 +29,7 @@
       >
         Back to Enquiries
       </button>
-    </div>
+    </div> -->
 
     <!-- Department Access Error -->
     <div v-else-if="accessError" class="bg-yellow-100 dark:bg-yellow-900 p-8 rounded-lg text-center">
@@ -183,266 +183,138 @@
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
         >
       <!-- Step 1: Enquiry & Site Survey -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
             :class="getStepBorderClass(1)">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+        <!-- Prominent Top Section -->
+        <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                    :class="getStepNumberClass(1)">
-                1
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+                    :class="getStepIconClass(1)">
+                <svg v-if="getStepStatus(1) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <svg v-else-if="getStepStatus(1) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <svg v-else-if="getStepStatus(1) === 'pending'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span v-else class="text-lg font-bold text-white">1</span>
               </div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Enquiry & Site Survey</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Project request & assessment</p>
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Enquiry & Site Survey</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Project request & assessment</p>
               </div>
             </div>
-            <span :class="getStatusBadgeClass(getStepStatus(1))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-              {{ getStepStatusText(1) }}
-            </span>
-          </div>
-        </div>
-        <div class="p-4">
-          <div class="space-y-3">
-            <div class="text-sm">
-              <span class="font-medium">Priority:</span>
-              <span :class="getPriorityClass(enquiry?.priority)">
-                {{ enquiry?.priority }}
+            <div class="text-right">
+              <span :class="getStatusBadgeClass(getStepStatus(1))" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
+                {{ getStepStatusText(1) }}
               </span>
             </div>
-            <div class="text-sm">
-              <span class="font-medium">Created:</span>
-              <span class="text-gray-500">{{ enquiry?.created_at ? formatDate(enquiry.created_at) : 'N/A' }}</span>
-            </div>
-            <div v-if="selectedSurvey" class="text-sm">
-              <span class="font-medium">Survey Date:</span>
-              <span class="text-gray-500">{{ formatDate(selectedSurvey.site_visit_date) }}</span>
-            </div>
-            <div v-if="selectedSurvey" class="text-sm">
-              <span class="font-medium">Survey Status:</span>
-              <span :class="getStatusClass(selectedSurvey.status)">
-                {{ selectedSurvey.status.replace('_', ' ') }}
-              </span>
-            </div>
-            <button
-              v-if="enquiry"
-              @click="openSurveyModal"
-              class="w-full bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-4 rounded-md transition-colors"
-              :disabled="!enquiry"
-            >
-              {{ selectedSurvey ? 'View Survey' : 'Schedule Survey' }}
-            </button>
           </div>
         </div>
       </div>
 
       <!-- Step 2: Material Specification -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
             :class="getStepBorderClass(2)">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+        <!-- Prominent Top Section -->
+        <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                    :class="getStepNumberClass(2)">
-                2
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+                    :class="getStepIconClass(2)">
+                <svg v-if="getStepStatus(2) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <svg v-else-if="getStepStatus(2) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <svg v-else-if="getStepStatus(2) === 'pending'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span v-else class="text-lg font-bold text-white">2</span>
               </div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Design Concept and Material Specification</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Creative work & requirements</p>
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Design Concept and Material Specification</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Creative work & requirements</p>
               </div>
             </div>
-            <span :class="getStatusBadgeClass(getStepStatus(2))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-              {{ getStepStatusText(2) }}
-            </span>
-          </div>
-        </div>
-        <div class="p-4">
-          <div class="space-y-3">
-            <!-- Department-specific header -->
-
-            <div class="text-sm">
-              <span class="font-medium">Materials:</span>
-              <span class="text-gray-500">{{ materialItemsCount }} items</span>
-            </div>
-            <div v-if="enquiry" class="text-sm">
-              <span class="font-medium">Creative Progress:</span>
-              <span class="text-gray-500">{{ getEnquiryProgress(enquiry.id) }}% complete</span>
-            </div>
-
-            <!-- Department-specific error handling -->
-            <div v-if="integrationError" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                  <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                  </svg>
-                  <span class="text-sm font-medium text-red-800 dark:text-red-200">Creative Tasks Error</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <button
-                    @click="retryCreativeTasks"
-                    class="inline-flex items-center space-x-1 px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    <span>Retry</span>
-                  </button>
-                  <button
-                    @click="clearError"
-                    class="inline-flex items-center space-x-1 px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                    <span>Dismiss</span>
-                  </button>
-                </div>
-              </div>
-              <p class="text-sm text-red-700 dark:text-red-300 mt-2">{{ integrationError }}</p>
-            </div>
-
-            <!-- Department-specific action buttons -->
-            <div class="flex flex-col space-y-2">
-              <div class="flex space-x-2">
-                <button
-                  @click="openMaterialsModal"
-                  class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm py-2 px-4 rounded-md transition-colors"
-                >
-                  Manage Materials
-                </button>
-                <button
-                  v-if="enquiry && canAccessCreatives(enquiry)"
-                  @click="navigateToCreatives"
-                  class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm py-2 px-4 rounded-md transition-colors"
-                  :disabled="isCreatingTasks"
-                >
-                  <span v-if="isCreatingTasks">Creating Tasks...</span>
-                  <span v-else>Creative Tasks</span>
-                </button>
-                <button
-                  v-else-if="enquiry && canCreateTasks(enquiry)"
-                  @click="createCreativeTasks"
-                  class="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-4 rounded-md transition-colors"
-                  :disabled="isCreatingTasks"
-                >
-                  <span v-if="isCreatingTasks">Creating Tasks...</span>
-                  <span v-else>Create Creative Tasks</span>
-                </button>
-                <button
-                  v-if="(currentDepartment === 'creatives' || currentDepartment === 'design') && enquiry"
-                  @click="completeDepartmentTask(enquiry!, 'materials')"
-                  class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm py-2 px-4 rounded-md transition-colors"
-                >
-                  Complete Materials Task
-                </button>
-              </div>
-
-              <!-- Design-specific button for comprehensive material list management -->
-              <button
-                v-if="currentDepartment === 'design' && enquiry"
-                @click="openDesignMaterialModal"
-                class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-sm py-3 px-4 rounded-md transition-all duration-200 transform hover:scale-105 shadow-lg"
-              >
-                <div class="flex items-center justify-center space-x-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
-                  <span>Manage Material List and Design</span>
-                </div>
-              </button>
+            <div class="text-right">
+              <span :class="getStatusBadgeClass(getStepStatus(2))" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
+                {{ getStepStatusText(2) }}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Step 3: Budget & Quote Preparation -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
             :class="getStepBorderClass(3)">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+        <!-- Prominent Top Section -->
+        <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                    :class="getStepNumberClass(3)">
-                3
-              </div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Budget & Quote Preparation</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Cost calculation & quotation</p>
-              </div>
-            </div>
-            <span :class="getStatusBadgeClass(getStepStatus(3))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-              {{ getStepStatusText(3) }}
-            </span>
-          </div>
-        </div>
-        <div class="p-4">
-          <div class="space-y-3">
-            <div class="text-sm">
-              <span class="font-medium">Total Cost:</span>
-              <span class="text-gray-500">KES {{ materialTotalCost.toLocaleString() }}</span>
-            </div>
-            <div class="text-sm">
-              <span class="font-medium">Quotation:</span>
-              <span v-if="selectedQuotation" :class="getQuotationStatusClass(selectedQuotation.status)">
-                {{ selectedQuotation.status }}
-              </span>
-              <span v-else class="text-gray-500">Not created</span>
-              <button
-                v-if="selectedQuotation"
-                @click="viewQuotation"
-                class="ml-2 inline-flex items-center space-x-1 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-              >
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+                    :class="getStepIconClass(3)">
+                <svg v-if="getStepStatus(3) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                <span>View</span>
-              </button>
+                <svg v-else-if="getStepStatus(3) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <svg v-else-if="getStepStatus(3) === 'pending'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span v-else class="text-lg font-bold text-white">3</span>
+              </div>
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Budget & Quote Preparation</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Cost calculation & quotation</p>
+              </div>
             </div>
-            <button
-              @click="openBudgetModal"
-              class="w-full bg-yellow-600 hover:bg-yellow-700 text-white text-sm py-2 px-4 rounded-md transition-colors"
-            >
-              Create Budget & Quote
-            </button>
+            <div class="text-right">
+              <span :class="getStatusBadgeClass(getStepStatus(3))" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
+                {{ getStepStatusText(3) }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
 
       <!-- Step 4: Project Conversion -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200"
-           :class="getStepBorderClass(10)">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
+            :class="getStepBorderClass(10)">
+        <!-- Prominent Top Section -->
+        <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                   :class="getStepNumberClass(10)">
-                10
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+                    :class="getStepIconClass(10)">
+                <svg v-if="getStepStatus(10) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <svg v-else-if="getStepStatus(10) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <svg v-else-if="getStepStatus(10) === 'pending'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span v-else class="text-lg font-bold text-white">4</span>
               </div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white">Project Conversion</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Production ready</p>
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Project Conversion</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Production ready</p>
               </div>
             </div>
-            <span :class="getStatusBadgeClass(getStepStatus(10))" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
-              {{ getStepStatusText(4) }}
-            </span>
-          </div>
-        </div>
-        <div class="p-4">
-          <div class="space-y-3">
-            <div v-if="selectedProject" class="text-sm">
-              <span class="font-medium">Project ID:</span>
-              <span class="text-gray-500">#{{ Date.now() }}</span>
+            <div class="text-right">
+              <span :class="getStatusBadgeClass(getStepStatus(10))" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
+                {{ getStepStatusText(4) }}
+              </span>
             </div>
-            <button
-              @click="startProduction"
-              class="w-full bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-4 rounded-md transition-colors"
-            >
-              Start Production
-            </button>
           </div>
         </div>
 
@@ -474,7 +346,7 @@
          <!-- Project Phase Cards (Matching Workflow Style) -->
          <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
            <!-- Phase 1: Client Engagement & Briefing -->
-           <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 cursor-pointer"
+           <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 cursor-pointer overflow-hidden"
                 :class="{
                   'border-blue-500 bg-blue-50 dark:bg-blue-900/20': currentPhaseIndex === 0,
                   'border-green-500 bg-green-50 dark:bg-green-900/20': selectedProject.phases[0].status === 'Completed',
@@ -482,36 +354,53 @@
                   'border-gray-300 dark:border-gray-600': selectedProject.phases[0].status === 'Not Started'
                 }"
                 @click="setCurrentPhase(0)">
-             <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+             <!-- Prominent Top Section -->
+             <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
                <div class="flex items-center justify-between">
-                 <div class="flex items-center space-x-3">
-                   <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                        :class="getStepNumberClass(1)">
-                     1
+                 <div class="flex items-center space-x-4">
+                   <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+                        :class="getPhaseIconClass(selectedProject.phases[0].status)">
+                     <svg v-if="selectedProject.phases[0].status === 'Completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                     </svg>
+                     <svg v-else-if="selectedProject.phases[0].status === 'In Progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                     </svg>
+                     <svg v-else-if="selectedProject.phases[0].status === 'Not Started'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                     </svg>
+                     <span v-else class="text-lg font-bold text-white">1</span>
                    </div>
-                   <div>
-                     <h3 class="text-sm font-medium text-gray-900 dark:text-white">Client Engagement</h3>
-                     <p class="text-xs text-gray-600 dark:text-gray-400">Initial meetings & briefs</p>
+                   <div class="flex-1">
+                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Client Engagement</h3>
+                     <p class="text-sm text-gray-600 dark:text-gray-300">Initial meetings & briefs</p>
                    </div>
                  </div>
-                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                   Completed
-                 </span>
+                 <div class="text-right">
+                   <span :class="getPhaseStatusBadgeClass(selectedProject.phases[0].status)" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
+                     {{ getPhaseStatusText(selectedProject.phases[0].status) }}
+                   </span>
+                 </div>
                </div>
              </div>
+
+             <!-- Content Area -->
              <div class="p-4">
-               <div class="space-y-3">
-                 <div class="text-sm">
-                   <span class="font-medium">Duration:</span>
-                   <span class="text-gray-500 ml-2">5 days</span>
-                 </div>
-                 <div class="text-sm">
-                   <span class="font-medium">Assigned:</span>
-                   <span class="text-gray-500 ml-2">Project Officer</span>
-                 </div>
-                 <div class="text-sm">
-                   <span class="font-medium">Status:</span>
-                   <span class="text-green-600 ml-2">Phase foundation completed</span>
+               <div class="space-y-4">
+                 <!-- Additional Information -->
+                 <div class="grid grid-cols-1 gap-3">
+                   <div class="flex items-center justify-between">
+                     <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Duration:</span>
+                     <span class="text-sm text-gray-900 dark:text-white">{{ selectedProject.phases[0].estimatedDuration }} days</span>
+                   </div>
+                   <div class="flex items-center justify-between">
+                     <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Assigned:</span>
+                     <span class="text-sm text-gray-900 dark:text-white">{{ selectedProject.phases[0].assignedRole }}</span>
+                   </div>
+                   <div class="flex items-center justify-between">
+                     <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Status:</span>
+                     <span class="text-sm text-green-600 dark:text-green-400">Phase foundation completed</span>
+                   </div>
                  </div>
                </div>
              </div>
@@ -908,6 +797,8 @@
 
       <!-- Step Content -->
       <div class="min-h-[400px]">
+        <!-- DEBUG: Content Area - Step {{ currentDetailStep }} | Project: {{ selectedProject ? 'Yes' : 'No' }} -->
+
         <!-- Enquiry Details -->
         <div v-if="currentDetailStep === 1" class="space-y-6">
            <!-- Enquiry Header -->
@@ -924,7 +815,6 @@
                </div>
              </div>
            </div>
-
 
            <!-- Description Cards -->
            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -952,151 +842,45 @@
                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ enquiry?.project_scope }}</p>
              </div>
            </div>
-         </div>
 
-        <!-- Site Survey Details -->
-        <div v-if="currentDetailStep === 2" class="space-y-6">
-           <!-- Site Survey Header -->
-           <div class="bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-lg p-4 border border-cyan-200 dark:border-cyan-800">
-             <div class="flex items-center space-x-3">
-               <div class="flex-shrink-0 w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900 flex items-center justify-center">
-                 <svg class="w-5 h-5 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                 </svg>
-               </div>
-               <div>
-                 <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Site Survey Assessment</h4>
-                 <p class="text-sm text-gray-600 dark:text-gray-400">Project site evaluation and requirements analysis</p>
-               </div>
+           <!-- Additional Information -->
+           <div class="grid grid-cols-1 gap-3">
+             <div class="flex items-center justify-between">
+               <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Priority:</span>
+               <span :class="getPriorityClass(enquiry?.priority)" class="text-sm font-medium px-2 py-1 rounded">
+                 {{ enquiry?.priority }}
+               </span>
+             </div>
+             <div class="flex items-center justify-between">
+               <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Created:</span>
+               <span class="text-sm text-gray-900 dark:text-white">{{ enquiry?.created_at ? formatDate(enquiry.created_at) : 'N/A' }}</span>
+             </div>
+             <div v-if="selectedSurvey" class="flex items-center justify-between">
+               <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Survey Date:</span>
+               <span class="text-sm text-gray-900 dark:text-white">{{ formatDate(selectedSurvey.site_visit_date) }}</span>
+             </div>
+             <div v-if="selectedSurvey" class="flex items-center justify-between">
+               <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Survey Status:</span>
+               <span :class="getStatusClass(selectedSurvey.status)" class="text-sm font-medium px-2 py-1 rounded">
+                 {{ selectedSurvey.status.replace('_', ' ') }}
+               </span>
              </div>
            </div>
 
-           <div v-if="selectedSurvey" class="space-y-4">
-             <!-- Survey Information Cards -->
-             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                 <div class="flex items-center space-x-2 mb-3">
-                   <div class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                     <svg class="w-3 h-3 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                     </svg>
-                   </div>
-                   <h5 class="text-sm font-semibold text-gray-900 dark:text-white">Survey Information</h5>
-                 </div>
-                 <div class="space-y-3">
-                   <div class="flex items-center justify-between">
-                     <span class="text-sm text-gray-600 dark:text-gray-400">Date:</span>
-                     <span class="text-sm font-medium text-gray-900 dark:text-white">{{ formatDate(selectedSurvey.site_visit_date) }}</span>
-                   </div>
-                   <div class="flex items-center justify-between">
-                     <span class="text-sm text-gray-600 dark:text-gray-400">Location:</span>
-                     <span class="text-sm font-medium text-gray-900 dark:text-white">{{ selectedSurvey.location }}</span>
-                   </div>
-                   <div class="flex items-center justify-between">
-                     <span class="text-sm text-gray-600 dark:text-gray-400">Status:</span>
-                     <span :class="getStatusClass(selectedSurvey.status)" class="text-sm font-medium px-2 py-1 rounded">
-                       {{ selectedSurvey.status.replace('_', ' ') }}
-                     </span>
-                   </div>
-                 </div>
-               </div>
-
-               <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                 <div class="flex items-center space-x-2 mb-3">
-                   <div class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                     <svg class="w-3 h-3 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                     </svg>
-                   </div>
-                   <h5 class="text-sm font-semibold text-gray-900 dark:text-white">Survey Progress</h5>
-                 </div>
-                 <div class="space-y-3">
-                   <div class="flex items-center justify-between">
-                     <span class="text-sm text-gray-600 dark:text-gray-400">Completion:</span>
-                     <div class="flex items-center space-x-2">
-                       <div class="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                         <div class="bg-green-600 h-2 rounded-full" :style="{ width: selectedSurvey.status === 'completed' ? '100%' : selectedSurvey.status === 'approved' ? '75%' : '25%' }"></div>
-                       </div>
-                       <span class="text-sm font-medium text-gray-900 dark:text-white">
-                         {{ selectedSurvey.status === 'completed' ? '100%' : selectedSurvey.status === 'approved' ? '75%' : '25%' }}
-                       </span>
-                     </div>
-                   </div>
-                   <div class="flex items-center justify-between">
-                     <span class="text-sm text-gray-600 dark:text-gray-400">Surveyor:</span>
-                     <span class="text-sm font-medium text-gray-900 dark:text-white">Field Team</span>
-                   </div>
-                   <div class="flex items-center justify-between">
-                     <span class="text-sm text-gray-600 dark:text-gray-400">Duration:</span>
-                     <span class="text-sm font-medium text-gray-900 dark:text-white">2 hours</span>
-                   </div>
-                 </div>
-               </div>
-             </div>
-
-             <!-- Survey Findings and Recommendations -->
-             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                 <div class="flex items-center space-x-2 mb-3">
-                   <div class="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
-                     <svg class="w-3 h-3 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                     </svg>
-                   </div>
-                   <h5 class="text-sm font-semibold text-gray-900 dark:text-white">Key Findings</h5>
-                 </div>
-                 <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ selectedSurvey.findings }}</p>
-               </div>
-
-               <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                 <div class="flex items-center space-x-2 mb-3">
-                   <div class="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                     <svg class="w-3 h-3 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                   </svg>
-                   </div>
-                   <h5 class="text-sm font-semibold text-gray-900 dark:text-white">Recommendations</h5>
-                 </div>
-                 <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ selectedSurvey.recommendations }}</p>
-               </div>
-             </div>
-
-             <!-- Survey Actions -->
-             <div class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg p-4">
-               <div class="flex items-center justify-between">
-                 <div class="flex items-center space-x-2">
-                   <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
-                   </svg>
-                   <span class="text-sm font-medium text-gray-900 dark:text-white">Survey Actions</span>
-                 </div>
-                 <div class="flex items-center space-x-3">
-                   <button
-                     @click="openSurveyModal"
-                     class="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 transform hover:scale-105"
-                   >
-                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                     </svg>
-                     <span>Edit Survey</span>
-                   </button>
-                   <button
-                     v-if="selectedSurvey.status !== 'completed'"
-                     @click="updateSurveyStatus('completed')"
-                     class="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-all duration-200 transform hover:scale-105"
-                   >
-                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                     </svg>
-                     <span>Mark Complete</span>
-                   </button>
-                 </div>
-               </div>
-             </div>
+           <!-- Action Buttons -->
+           <div class="pt-2 border-t border-gray-200 dark:border-gray-600">
+             <button
+               v-if="enquiry"
+               @click="openSurveyModal"
+               class="w-full bg-green-600 hover:bg-green-700 text-white text-sm py-2.5 px-4 rounded-md transition-colors font-medium"
+               :disabled="!enquiry"
+             >
+               {{ selectedSurvey ? 'View Survey' : 'Schedule Survey' }}
+             </button>
            </div>
          </div>
 
-        <!-- Design Concept and Materials Details -->
+        <!-- Design Concept and Materials Details (Step 2) -->
         <div v-if="currentDetailStep === 2" class="space-y-6">
           <!-- Creative Tasks Overview -->
           <div v-if="enquiry" class="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
@@ -1223,7 +1007,7 @@
                   <span v-else class="text-sm font-medium text-gray-500">Not created</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-sm text-gray-600 dark:text-gray-400">Total Amount:</span>
+                  <span class="text-sm text-gray-600 dark:text-gray-400">Quote Amount:</span>
                   <span v-if="selectedQuotation" class="text-sm font-medium">
                     KES {{ selectedQuotation.total_amount.toLocaleString() }}
                   </span>
@@ -1278,270 +1062,6 @@
             <button class="px-6 py-3 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors">
               Create Budget & Prepare Quote
             </button>
-          </div>
-        </div>
-
-        <!-- Current Project Phase Details -->
-        <div v-if="selectedProject && currentPhase" class="space-y-6">
-          <!-- Phase Header with Enhanced Information -->
-          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center space-x-4">
-                <div class="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                  <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h4 class="text-xl font-bold text-gray-900 dark:text-white">{{ currentPhase.name }}</h4>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ currentPhase.summary }}</p>
-                  <div class="flex items-center space-x-4 mt-2">
-                    <span class="text-xs text-gray-500 dark:text-gray-400">Phase {{ currentPhaseIndex + 1 }} of {{ selectedProject.phases.length }}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">Order: {{ currentPhase.order }}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="text-right">
-                <span :class="getPhaseStatusBadgeClass(currentPhase.status)" class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium mb-2">
-                  {{ getPhaseStatusText(currentPhase.status) }}
-                </span>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
-                  ID: {{ currentPhase.id }}
-                </div>
-              </div>
-            </div>
-
-            <!-- Phase Progress Bar -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Phase Progress</span>
-                <span class="text-sm font-bold text-gray-900 dark:text-white">{{ getPhaseProgressPercentage(currentPhase) }}%</span>
-              </div>
-              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                <div class="bg-blue-600 h-3 rounded-full transition-all duration-300" :style="{ width: getPhaseProgressPercentage(currentPhase) + '%' }"></div>
-              </div>
-            </div>
-          </div>
-
-         <!-- Phase Metrics Dashboard -->
-         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-           <!-- Duration & Timeline -->
-           <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-             <div class="flex items-center space-x-3">
-               <div class="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                 <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                 </svg>
-               </div>
-               <div>
-                 <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Duration</p>
-                 <p class="text-lg font-bold text-gray-900 dark:text-white">{{ currentPhase.estimatedDuration }} days</p>
-                 <p class="text-xs text-gray-600 dark:text-gray-400">{{ getPhaseTimelineInfo(currentPhase) }}</p>
-               </div>
-             </div>
-           </div>
-
-           <!-- Assigned Team/User -->
-           <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-             <div class="flex items-center space-x-3">
-               <div class="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                 <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                 </svg>
-               </div>
-               <div>
-                 <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Assigned To</p>
-                 <p class="text-sm font-bold text-gray-900 dark:text-white">{{ currentPhase.assignedRole }}</p>
-                 <p class="text-xs text-gray-600 dark:text-gray-400">{{ getAssignedUserCount(currentPhase) }} team member(s)</p>
-               </div>
-             </div>
-           </div>
-
-           <!-- Budget & Costs -->
-           <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-             <div class="flex items-center space-x-3">
-               <div class="flex-shrink-0 w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
-                 <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
-                 </svg>
-               </div>
-               <div>
-                 <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget Allocation</p>
-                 <p class="text-sm font-bold text-gray-900 dark:text-white">{{ getPhaseBudgetAllocation(currentPhase) }}</p>
-                 <p class="text-xs text-gray-600 dark:text-gray-400">{{ getPhaseCostBreakdown(currentPhase) }}</p>
-               </div>
-             </div>
-           </div>
-
-           <!-- Materials & Resources -->
-           <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-             <div class="flex items-center space-x-3">
-               <div class="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                 <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                 </svg>
-               </div>
-               <div>
-                 <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Materials</p>
-                 <p class="text-sm font-bold text-gray-900 dark:text-white">{{ getPhaseMaterialCount(currentPhase) }} items</p>
-                 <p class="text-xs text-gray-600 dark:text-gray-400">{{ getPhaseMaterialStatus(currentPhase) }}</p>
-               </div>
-             </div>
-           </div>
-         </div>
-
-         <!-- Associated Materials & Resources -->
-         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-           <div class="flex items-center justify-between mb-4">
-             <div class="flex items-center space-x-3">
-               <div class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                 <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                 </svg>
-               </div>
-               <div>
-                 <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Associated Materials & Resources</h4>
-                 <p class="text-sm text-gray-600 dark:text-gray-400">Materials and resources allocated to this phase</p>
-               </div>
-             </div>
-             <div class="text-right">
-               <div class="text-sm text-gray-600 dark:text-gray-400">Total Value</div>
-               <div class="text-lg font-bold text-green-600 dark:text-green-400">{{ getPhaseTotalMaterialValue(currentPhase) }}</div>
-             </div>
-           </div>
-
-           <!-- Material Items for this Phase -->
-           <div class="space-y-3">
-             <div v-for="material in getPhaseMaterials(currentPhase)" :key="material.id"
-                  class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-               <div class="flex items-center space-x-3">
-                 <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                   <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                   </svg>
-                 </div>
-                 <div>
-                   <p class="text-sm font-medium text-gray-900 dark:text-white">{{ material.name }}</p>
-                   <p class="text-xs text-gray-600 dark:text-gray-400">{{ material.quantity }} {{ material.unit }} • {{ material.category }}</p>
-                 </div>
-               </div>
-               <div class="text-right">
-                 <div class="text-sm font-bold text-gray-900 dark:text-white">KES {{ material.totalCost?.toLocaleString() || '0' }}</div>
-                 <div class="text-xs text-gray-600 dark:text-gray-400">@ KES {{ material.unitPrice?.toLocaleString() || '0' }}/{{ material.unit }}</div>
-               </div>
-             </div>
-
-             <div v-if="getPhaseMaterials(currentPhase).length === 0" class="text-center py-8">
-               <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-               </svg>
-               <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No materials allocated</h3>
-               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Materials will be allocated as the phase progresses</p>
-             </div>
-           </div>
-         </div>
-
-         <!-- Phase Tasks & Deliverables -->
-         <div v-if="currentPhase.tasks && currentPhase.tasks.length > 0" class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-           <div class="flex items-center space-x-3 mb-4">
-             <div class="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
-               <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-               </svg>
-             </div>
-             <div>
-               <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Phase Tasks & Deliverables</h4>
-               <p class="text-sm text-gray-600 dark:text-gray-400">{{ currentPhase.tasks.length }} task(s) defined</p>
-             </div>
-           </div>
-
-           <div class="space-y-3">
-             <div v-for="task in currentPhase.tasks" :key="task.name" class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-               <div class="flex items-start justify-between">
-                 <div class="flex-1">
-                   <h5 class="font-medium text-gray-900 dark:text-white">{{ task.name }}</h5>
-                   <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ task.description }}</p>
-
-                   <div class="mt-3">
-                     <h6 class="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Deliverables</h6>
-                     <ul class="space-y-1">
-                       <li v-for="deliverable in task.deliverables" :key="deliverable" class="flex items-start space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                         <svg class="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                         </svg>
-                         <span>{{ deliverable }}</span>
-                       </li>
-                     </ul>
-                   </div>
-                 </div>
-                 <div class="ml-4">
-                   <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                     Pending
-                   </span>
-                 </div>
-               </div>
-             </div>
-           </div>
-         </div>
-
-          <!-- Phase Controls -->
-          <div class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg p-4">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <button
-                  v-if="currentPhase.status !== 'Completed'"
-                  @click="updatePhaseStatus(currentPhase.id, 'In Progress')"
-                  class="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 transform hover:scale-105"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 11H15m2 0h1.586a1 1 0 01.707.293l.707.707A1 1 0 0021 12.414V15m0 2h-1.586a1 1 0 01-.707-.293l-.707-.707A1 1 0 0018.586 16H16m-2 0H9"/>
-                  </svg>
-                  <span>Start Phase</span>
-                </button>
-                <button
-                  v-if="currentPhase.status === 'In Progress'"
-                  @click="updatePhaseStatus(currentPhase.id, 'Completed')"
-                  class="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-all duration-200 transform hover:scale-105"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  <span>Mark Complete</span>
-                </button>
-
-                <!-- Special approval button for quotation phase -->
-                <button
-                  v-if="currentPhase.id === 'quotation-budget' && currentPhase.status === 'In Progress'"
-                  @click="approveQuotation"
-                  class="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-all duration-200 transform hover:scale-105"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  <span>Approve Quotation</span>
-                </button>
-              </div>
-
-              <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span>{{ currentPhase.estimatedDuration }} days estimated</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Quotation approval status -->
-          <div v-if="currentPhase.id === 'quotation-budget'" class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <div class="flex items-center space-x-2">
-              <div class="w-2 h-2 rounded-full" :class="quotationApproved ? 'bg-green-500' : 'bg-yellow-500'"></div>
-              <span class="text-sm font-medium" :class="quotationApproved ? 'text-green-700 dark:text-green-300' : 'text-yellow-700 dark:text-yellow-300'">
-                {{ quotationApproved ? 'Quotation Approved' : 'Waiting for Quotation Approval' }}
-              </span>
-            </div>
-            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              {{ quotationApproved ? 'Client has approved the quotation. You can now proceed to production.' : 'Quotation must be approved before production can begin.' }}
-            </p>
           </div>
         </div>
 
@@ -1618,7 +1138,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </div>
@@ -1769,6 +1288,7 @@ const currentPhase = computed(() => {
   console.log('Enquiry:', enquiry.value)
   console.log('Selected Survey:', selectedSurvey.value)
   console.log('Selected Quotation:', selectedQuotation.value)
+  console.log('Content Area Rendering: Step', currentDetailStep.value, selectedProject.value ? 'with Project Phases' : 'without Project')
   console.log('=====================================')
   return phase
 })
@@ -1971,6 +1491,19 @@ const getStepNumberClass = (step: number) => {
   }
 }
 
+const getStepIconClass = (step: number) => {
+  const status = getStepStatus(step)
+  if (status === 'completed') {
+    return 'bg-green-500'
+  } else if (status === 'in_progress') {
+    return 'bg-blue-500'
+  } else if (status === 'pending') {
+    return 'bg-yellow-500'
+  } else {
+    return 'bg-gray-400'
+  }
+}
+
 const getStatusBadgeClass = (status: string) => {
   switch (status) {
     case 'completed':
@@ -2035,6 +1568,15 @@ const getPhaseStatusText = (status: string) => {
     case 'In Progress': return 'In Progress'
     case 'Not Started': return 'Not Started'
     default: return 'Unknown'
+  }
+}
+
+const getPhaseIconClass = (status: string) => {
+  switch (status) {
+    case 'Completed': return 'bg-green-500'
+    case 'In Progress': return 'bg-blue-500'
+    case 'Not Started': return 'bg-gray-400'
+    default: return 'bg-gray-400'
   }
 }
 
@@ -2145,12 +1687,22 @@ const nextStep = () => {
 }
 
 const openSurveyModal = () => {
+  console.log('=== DEBUG: openSurveyModal called ===')
+  console.log('Enquiry:', enquiry.value)
+  console.log('Selected Survey:', selectedSurvey.value)
+  console.log('Current Department:', currentDepartment.value)
   // Show site survey modal
   showSiteSurveyModal.value = true
+  console.log('Site Survey Modal opened')
 }
 
 const openMaterialsModal = () => {
+  console.log('=== DEBUG: openMaterialsModal called ===')
+  console.log('Enquiry:', enquiry.value)
+  console.log('Material Items Count:', materialItemsCount.value)
+  console.log('Current Department:', currentDepartment.value)
   showMaterialsModal.value = true
+  console.log('Materials Modal opened')
 }
 
 const openDesignMaterialModal = () => {
@@ -2160,6 +1712,11 @@ const openDesignMaterialModal = () => {
 }
 
 const openBudgetModal = () => {
+  console.log('=== DEBUG: openBudgetModal called ===')
+  console.log('Enquiry:', enquiry.value)
+  console.log('Material Total Cost:', materialTotalCost.value)
+  console.log('Selected Quotation:', selectedQuotation.value)
+  console.log('Current Department:', currentDepartment.value)
   // Prepare material costs for budget modal (flattened for backward compatibility)
   budgetMaterialCosts.value = [
     {

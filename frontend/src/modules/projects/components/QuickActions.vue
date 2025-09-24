@@ -9,27 +9,6 @@
 
     <!-- Action Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-      <!-- Client Service -->
-      <div class="group relative">
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 hover:shadow-lg transition-all duration-200 cursor-pointer"
-             @click="$router.push('/projects/clients')">
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-              </svg>
-            </div>
-            <div class="text-right">
-              <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ clientsCount }}</div>
-              <div class="text-xs text-blue-600 dark:text-blue-400">Total Clients</div>
-            </div>
-          </div>
-          <h4 class="font-medium text-gray-900 dark:text-white mb-1">Client Service</h4>
-          <p class="text-sm text-gray-600 dark:text-gray-400">Register and manage client information</p>
-          <div class="absolute inset-0 bg-blue-500 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-200"></div>
-        </div>
-      </div>
-
       <!-- Enquiries -->
       <div class="group relative">
         <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800 hover:shadow-lg transition-all duration-200 cursor-pointer"
@@ -152,16 +131,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useClients } from '../composables/useClients'
 import { useEnquiries } from '../composables/useEnquiries'
 import { useProjects } from '../composables/useProjects'
 
-const { clients } = useClients()
 const { enquiries } = useEnquiries()
 const { projects } = useProjects()
 
 // Computed properties for counts
-const clientsCount = computed(() => clients.value.length)
 const enquiriesCount = computed(() => enquiries.value.filter(e => e.status !== 'converted_to_project').length)
 const surveysCount = computed(() => enquiries.value.filter(e => e.status === 'site_survey_completed').length)
 const materialsCount = computed(() => enquiries.value.filter(e => e.status === 'materials_created' || e.status === 'quoted').length)

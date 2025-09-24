@@ -39,9 +39,11 @@ export function useAuth() {
       const response = await api.post('/api/login', { email, password })
       if (response.status === 200 && response.data.token) {
         setAuthToken(response.data.token)
+        console.log('Auth token stored in localStorage')
         isLoggedIn.value = true
         await fetchUser()
         localStorage.setItem('isLoggedIn', 'true')
+        console.log('Login successful, user authenticated')
         return true
       }
     } catch (error) {
@@ -97,11 +99,13 @@ export function useAuth() {
 
       user.value = userData
       isLoggedIn.value = true
+      console.log('User data fetched successfully')
 
       // Fetch permissions after user data
       await fetchPermissions()
     } catch (error) {
       console.error('Failed to fetch user:', error)
+      console.log('Removing auth token due to fetchUser failure')
       isLoggedIn.value = false
       user.value = null
       permissions.value = null
@@ -128,10 +132,12 @@ export function useAuth() {
   const checkAuth = () => {
     const token = localStorage.getItem('auth_token')
     const loggedIn = localStorage.getItem('isLoggedIn') === 'true'
+    console.log('Checking auth: token present:', !!token, 'isLoggedIn:', loggedIn)
     if (token && loggedIn) {
       fetchUser()
     } else if (!token && loggedIn) {
       // Token is missing but user thinks they're logged in
+      console.log('Token missing but isLoggedIn true, removing isLoggedIn')
       localStorage.removeItem('isLoggedIn')
     }
   }

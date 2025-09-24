@@ -25,28 +25,12 @@
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Projects Department</h1>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage clients, enquiries, and project lifecycle</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage enquiries and project lifecycle</p>
       </div>
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-              </svg>
-            </div>
-          </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Clients</p>
-            <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ totalClients }}</p>
-          </div>
-        </div>
-      </div>
-
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
         <div class="flex items-center">
           <div class="flex-shrink-0">
@@ -104,22 +88,6 @@
 
     <!-- Navigation Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-      <router-link to="/projects/clients" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-              </svg>
-            </div>
-          </div>
-          <div class="ml-4">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Client Service</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Register and manage client information</p>
-          </div>
-        </div>
-      </router-link>
-
       <router-link to="/projects/enquiries" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
         <div class="flex items-center">
           <div class="flex-shrink-0">
@@ -175,13 +143,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { useClients } from '../composables/useClients'
 import { useEnquiries } from '../composables/useEnquiries'
 import { useProjects } from '../composables/useProjects'
 import QuickActions from '../components/QuickActions.vue'
 import WorkflowGuide from '../components/WorkflowGuide.vue'
 
-const { totalClients } = useClients()
 const { totalEnquiries } = useEnquiries()
 const { totalProjects, projects } = useProjects()
 

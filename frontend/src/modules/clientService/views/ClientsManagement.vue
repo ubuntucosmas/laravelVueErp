@@ -47,7 +47,7 @@
 
     <!-- Filters -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <input
           v-model="filters.search"
           type="text"
@@ -62,6 +62,12 @@
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
+        <input
+          v-model="filters.company"
+          type="text"
+          placeholder="Filter by company..."
+          class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        />
         <button
           @click="applyFilters"
           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
@@ -92,7 +98,7 @@
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Contact
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th @click="sortClients('companyName')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
                 Company
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -104,7 +110,7 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="client in clients" :key="client.id">
+            <tr v-for="client in clients" :key="client.id" :class="{ 'opacity-50 text-gray-500': !client.isActive }">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <div class="flex-shrink-0 h-10 w-10">
@@ -124,7 +130,7 @@
                 <div class="text-gray-500 dark:text-gray-400">{{ client.Phone }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                {{ client.CustomerType === 'company' ? client.FullName : (client.Industry || 'N/A') }}
+                {{ client.companyName || 'N/A' }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span
@@ -136,6 +142,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button
+                  v-if="client.isActive"
                   @click="editClient(client)"
                   class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3"
                 >
@@ -148,11 +155,11 @@
                   View
                 </button>
                 <button
-                  @click="toggleClientStatus(client)"
-                  :class="client.status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'"
+                  @click="handleToggleClick(client)"
+                  :class="client.isActive ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'"
                   class="mr-3"
                 >
-                  {{ client.status === 'active' ? 'Deactivate' : 'Activate' }}
+                  {{ client.isActive ? 'Deactivate' : 'Activate' }}
                 </button>
               </td>
             </tr>
@@ -163,144 +170,167 @@
 
     <!-- Create/Edit Client Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <h2 class="text-xl font-bold mb-6 text-gray-900 dark:text-white">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+        <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
           {{ editingClient ? 'Edit Client' : 'Create New Client' }}
         </h2>
 
-        <form @submit.prevent="handleFormSubmit" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client Name *</label>
-            <input
-              v-model="clientFormData.FullName"
-              type="text"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
+        <form @submit.prevent="handleFormSubmit" class="space-y-6">
+          <!-- Row 1: Client Name, Contact Person, Email -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client Name *</label>
+              <input
+                v-model="clientFormData.FullName"
+                type="text"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person *</label>
+              <input
+                v-model="clientFormData.ContactPerson"
+                type="text"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
+              <input
+                v-model="clientFormData.Email"
+                type="email"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
+              />
+            </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person *</label>
-            <input
-              v-model="clientFormData.ContactPerson"
-              type="text"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
+          <!-- Row 2: Phone, Alternative Contact, Lead Source -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone *</label>
+              <input
+                v-model="clientFormData.Phone"
+                type="tel"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Alternative Contact</label>
+              <input
+                v-model="clientFormData.AltContact"
+                type="tel"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lead Source *</label>
+              <input
+                v-model="clientFormData.LeadSource"
+                type="text"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
+              />
+            </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
-            <input
-              v-model="clientFormData.Email"
-              type="email"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone *</label>
-            <input
-              v-model="clientFormData.Phone"
-              type="tel"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Alternative Contact</label>
-            <input
-              v-model="clientFormData.AltContact"
-              type="tel"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-          </div>
-
-          <div>
+          <!-- Row 3: Address (Full Width - spans all 3 columns) -->
+          <div class="col-span-full">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Address *</label>
             <textarea
               v-model="clientFormData.Address"
               required
               rows="3"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
             ></textarea>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <!-- Row 4: City, County, Postal Address -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">City *</label>
               <input
                 v-model="clientFormData.City"
                 type="text"
                 required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
               />
             </div>
+
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">County *</label>
               <input
                 v-model="clientFormData.County"
                 type="text"
                 required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Postal Address</label>
+              <input
+                v-model="clientFormData.PostalAddress"
+                type="text"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
               />
             </div>
           </div>
 
+          <!-- Row 4.5: Company Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Postal Address</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Company Name *</label>
             <input
-              v-model="clientFormData.PostalAddress"
+              v-model="clientFormData.companyName"
               type="text"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
             />
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Customer Type *</label>
-            <select
-              v-model="clientFormData.CustomerType"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="individual">Individual</option>
-              <option value="company">Company</option>
-              <option value="organization">Organization</option>
-            </select>
-          </div>
+          <!-- Row 5: Preferred Contact, Customer Type, Industry -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Preferred Contact *</label>
+              <select
+                v-model="clientFormData.PreferredContact"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
+              >
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+                <option value="sms">SMS</option>
+              </select>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lead Source *</label>
-            <input
-              v-model="clientFormData.LeadSource"
-              type="text"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-          </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Customer Type *</label>
+              <select
+                v-model="clientFormData.CustomerType"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
+              >
+                <option value="individual">Individual</option>
+                <option value="company">Company</option>
+                <option value="organization">Organization</option>
+              </select>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Preferred Contact *</label>
-            <select
-              v-model="clientFormData.PreferredContact"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="email">Email</option>
-              <option value="phone">Phone</option>
-              <option value="sms">SMS</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Industry</label>
-            <input
-              v-model="clientFormData.Industry"
-              type="text"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Industry</label>
+              <input
+                v-model="clientFormData.Industry"
+                type="text"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary"
+              />
+            </div>
           </div>
         </form>
 
@@ -312,7 +342,7 @@
           {{ formSuccess }}
         </div>
 
-        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex justify-end space-x-3 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
           <button
             @click="closeModal"
             class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
@@ -331,6 +361,176 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirmation Dialog -->
+    <div v-if="showConfirmDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+        <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Confirm Action</h2>
+        <p class="text-gray-700 dark:text-gray-300 mb-6">
+          Are you sure you want to {{ clientToToggle?.isActive ? 'deactivate' : 'activate' }} this client?
+        </p>
+        <div class="flex justify-end space-x-3">
+          <button
+            @click="showConfirmDialog = false; clientToToggle = null"
+            class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            @click="confirmToggle"
+            :disabled="loading"
+            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <span v-if="loading" class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Client Details Modal -->
+    <div v-if="showViewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div v-if="viewLoading" class="text-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p class="mt-2 text-gray-600 dark:text-gray-400">Loading client details...</p>
+        </div>
+
+        <div v-else-if="viewingClient">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Client Details</h2>
+            <button
+              @click="showViewModal = false; viewingClient = null"
+              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Basic Information -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white border-b pb-2">Basic Information</h3>
+
+              <div class="grid grid-cols-1 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                  <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.FullName }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person</label>
+                  <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.ContactPerson || 'N/A' }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                  <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.Email }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
+                  <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.Phone }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Alternative Contact</label>
+                  <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.AltContact || 'N/A' }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Company Name</label>
+                  <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.companyName || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Address & Additional Info -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white border-b pb-2">Address & Additional Information</h3>
+
+              <div class="grid grid-cols-1 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
+                  <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.Address }}</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">City</label>
+                    <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.City }}</p>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">County</label>
+                    <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.County }}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Postal Address</label>
+                  <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.PostalAddress || 'N/A' }}</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Customer Type</label>
+                    <p class="mt-1 text-sm text-gray-900 dark:text-white capitalize">{{ viewingClient.CustomerType }}</p>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Preferred Contact</label>
+                    <p class="mt-1 text-sm text-gray-900 dark:text-white capitalize">{{ viewingClient.PreferredContact }}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lead Source</label>
+                  <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.LeadSource }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Industry</label>
+                  <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.Industry || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status & Dates -->
+          <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                <span
+                  :class="viewingClient.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                  class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full mt-1"
+                >
+                  {{ viewingClient.status }}
+                </span>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Registration Date</label>
+                <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ viewingClient.registration_date }}</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Created At</label>
+                <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ new Date(viewingClient.created_at).toLocaleDateString() }}</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Updated At</label>
+                <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ new Date(viewingClient.updated_at).toLocaleDateString() }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -339,13 +539,39 @@ import { ref, onMounted } from 'vue'
 import type { Client, CreateClientData, UpdateClientData } from '../types/client'
 import { useClients } from '../composables/useClients'
 
-const { clients, loading, error, fetchClients, createClient, updateClient } = useClients()
-const filters = ref({ search: '', status: '' })
+const { clients, loading, error, fetchClients, createClient, updateClient, toggleClientStatus, fetchClient } = useClients()
+const filters = ref({ search: '', status: '', company: '' })
 const showCreateModal = ref(false)
 const editingClient = ref<Client | null>(null)
 const saving = ref(false)
 const formError = ref('')
 const formSuccess = ref('')
+const sortKey = ref<string>('')
+const sortDirection = ref<'asc' | 'desc'>('asc')
+const showConfirmDialog = ref(false)
+const clientToToggle = ref<Client | null>(null)
+const showViewModal = ref(false)
+const viewingClient = ref<Client | null>(null)
+const viewLoading = ref(false)
+
+const sortClients = (key: string) => {
+  if (sortKey.value === key) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortDirection.value = 'asc'
+  }
+  clients.value.sort((a: Client, b: Client) => {
+    const aVal = a.companyName || ''
+    const bVal = b.companyName || ''
+    const aStr = aVal.toLowerCase()
+    const bStr = bVal.toLowerCase()
+    if (aStr < bStr) return sortDirection.value === 'asc' ? -1 : 1
+    if (aStr > bStr) return sortDirection.value === 'asc' ? 1 : -1
+    return 0
+  })
+}
+
 const clientFormData = ref<CreateClientData>({
   FullName: '',
   ContactPerson: '',
@@ -359,7 +585,8 @@ const clientFormData = ref<CreateClientData>({
   CustomerType: 'individual',
   LeadSource: '',
   PreferredContact: 'email',
-  Industry: ''
+  Industry: '',
+  companyName: ''
 })
 
 const applyFilters = () => {
@@ -381,20 +608,41 @@ const editClient = (client: Client) => {
     CustomerType: client.CustomerType,
     LeadSource: client.LeadSource,
     PreferredContact: client.PreferredContact,
-    Industry: client.Industry || ''
+    Industry: client.Industry || '',
+    companyName: client.companyName || ''
   }
   showCreateModal.value = true
 }
 
-const viewClientDetails = (client: Client) => {
-  console.log('View client details:', client.FullName)
-  // Could navigate to client detail view
+const viewClientDetails = async (client: Client) => {
+  viewLoading.value = true
+  showViewModal.value = true
+  try {
+    viewingClient.value = await fetchClient(client.id)
+  } catch (err) {
+    console.error('Error fetching client details:', err)
+    viewingClient.value = client // fallback to the list data
+  } finally {
+    viewLoading.value = false
+  }
 }
 
-const toggleClientStatus = async (client: Client) => {
-  const newStatus = client.status === 'active' ? 'inactive' : 'active'
-  await updateClient(client.id, { status: newStatus })
-  await fetchClients()
+const handleToggleClick = (client: Client) => {
+  clientToToggle.value = client
+  showConfirmDialog.value = true
+}
+
+const confirmToggle = async () => {
+  if (!clientToToggle.value) return
+  try {
+    await toggleClientStatus(clientToToggle.value.id)
+    await fetchClients()
+  } catch (err) {
+    console.error('Error toggling client status:', err)
+  } finally {
+    showConfirmDialog.value = false
+    clientToToggle.value = null
+  }
 }
 
 const closeModal = () => {
@@ -415,7 +663,8 @@ const closeModal = () => {
     CustomerType: 'individual',
     LeadSource: '',
     PreferredContact: 'email',
-    Industry: ''
+    Industry: '',
+    companyName: ''
   }
 }
 
@@ -424,7 +673,8 @@ const handleFormSubmit = async () => {
   if (!clientFormData.value.FullName || !clientFormData.value.ContactPerson ||
       !clientFormData.value.Email || !clientFormData.value.Phone ||
       !clientFormData.value.Address || !clientFormData.value.City ||
-      !clientFormData.value.County || !clientFormData.value.LeadSource) {
+      !clientFormData.value.County || !clientFormData.value.LeadSource ||
+      !clientFormData.value.companyName) {
     formError.value = 'Please fill in all required fields'
     return
   }

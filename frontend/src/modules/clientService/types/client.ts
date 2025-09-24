@@ -13,6 +13,8 @@ export interface Client {
   LeadSource: string;
   PreferredContact: 'email' | 'phone' | 'sms';
   Industry?: string;
+  companyName: string;
+  isActive: boolean;
   registration_date: string;
   status: 'active' | 'inactive';
   created_at: string;
@@ -33,6 +35,7 @@ export interface CreateClientData {
   LeadSource: string;
   PreferredContact: 'email' | 'phone' | 'sms';
   Industry?: string;
+  companyName: string;
 }
 
 export interface UpdateClientData extends Partial<CreateClientData> {

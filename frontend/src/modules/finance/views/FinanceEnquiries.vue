@@ -79,7 +79,7 @@
         >
           <option value="">All Clients</option>
           <option v-for="client in clients" :key="client.id" :value="client.id">
-            {{ client.name }}
+            {{ client.FullName }}
           </option>
         </select>
         <button
@@ -207,7 +207,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Enquiry } from '../../projects/types/enquiry'
 import { useEnquiries } from '../../projects/composables/useEnquiries'
-import { useClients } from '../../projects/composables/useClients'
+import { useClients } from '../../clientService/composables/useClients'
 
 const router = useRouter()
 
