@@ -37,10 +37,14 @@ export const creativesRoutes: RouteRecordRaw[] = [
         }
       },
       {
-        path: 'tasks',
-        name: 'creatives-tasks',
+        path: 'task-management',
+        name: 'creatives-task-management',
         component: () => import('../modules/creatives/views/TaskManagement.vue'),
-        meta: { title: 'Task Management' }
+        meta: { 
+          title: 'Task Management',
+          requiresAuth: true,
+          requiresRole: true
+        }
       },
       {
         path: 'element-templates',

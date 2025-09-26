@@ -199,12 +199,20 @@
         </table>
       </div>
     </div>
+    <!-- Budget Modal -->
+    <BudgetModal
+      v-if="selectedEnquiry"
+      :is-visible="budgetModalVisible"
+      :enquiry="selectedEnquiry"
+      @close="budgetModalVisible = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import BudgetModal from '@/modules/projects/components/BudgetModal.vue'
 import type { Enquiry } from '../../projects/types/enquiry'
 import { useEnquiries } from '../../projects/composables/useEnquiries'
 import { useClients } from '../../projects/composables/useClients'
@@ -297,14 +305,18 @@ const viewEnquiryDetails = (enquiry: Enquiry) => {
   router.push(`/projects/enquiries/${enquiry.id}`)
 }
 
+const budgetModalVisible = ref(false)
+const selectedEnquiry = ref<Enquiry | null>(null)
+
 const createBudget = (enquiry: Enquiry) => {
-  // Navigate to budget creation with enquiry data
-  router.push(`/finance/budgeting/create?enquiry=${enquiry.id}`)
+  selectedEnquiry.value = enquiry
+  budgetModalVisible.value = true
 }
 
 const generateQuote = (enquiry: Enquiry) => {
   // Navigate to quote generation
-  router.push(`/projects/enquiries/${enquiry.id}?action=generate-quote`)
+  console.log('Generate quote for:', enquiry.id)
+  // TODO: Implement quote generation
 }
 
 onMounted(async () => {

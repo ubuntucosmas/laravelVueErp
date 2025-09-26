@@ -1,5 +1,5 @@
 <template>
-  <div class="task-management">
+  <div class="task-management p-6">
     <div class="mb-6">
       <div class="flex items-center justify-between">
         <div>
@@ -19,7 +19,7 @@
             <span>New Task</span>
           </button>
           <button
-            @click="fetchTasks()"
+            @click="loadProjects()"
             class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center space-x-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +55,7 @@
       </div>
       <div class="bg-purple-50 rounded-lg shadow p-4">
         <div class="text-sm text-purple-700">Designs</div>
-        <div class="text-2xl font-bold text-purple-800">{{ designTasks.length }}</div>
+        <div class="text-2xl font-bold text-purple-800">{{ taskStats.total || 0 }}</div>
       </div>
       <div class="bg-red-50 rounded-lg shadow p-4">
         <div class="text-sm text-red-700">Overdue</div>
@@ -126,170 +126,232 @@
       </div>
     </div>
 
-    <!-- Tasks List -->
+    <!-- Projects List -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
-      <div v-if="loading" class="p-8 text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p class="mt-4 text-gray-600">Loading tasks...</p>
-      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Project
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Client
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Created
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                To Do
+              </th>
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Completed
+              </th>
+            </tr>
+          </thead>
 
-      <div v-else-if="filteredTasks.length === 0" class="p-8 text-center">
-        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-        <p class="text-gray-600">No tasks found</p>
-        <p class="text-sm text-gray-500">Create a new task to get started</p>
-      </div>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <!-- Loading Row -->
+            <tr v-if="loading">
+              <td colspan="6" class="px-6 py-8 text-center text-gray-600">
+                <div class="flex flex-col items-center">
+                  <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-3"></div>
+                  <p>Loading projects...</p>
+                </div>
+              </td>
+            </tr>
 
-      <div v-else class="divide-y divide-gray-200">
-        <div
-          v-for="task in filteredTasks"
-          :key="task.id"
-          class="p-6 hover:bg-gray-50 transition-colors"
-        >
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <div class="flex items-center space-x-3 mb-2">
-                <h3 class="text-lg font-medium text-gray-900">{{ task.title }}</h3>
-                <span :class="getTaskTypeColor(task.task_type)" class="px-2 py-1 text-xs rounded-full">
-                  {{ task.task_type.replace('_', ' ').toUpperCase() }}
+            <!-- Empty State -->
+            <tr v-else-if="!loading && filteredProjects.length === 0">
+              <td colspan="6" class="px-6 py-8 text-center text-gray-600">
+                No projects found
+              </td>
+            </tr>
+
+            <!-- Projects Rows -->
+            <tr v-for="project in filteredProjects" :key="project.id" class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{ project.title }}</div>
+                <div class="text-sm text-gray-500">
+                  {{ project.description?.substring(0, 50) || 'No description' }}
+                  {{ project.description?.length > 50 ? '...' : '' }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">{{ project.client?.name || 'N/A' }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">
+                  {{ formatDate(project.created_at) }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span :class="getStatusBadgeClass(project.taskStatus || project.status)">
+                  {{ formatTaskStatus(project.taskStatus || project.status) }}
                 </span>
-                <span :class="getPriorityColor(task.priority)" class="px-2 py-1 text-xs rounded-full">
-                  {{ task.priority.toUpperCase() }}
-                </span>
-                <span :class="getStatusColor(task.status)" class="px-2 py-1 text-xs rounded-full">
-                  {{ task.status.replace('_', ' ').toUpperCase() }}
-                </span>
-              </div>
-
-              <p v-if="task.description" class="text-gray-600 mb-3">{{ task.description }}</p>
-
-              <div class="flex items-center space-x-4 text-sm text-gray-500">
-                <span>Enquiry: {{ task.enquiry?.title || 'N/A' }}</span>
-                <span v-if="task.assigned_user">Assigned to: {{ task.assigned_user.name }}</span>
-                <span v-if="task.due_date">Due: {{ formatDate(task.due_date) }}</span>
-                <span>Progress: {{ task.progress_percentage }}%</span>
-              </div>
-            </div>
-
-            <div class="flex items-center space-x-2">
-              <button
-                @click="openTaskDetail(task)"
-                class="text-blue-600 hover:text-blue-800 p-2"
-                title="View Details"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                </svg>
-              </button>
-
-              <button
-                v-if="canAssignTask(task)"
-                @click="openAssignModal(task)"
-                class="text-green-600 hover:text-green-800 p-2"
-                title="Assign Task (Modal not yet implemented)"
-                disabled
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-              </button>
-
-              <button
-                v-if="canUpdateProgress(task)"
-                @click="openProgressModal(task)"
-                class="text-purple-600 hover:text-purple-800 p-2"
-                title="Update Progress (Modal not yet implemented)"
-                disabled
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Progress Bar -->
-          <div class="mt-4">
-            <div class="flex items-center justify-between text-sm text-gray-600 mb-1">
-              <span>Progress</span>
-              <span>{{ task.progress_percentage }}%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div
-                :class="getProgressBarColor(task.status)"
-                class="h-2 rounded-full transition-all duration-300"
-                :style="{ width: `${task.progress_percentage}%` }"
-              ></div>
-            </div>
-          </div>
-        </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                <button 
+                  @click="viewProjectTasks(project)" 
+                  class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-sm font-medium transition-colors"
+                >
+                  To Do
+                </button>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                <button 
+                  @click="viewCompletedTasks(project)" 
+                  class="px-3 py-1.5 bg-green-100 text-green-700 rounded-md hover:bg-green-200 text-sm font-medium transition-colors"
+                  :disabled="!hasCompletedTasks(project)"
+                  :class="{ 'opacity-50 cursor-not-allowed': !hasCompletedTasks(project), 'hover:bg-green-200': hasCompletedTasks(project) }"
+                  :title="hasCompletedTasks(project) ? 'View completed tasks' : 'No completed tasks'"
+                >
+                  View
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <!-- TODO: Create Task Modal -->
-    <!-- <CreateTaskModal
-      v-if="showCreateTaskModal"
-      @close="showCreateTaskModal = false"
-      @created="handleTaskCreated"
-    /> -->
-
-    <!-- TODO: Task Detail Modal -->
-    <!-- <TaskDetailModal
-      v-if="selectedTask"
-      :task="selectedTask"
-      @close="selectedTask = null"
-      @updated="handleTaskUpdated"
-    /> -->
-
-    <!-- TODO: Assign Task Modal -->
-    <!-- <AssignTaskModal
-      v-if="taskToAssign"
-      :task="taskToAssign"
-      :designers="designers"
-      @close="taskToAssign = null"
-      @assigned="handleTaskAssigned"
-    /> -->
-
-    <!-- TODO: Progress Update Modal -->
-    <!-- <ProgressUpdateModal
-      v-if="taskToUpdate"
-      :task="taskToUpdate"
-      @close="taskToUpdate = null"
-      @updated="handleProgressUpdated"
-    /> -->
+    <!-- Materials Modal -->
+    <!-- Materials Modal -->
+    <MaterialsModal
+      v-if="selectedProject"
+      :enquiry="selectedProject"
+      :is-visible="showMaterialsModal"
+      @close="closeMaterialsModal"
+    />
+    
+    <!-- Completed Tasks Modal -->
+    <CompletedTasksModal
+      v-if="selectedProject"
+      :project="selectedProject"
+      :is-visible="showCompletedTasksModal"
+      :materials="getProjectMaterials(selectedProject)"
+      :uploaded-files="getProjectFiles(selectedProject)"
+      @close="closeCompletedTasksModal"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useTasks } from '../composables/useTasks'
-import { useAuth } from '@/composables/useAuth'
-import type { CreativeTask } from '../types'
-// TODO: Create these modal components
-// import CreateTaskModal from '../components/CreateTaskModal.vue'
-// import TaskDetailModal from '../components/TaskDetailModal.vue'
-// import AssignTaskModal from '../components/AssignTaskModal.vue'
-// import ProgressUpdateModal from '../components/ProgressUpdateModal.vue'
+import { useRouter } from 'vue-router'
+import { useEnquiries } from '@/modules/clientService/composables/useEnquiries'
+import type { Enquiry as BaseEnquiry } from '@/modules/clientService/types'
+import MaterialsModal from '@/modules/projects/components/MaterialsModal.vue'
+import CompletedTasksModal from '@/modules/creatives/components/CompletedTasksModal.vue'
+
+// Extend the base Enquiry type to include materials and uploadedFiles
+interface Enquiry extends BaseEnquiry {
+  materials?: Array<{
+    id: string
+    name: string
+    description?: string
+    materials: Array<{
+      id: string
+      name: string
+      quantity: number
+      unit: string
+      unitPrice: number
+      totalPrice: number
+      category: string
+      createdAt?: string
+      updatedAt?: string
+    }>
+    createdAt?: string
+    updatedAt?: string
+  }>
+  uploadedFiles?: Array<{
+    id?: string
+    name: string
+    size?: number
+    type?: string
+    url?: string
+    uploadedAt?: string
+    uploadedBy?: string
+  }>
+}
+
+// Define the component's props and emits
+const props = defineProps({})
+const emit = defineEmits([])
+
+// Router
+const router = useRouter()
 
 // Composables
-const {
-  tasks,
-  loading,
-  fetchTasks,
-  fetchTaskStats,
-  // assignTask, // TODO: Use when modal components are created
-  // updateProgress, // TODO: Use when modal components are created
-  designTasks
-} = useTasks()
-const { user } = useAuth()
+const { fetchEnquiries, loading, enquiries } = useEnquiries()
+const projects = ref<Array<Enquiry & { taskStatus?: string }>>([])
+
+// Fetch projects with task status
+const loadProjects = async () => {
+  try {
+    await fetchEnquiries()
+    if (enquiries.value && Array.isArray(enquiries.value)) {
+      // Map through projects and add task status
+      projects.value = enquiries.value.map(project => ({
+        ...project,
+        taskStatus: determineTaskStatus(project) // Add task status to each project
+      }))
+      
+      // Update task stats based on projects
+      updateTaskStats(projects.value)
+    }
+  } catch (error) {
+    console.error('Failed to load projects:', error)
+  }
+}
+
+// Determine task status based on project tasks
+const determineTaskStatus = (project: any): string => {
+  // TODO: Replace with actual task status check when tasks API is available
+  // For now, we'll use a mock implementation
+  
+  // If no tasks, return 'pending'
+  if (!project.tasks || project.tasks.length === 0) {
+    return 'pending';
+  }
+  
+  // Check if any task is in progress
+  const hasInProgress = project.tasks.some((task: any) => 
+    task.status === 'in_progress' || task.status === 'draft'
+  );
+  
+  // Check if all tasks are completed
+  const allCompleted = project.tasks.every((task: any) => 
+    task.status === 'completed' || task.status === 'approved'
+  );
+  
+  if (allCompleted) return 'completed';
+  if (hasInProgress) return 'in_progress';
+  return 'pending';
+}
+
+// Update task stats based on projects
+const updateTaskStats = (projectsList: Enquiry[]) => {
+  taskStats.value = {
+    total: projectsList.length,
+    pending: projectsList.filter(p => p.status?.toLowerCase().includes('pending')).length,
+    assigned: 0, // Not applicable for projects
+    in_progress: projectsList.filter(p => p.status?.toLowerCase().includes('in_progress') || p.status?.toLowerCase().includes('in progress')).length,
+    review: projectsList.filter(p => p.status?.toLowerCase().includes('review')).length,
+    approved: projectsList.filter(p => p.status?.toLowerCase().includes('approved')).length,
+    completed: projectsList.filter(p => p.status?.toLowerCase().includes('complete')).length,
+    overdue: 0 // Not tracked in current data
+  }
+}
 
 // State
 const showCreateTaskModal = ref(false)
-const selectedTask = ref<CreativeTask | null>(null)
-const taskToAssign = ref<CreativeTask | null>(null)
-const taskToUpdate = ref<CreativeTask | null>(null)
+const showMaterialsModal = ref(false)
+const showCompletedTasksModal = ref(false)
+const selectedProject = ref<Enquiry | null>(null)
 const filters = ref({
   status: '',
   task_type: '',
@@ -303,22 +365,20 @@ const designers = ref([
 ])
 
 // Computed
-const filteredTasks = computed(() => {
-  let filtered = [...tasks.value]
+const filteredProjects = computed(() => {
+  if (!projects.value || !Array.isArray(projects.value)) {
+    console.log('No projects to filter or invalid projects data')
+    return [];
+  }
+  
+  console.log('Filtering projects with status:', filters.value.status) // Debug log
+  let filtered = [...projects.value]
 
   if (filters.value.status) {
-    filtered = filtered.filter(t => t.status === filters.value.status)
+    filtered = filtered.filter((p: Enquiry) => p.status?.toLowerCase() === filters.value.status.toLowerCase())
   }
-  if (filters.value.task_type) {
-    filtered = filtered.filter(t => t.task_type === filters.value.task_type)
-  }
-  if (filters.value.priority) {
-    filtered = filtered.filter(t => t.priority === filters.value.priority)
-  }
-  if (filters.value.assigned_to) {
-    filtered = filtered.filter(t => t.assigned_to === parseInt(filters.value.assigned_to))
-  }
-
+  
+  console.log('Filtered projects:', filtered) // Debug log
   return filtered
 })
 
@@ -333,113 +393,186 @@ const taskStats = ref({
   overdue: 0
 })
 
-// Methods
-const applyFilters = () => {
+// Format task status for display
+const formatTaskStatus = (status: string): string => {
+  if (!status) return 'Pending';
+  
+  const statusMap: Record<string, string> = {
+    'pending': 'Pending',
+    'in_progress': 'In Progress',
+    'draft': 'In Progress',
+    'completed': 'Completed',
+    'approved': 'Completed'
+  };
+  
+  return statusMap[status.toLowerCase()] || 
+    status
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+}
+
+// Get status badge class based on status
+const getStatusBadgeClass = (status: string): string => {
+  const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full'
+  
+  if (!status) return `${baseClasses} bg-yellow-100 text-yellow-800`
+  
+  const statusLower = status.toLowerCase()
+  
+  if (statusLower === 'completed' || statusLower === 'approved') {
+    return `${baseClasses} bg-green-100 text-green-800`
+  }
+  if (statusLower === 'in_progress' || statusLower === 'draft') {
+    return `${baseClasses} bg-blue-100 text-blue-800`
+  }
+  if (statusLower === 'pending') {
+    return `${baseClasses} bg-yellow-100 text-yellow-800`
+  }
+  if (statusLower === 'review') {
+    return `${baseClasses} bg-purple-100 text-purple-800`
+  }
+  if (statusLower === 'cancelled') {
+    return `${baseClasses} bg-red-100 text-red-800`
+  }
+  
+  // Default to pending style for unknown statuses
+  return `${baseClasses} bg-yellow-100 text-yellow-800`
+}
+
+// Check if project has completed tasks
+const hasCompletedTasks = (project: Enquiry): boolean => {
+  // For testing purposes, always return true to enable the button
+  // In production, you can uncomment and adjust the logic below
+  return true;
+  
+  /* Actual implementation for production:
+  // Check if project has tasks and at least one is completed or approved
+  if (project.tasks && Array.isArray(project.tasks)) {
+    return project.tasks.some((task: any) => 
+      task.status === 'completed' || task.status === 'approved' || 
+      task.status?.toLowerCase().includes('complete') || 
+      task.status?.toLowerCase().includes('approve')
+    )
+  }
+  // If no tasks array, check other possible locations
+  if (project.status) {
+    const status = String(project.status).toLowerCase();
+    return status.includes('complete') || status.includes('approve');
+  }
+  return false;
+  */
+}
+
+// Open materials modal for project
+const viewProjectTasks = (project: Enquiry): void => {
+  selectedProject.value = project
+  showMaterialsModal.value = true
+}
+
+// View completed tasks for project
+const viewCompletedTasks = (project: Enquiry): void => {
+  if (!hasCompletedTasks(project)) return
+  selectedProject.value = project
+  showCompletedTasksModal.value = true
+}
+
+// Close materials modal
+const closeMaterialsModal = (): void => {
+  showMaterialsModal.value = false
+  selectedProject.value = null
+}
+
+// Close completed tasks modal
+const closeCompletedTasksModal = (): void => {
+  showCompletedTasksModal.value = false
+  selectedProject.value = null
+}
+
+// Get project materials or return mock data
+const getProjectMaterials = (project: Enquiry): any[] => {
+  if (project.materials && project.materials.length > 0) {
+    return project.materials;
+  }
+  
+  // Return mock materials data for testing
+  return [
+    {
+      id: 'mock-1',
+      name: 'Sample Materials',
+      description: 'Sample materials for testing',
+      materials: [
+        {
+          id: 'mock-mat-1',
+          name: 'Sample Material 1',
+          quantity: 5,
+          unit: 'pcs',
+          unitPrice: 1000,
+          totalPrice: 5000,
+          category: 'production',
+          description: 'Sample material for testing'
+        },
+        {
+          id: 'mock-mat-2',
+          name: 'Sample Material 2',
+          quantity: 10,
+          unit: 'm',
+          unitPrice: 500,
+          totalPrice: 5000,
+          category: 'production',
+          description: 'Another sample material'
+        }
+      ]
+    }
+  ];
+}
+
+// Get project files or return empty array
+const getProjectFiles = (project: Enquiry): any[] => {
+  if (project.uploadedFiles && project.uploadedFiles.length > 0) {
+    return project.uploadedFiles;
+  }
+  
+  // Return mock files for testing
+  return [
+    {
+      id: 'mock-file-1',
+      name: 'sample-document.pdf',
+      size: 1024 * 1024 * 2, // 2MB
+      type: 'application/pdf',
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: 'System'
+    },
+    {
+      id: 'mock-file-2',
+      name: 'sample-image.jpg',
+      size: 1024 * 1024 * 1.5, // 1.5MB
+      type: 'image/jpeg',
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: 'System'
+    }
+  ];
+}
+
+// Format date for display
+const formatDate = (dateString: string): string => {
+  if (!dateString) return 'N/A'
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+// Apply filters
+const applyFilters = (): void => {
   // Filters are applied automatically through computed property
-}
-
-const openTaskDetail = (task: CreativeTask) => {
-  selectedTask.value = task
-}
-
-const openAssignModal = (task: CreativeTask) => {
-  taskToAssign.value = task
-}
-
-const openProgressModal = (task: CreativeTask) => {
-  taskToUpdate.value = task
-}
-
-// TODO: Use when modal components are created
-// const handleTaskCreated = () => {
-//   showCreateTaskModal.value = false
-//   fetchTasks()
-// }
-
-// const handleTaskUpdated = () => {
-//   selectedTask.value = null
-//   fetchTasks()
-// }
-
-// const handleTaskAssigned = () => {
-//   taskToAssign.value = null
-//   fetchTasks()
-// }
-
-// const handleProgressUpdated = () => {
-//   taskToUpdate.value = null
-//   fetchTasks()
-// }
-
-const canAssignTask = (task: CreativeTask) => {
-  // Design leads can assign tasks
-  return user.value?.roles?.includes('Designer') && task.status === 'pending'
-}
-
-const canUpdateProgress = (task: CreativeTask) => {
-  // Assigned designers can update progress
-  return task.assigned_to === user.value?.id || user.value?.roles?.includes('Designer')
-}
-
-const getTaskTypeColor = (type: string) => {
-  const colors = {
-    design: 'bg-purple-100 text-purple-800',
-    mockup: 'bg-blue-100 text-blue-800',
-    render: 'bg-green-100 text-green-800',
-    material_list: 'bg-orange-100 text-orange-800'
-  }
-  return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800'
-}
-
-const getPriorityColor = (priority: string) => {
-  const colors = {
-    low: 'bg-gray-100 text-gray-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    high: 'bg-orange-100 text-orange-800',
-    urgent: 'bg-red-100 text-red-800'
-  }
-  return colors[priority as keyof typeof colors] || 'bg-gray-100 text-gray-800'
-}
-
-const getStatusColor = (status: string) => {
-  const colors = {
-    pending: 'bg-gray-100 text-gray-800',
-    assigned: 'bg-blue-100 text-blue-800',
-    in_progress: 'bg-yellow-100 text-yellow-800',
-    review: 'bg-purple-100 text-purple-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-    completed: 'bg-green-100 text-green-800'
-  }
-  return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
-}
-
-const getProgressBarColor = (status: string) => {
-  const colors = {
-    pending: 'bg-gray-400',
-    assigned: 'bg-blue-500',
-    in_progress: 'bg-yellow-500',
-    review: 'bg-purple-500',
-    approved: 'bg-green-500',
-    rejected: 'bg-red-500',
-    completed: 'bg-green-500'
-  }
-  return colors[status as keyof typeof colors] || 'bg-gray-400'
-}
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString()
 }
 
 // Load data on mount
 onMounted(async () => {
-  try {
-    await Promise.all([
-      fetchTasks(),
-      fetchTaskStats().then(stats => taskStats.value = stats)
-    ])
-  } catch (error) {
-    console.error('Error loading task data:', error)
-  }
+  console.log('Component mounted, loading projects...') // Debug log
+  await loadProjects()
+  console.log('Projects loaded after mount:', projects.value) // Debug log
 })
 </script>

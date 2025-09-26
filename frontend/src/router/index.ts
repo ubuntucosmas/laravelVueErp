@@ -9,6 +9,7 @@ import { projectsRoutes } from './projects'
 import { clientServiceRoutes } from './clientService'
 import { creativesRoutes } from './creatives'
 import financeRoutes from './finance'
+import { productionRoutes } from './production'
 
 // Combine all routes
 const routes: RouteRecordRaw[] = [
@@ -19,6 +20,7 @@ const routes: RouteRecordRaw[] = [
   ...clientServiceRoutes,
   ...creativesRoutes,
   ...financeRoutes,
+  ...productionRoutes,
 ]
 
 const router = createRouter({

@@ -142,6 +142,22 @@ export function useRouteGuard() {
     return requiredRoles.some(role => userRoles.includes(role))
   }
 
+  const canAccessProduction = (allowedRoles: string[]): boolean => {
+    if (!isLoggedIn.value || !user.value) {
+      return false
+    }
+
+    const userRoles = user.value.roles || []
+
+    // Super Admin can access everything
+    if (userRoles.includes('Super Admin')) {
+      return true
+    }
+
+    // Check if user has any of the allowed roles
+    return allowedRoles.some(role => userRoles.includes(role))
+  }
+
   const redirectToAppropriateRoute = () => {
     if (!isLoggedIn.value || !user.value) {
       router.push('/login')
@@ -257,6 +273,7 @@ export function useRouteGuard() {
         { name: 'design-dashboard', path: '/creatives/design', label: 'Design Department', icon: '📐' },
         { name: 'creatives-enquiries', path: '/creatives/enquiries', label: 'Enquiries', icon: '📝' },
         { name: 'creatives-element-templates', path: '/creatives/element-templates', label: 'Element Templates', icon: '📋' },
+        { name: 'creatives-task-management', path: '/creatives/task-management', label: 'Task Management', icon: '📋' },
 
         // TODO: Add individual management routes when components are created
         // { name: 'creatives-designs', path: '/creatives/designs', label: 'Designs', icon: '📐' },
@@ -278,7 +295,35 @@ export function useRouteGuard() {
         { name: 'finance-analytics', path: '/finance/analytics', label: 'Financial Analytics', icon: '📉' }
       )
     }
-
+    // Add production routes for authorized users
+    if (canAccessProduction(['Super Admin', 'Production Manager', 'Production Staff'])) {
+      routes.push(
+        { 
+          name: 'production-dashboard', 
+          path: '/production', 
+          label: 'Production Dashboard', 
+          icon: '🏭' 
+        },
+        { 
+          name: 'production-work-orders', 
+          path: '/production/work-orders', 
+          label: 'Work Orders', 
+          icon: '📋' 
+        },
+        { 
+          name: 'production-reports', 
+          path: '/production/reports', 
+          label: 'Production Reports', 
+          icon: '📊' 
+        },
+        {
+          name: 'labor-assignments',
+          path: '/production/labor-assignments',
+          label: 'Labor Assignments',
+          icon: '👷'
+        },
+      )
+    }
     return routes
   }
 
@@ -317,6 +362,10 @@ export function useRouteGuard() {
 
     if (canAccessFinance(['Accounts', 'Costing'])) {
       return 'Finance Panel'
+    }
+
+    if (canAccessProduction(['Production Manager', 'Production Staff'])) {
+      return 'Production Panel'
     }
 
     // Department fallback
