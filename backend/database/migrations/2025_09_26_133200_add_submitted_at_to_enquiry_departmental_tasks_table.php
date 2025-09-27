@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('clients', function (Blueprint $table) {
+        Schema::table('enquiry_departmental_tasks', function (Blueprint $table) {
+            $table->timestamp('submitted_at')->nullable()->after('completed_at');
         });
     }
 
@@ -20,7 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('clients', function (Blueprint $table) {
+        Schema::table('enquiry_departmental_tasks', function (Blueprint $table) {
+            $table->dropColumn('submitted_at');
         });
     }
 };

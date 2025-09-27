@@ -2,8 +2,8 @@ import { ref, computed } from 'vue'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types'
 import api from '@/plugins/axios'
 
-// Import shared dummy data from ClientService module
-import { dummyEnquiries } from '../../clientService/composables/useEnquiries'
+// Import shared dummy data
+import { dummyEnquiries } from '../../shared/data/dummyData'
 
 const enquiries = ref<Enquiry[]>([...dummyEnquiries])
 const loading = ref(false)

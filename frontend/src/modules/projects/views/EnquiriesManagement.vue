@@ -32,18 +32,46 @@
       </ol>
     </nav>
 
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Enquiries Management</h1>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage client enquiries and project requests</p>
+    <!-- Task Dashboard View -->
+    <div v-if="showTaskDashboard && selectedEnquiryForTasks">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <button
+            @click="closeTaskDashboard"
+            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to Enquiries
+          </button>
+        </div>
       </div>
-      <button
-        @click="showCreateModal = true"
-        class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-lg font-medium transition-colors"
-      >
-        New Enquiry
-      </button>
+
+      <DepartmentalTaskDashboard
+        :context="'enquiry'"
+        :context-id="selectedEnquiryForTasks.id"
+        :title="`Tasks for ${selectedEnquiryForTasks.project_name}`"
+        :enquiry="selectedEnquiryForTasks"
+        :department="selectedEnquiryForTasks.assigned_department || selectedEnquiryForTasks.department?.name || 'projects'"
+        @taskAssigned="handleTaskAssigned"
+      />
     </div>
+
+    <!-- Enquiries Table View -->
+    <div v-else>
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Enquiries Management</h1>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage client enquiries and project requests</p>
+        </div>
+        <button
+          @click="showCreateModal = true"
+          class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-lg font-medium transition-colors"
+        >
+          New Enquiry
+        </button>
+      </div>
 
     <!-- Status Tabs -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
@@ -128,6 +156,9 @@
                 Budget
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Departmental Tasks
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -165,6 +196,21 @@
                </td>
                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                  {{ enquiry.enquiry_number }}
+               </td>
+               <td class="px-6 py-4 whitespace-nowrap">
+                 <button
+                   @click="openTaskDashboard(enquiry)"
+                   class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                   :title="`View departmental tasks for ${enquiry.project_name}`"
+                 >
+                   <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                   </svg>
+                   <span class="mr-1">Tasks</span>
+                   <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full min-w-[1.25rem] h-4">
+                     3
+                   </span>
+                 </button>
                </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button
@@ -314,18 +360,35 @@
         </div>
       </div>
     </div>
+
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types'
 import { useEnquiries } from '../composables/useEnquiries'
 import { useClients } from '../../clientService/composables/useClients'
 import { useDepartmentWorkflow } from '../composables/useDepartmentWorkflow'
+import DepartmentalTaskDashboard from '../components/DepartmentalTaskDashboard.vue'
+
+// Emits
+const emit = defineEmits<{
+  taskAssigned: [data: {
+    userId: number
+    userName: string
+    userEmail: string
+    taskCount: number
+    taskNames: string
+    message: string
+    tasks: any[]
+  }]
+}>()
 
 const router = useRouter()
+const route = useRoute()
 
 const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry, convertToProject, canConvertToProject, newEnquiries, inProgressEnquiries, convertedEnquiries } = useEnquiries()
 const { activeClients, fetchClients } = useClients()
@@ -338,6 +401,8 @@ const editingEnquiry = ref<Enquiry | null>(null)
 const saving = ref(false)
 const formError = ref('')
 const formSuccess = ref('')
+const showTaskDashboard = ref(false)
+const selectedEnquiryForTasks = ref<Enquiry | null>(null)
 const enquiryFormData = ref<CreateEnquiryData>({
   date_received: new Date().toISOString().split('T')[0],
   expected_delivery_date: '',
@@ -503,6 +568,29 @@ const updateStatus = async (enquiry: Enquiry, status: Enquiry['status']) => {
   await fetchEnquiries()
 }
 
+const openTaskDashboard = (enquiry: Enquiry) => {
+  selectedEnquiryForTasks.value = enquiry
+  showTaskDashboard.value = true
+}
+
+const closeTaskDashboard = () => {
+  showTaskDashboard.value = false
+  selectedEnquiryForTasks.value = null
+}
+
+const handleTaskAssigned = (data: {
+  userId: number
+  userName: string
+  userEmail: string
+  taskCount: number
+  taskNames: string
+  message: string
+  tasks: any[]
+}) => {
+  // Emit the event up to the parent (MainLayout)
+  emit('taskAssigned', data)
+}
+
 const closeModal = () => {
   showCreateModal.value = false
   editingEnquiry.value = null
@@ -580,5 +668,23 @@ const handleFormSubmit = async () => {
 onMounted(async () => {
   await fetchEnquiries()
   await fetchClients()
+
+  // Check for query parameters to auto-open task dashboard
+  const openTasksEnquiryId = route.query.open_tasks as string
+  const highlightTaskId = route.query.highlight_task as string
+
+  if (openTasksEnquiryId) {
+    // Find the enquiry and open its task dashboard
+    const enquiry = enquiries.value.find(e => e.id === parseInt(openTasksEnquiryId))
+    if (enquiry) {
+      openTaskDashboard(enquiry)
+
+      // If we have a task to highlight, we could scroll to it or highlight it
+      if (highlightTaskId) {
+        // Store the task ID to highlight (could be used in DepartmentalTaskDashboard)
+        // For now, we'll just open the dashboard
+      }
+    }
+  }
 })
 </script>

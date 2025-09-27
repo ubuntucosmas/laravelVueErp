@@ -43,6 +43,20 @@ export const creativesRoutes: RouteRecordRaw[] = [
         meta: { title: 'Task Management' }
       },
       {
+        path: 'materials',
+        name: 'creatives-materials',
+        component: () => import('../modules/creatives/views/TaskManagement.vue'),
+        meta: { title: 'Material & Cost Listing' },
+        props: { taskType: 'materials' }
+      },
+      {
+        path: 'final-design',
+        name: 'creatives-final-design',
+        component: () => import('../modules/creatives/views/TaskManagement.vue'),
+        meta: { title: 'Final Design' },
+        props: { taskType: 'final-design' }
+      },
+      {
         path: 'element-templates',
         name: 'creatives-element-templates',
         component: () => import('../modules/creatives/views/ElementTemplates.vue'),

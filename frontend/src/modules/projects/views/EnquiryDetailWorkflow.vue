@@ -177,34 +177,29 @@
     <!-- Workflow Steps -->
     <div class="relative overflow-hidden">
       <div class="w-full px-4">
-        <!-- Enquiry Workflow Cards -->
+        <!-- Project Workflow Phases (9 Phases) -->
         <div
           v-if="!selectedProject"
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
         >
-      <!-- Step 1: Enquiry & Site Survey -->
+      <!-- Phase 1: Site Survey -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
             :class="getStepBorderClass(1)">
-        <!-- Prominent Top Section -->
-        <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
+        <div class="p-6 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/30 border-b border-gray-200 dark:border-gray-600">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
-              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
-                    :class="getStepIconClass(1)">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-green-500">
                 <svg v-if="getStepStatus(1) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
                 <svg v-else-if="getStepStatus(1) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-                <svg v-else-if="getStepStatus(1) === 'pending'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
                 <span v-else class="text-lg font-bold text-white">1</span>
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Enquiry & Site Survey</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-300">Project request & assessment</p>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Site Survey</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Site assessment & feasibility study</p>
               </div>
             </div>
             <div class="text-right">
@@ -214,31 +209,42 @@
             </div>
           </div>
         </div>
+        <div class="p-4">
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
+              <span>Conduct Site Visit</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
+              <span>Assess Requirements</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
+              <span>Generate Survey Report</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Step 2: Material Specification -->
+      <!-- Phase 2: Creatives and Design -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
             :class="getStepBorderClass(2)">
-        <!-- Prominent Top Section -->
-        <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
+        <div class="p-6 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/30 border-b border-gray-200 dark:border-gray-600">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
-              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
-                    :class="getStepIconClass(2)">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-purple-500">
                 <svg v-if="getStepStatus(2) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
                 <svg v-else-if="getStepStatus(2) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-                <svg v-else-if="getStepStatus(2) === 'pending'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
                 <span v-else class="text-lg font-bold text-white">2</span>
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Design Concept and Material Specification</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-300">Creative work & requirements</p>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Creatives & Design</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Design & materials planning</p>
               </div>
             </div>
             <div class="text-right">
@@ -248,31 +254,38 @@
             </div>
           </div>
         </div>
+        <div class="p-4">
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-purple-500"></div>
+              <span>Final Design Approval</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-purple-500"></div>
+              <span>Material & Cost Listing</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Step 3: Budget & Quote Preparation -->
+      <!-- Phase 3: Account Finance & Costing -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
             :class="getStepBorderClass(3)">
-        <!-- Prominent Top Section -->
-        <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
+        <div class="p-6 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/30 border-b border-gray-200 dark:border-gray-600">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
-              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
-                    :class="getStepIconClass(3)">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-green-500">
                 <svg v-if="getStepStatus(3) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
                 <svg v-else-if="getStepStatus(3) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-                <svg v-else-if="getStepStatus(3) === 'pending'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
                 <span v-else class="text-lg font-bold text-white">3</span>
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Budget & Quote Preparation</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-300">Cost calculation & quotation</p>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Finance & Costing</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Budget & quote management</p>
               </div>
             </div>
             <div class="text-right">
@@ -282,41 +295,277 @@
             </div>
           </div>
         </div>
+        <div class="p-4">
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
+              <span>Generate Budget</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
+              <span>Prepare & Send Quote</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
+              <span>Quote Approval Confirmation</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-
-      <!-- Step 4: Project Conversion -->
+      <!-- Phase 4: Procurement -->
       <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
-            :class="getStepBorderClass(10)">
-        <!-- Prominent Top Section -->
-        <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
+            :class="getStepBorderClass(4)">
+        <div class="p-6 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-900/30 border-b border-gray-200 dark:border-gray-600">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
-              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
-                    :class="getStepIconClass(10)">
-                <svg v-if="getStepStatus(10) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-orange-500">
+                <svg v-if="getStepStatus(4) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                <svg v-else-if="getStepStatus(10) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-else-if="getStepStatus(4) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                <svg v-else-if="getStepStatus(10) === 'pending'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <span v-else class="text-lg font-bold text-white">4</span>
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Project Conversion</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-300">Production ready</p>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Procurement</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Material sourcing & ordering</p>
               </div>
             </div>
             <div class="text-right">
-              <span :class="getStatusBadgeClass(getStepStatus(10))" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
+              <span :class="getStatusBadgeClass(getStepStatus(4))" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
                 {{ getStepStatusText(4) }}
               </span>
             </div>
           </div>
         </div>
+        <div class="p-4">
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-orange-500"></div>
+              <span>Inventory Check</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-orange-500"></div>
+              <span>Procurement Process</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-orange-500"></div>
+              <span>Inventory Ready for Production</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 5: Production -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
+            :class="getStepBorderClass(5)">
+        <div class="p-6 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-900/30 border-b border-gray-200 dark:border-gray-600">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-red-500">
+                <svg v-if="getStepStatus(5) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <svg v-else-if="getStepStatus(5) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span v-else class="text-lg font-bold text-white">5</span>
+              </div>
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Production</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Manufacturing & quality control</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span :class="getStatusBadgeClass(getStepStatus(5))" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
+                {{ getStepStatusText(5) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-red-500"></div>
+              <span>Execute Production</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-red-500"></div>
+              <span>Quality Control</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-red-500"></div>
+              <span>Packing & Handover for Setup</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 6: Event Setup & Execution -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
+            :class="getStepBorderClass(6)">
+        <div class="p-6 bg-gradient-to-r from-cyan-50 to-cyan-100 dark:from-cyan-900/20 dark:to-cyan-900/30 border-b border-gray-200 dark:border-gray-600">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-cyan-500">
+                <svg v-if="getStepStatus(6) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <svg v-else-if="getStepStatus(6) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span v-else class="text-lg font-bold text-white">6</span>
+              </div>
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Event Setup & Execution</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">On-site delivery & setup</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span :class="getStatusBadgeClass(getStepStatus(6))" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
+                {{ getStepStatusText(6) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-cyan-500"></div>
+              <span>Site Delivery</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-cyan-500"></div>
+              <span>Setup Execution</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 7: Client Handover & Feedback -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
+            :class="getStepBorderClass(7)">
+        <div class="p-6 bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-900/30 border-b border-gray-200 dark:border-gray-600">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-indigo-500">
+                <svg v-if="getStepStatus(7) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <svg v-else-if="getStepStatus(7) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span v-else class="text-lg font-bold text-white">7</span>
+              </div>
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Client Handover & Feedback</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Project delivery & review</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span :class="getStatusBadgeClass(getStepStatus(7))" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
+                {{ getStepStatusText(7) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+              <span>Final Handover</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+              <span>Feedback Collection</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 8: Set Down & Return -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
+            :class="getStepBorderClass(8)">
+        <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-gray-500">
+                <svg v-if="getStepStatus(8) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <svg v-else-if="getStepStatus(8) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span v-else class="text-lg font-bold text-white">8</span>
+              </div>
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Set Down & Return</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Post-event cleanup & returns</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span :class="getStatusBadgeClass(getStepStatus(8))" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
+                {{ getStepStatusText(8) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-gray-500"></div>
+              <span>Dismantling</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-gray-500"></div>
+              <span>Returns & Storage</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 9: Archival & Reporting -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg border-2 transition-all duration-200 overflow-hidden"
+            :class="getStepBorderClass(9)">
+        <div class="p-6 bg-gradient-to-r from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-900/30 border-b border-gray-200 dark:border-gray-600">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-teal-500">
+                <svg v-if="getStepStatus(9) === 'completed'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <svg v-else-if="getStepStatus(9) === 'in_progress'" class="w-6 h-6 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span v-else class="text-lg font-bold text-white">9</span>
+              </div>
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Archival & Reporting</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Project closure & analytics</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span :class="getStatusBadgeClass(getStepStatus(9))" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold">
+                {{ getStepStatusText(9) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-teal-500"></div>
+              <span>Close Project</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 rounded-full bg-teal-500"></div>
+              <span>Analytics & Reports</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
        <!-- Project Phases (Available when quotation is approved) -->
        <div v-if="selectedQuotation && selectedQuotation.status === 'approved'" class="mt-8">
@@ -402,6 +651,22 @@
                      <span class="text-sm text-green-600 dark:text-green-400">Phase foundation completed</span>
                    </div>
                  </div>
+
+                 <!-- Departmental Tasks Overview -->
+                 <div v-if="selectedProject.phases[0].departmental_tasks && selectedProject.phases[0].departmental_tasks.length > 0" class="pt-3 border-t border-gray-200 dark:border-gray-600">
+                   <h5 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Departmental Tasks</h5>
+                   <div class="space-y-2">
+                     <div v-for="task in selectedProject.phases[0].departmental_tasks.slice(0, 2)" :key="task.id" class="flex items-center justify-between text-xs">
+                       <span class="text-gray-600 dark:text-gray-400 truncate">{{ task.task_name }}</span>
+                       <span :class="getTaskStatusClass(task.status)" class="px-2 py-1 rounded text-xs">
+                         {{ task.status.replace('_', ' ') }}
+                       </span>
+                     </div>
+                     <div v-if="selectedProject.phases[0].departmental_tasks.length > 2" class="text-xs text-gray-500 dark:text-gray-500">
+                       +{{ selectedProject.phases[0].departmental_tasks.length - 2 }} more tasks
+                     </div>
+                   </div>
+                 </div>
                </div>
              </div>
            </div>
@@ -439,6 +704,19 @@
                  <div class="text-sm">
                    <span class="font-medium">Status:</span>
                    <span class="text-blue-600 ml-2">Creating design concepts</span>
+                 </div>
+
+                 <!-- Departmental Tasks for Design Phase -->
+                 <div v-if="selectedProject.phases[1] && selectedProject.phases[1].departmental_tasks && selectedProject.phases[1].departmental_tasks.length > 0" class="pt-2 border-t border-gray-200 dark:border-gray-600">
+                   <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Departmental Tasks</div>
+                   <div class="space-y-1">
+                     <div v-for="task in selectedProject.phases[1].departmental_tasks.slice(0, 2)" :key="task.id" class="flex items-center justify-between text-xs">
+                       <span class="text-gray-600 dark:text-gray-400 truncate">{{ task.task_name }}</span>
+                       <span :class="getTaskStatusClass(task.status)" class="px-1.5 py-0.5 rounded text-xs">
+                         {{ task.status.replace('_', ' ') }}
+                       </span>
+                     </div>
+                   </div>
                  </div>
                </div>
              </div>
@@ -787,7 +1065,7 @@
           </button>
           <button
             @click="nextStep"
-            :disabled="currentDetailStep >= 4"
+            :disabled="currentDetailStep >= 9"
             class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next →
@@ -1246,50 +1524,6 @@
   </div>
 </div>
 
-<!-- Materials Modal -->
-<MaterialsModal
-  :is-visible="showMaterialsModal"
-  :enquiry="enquiry"
-  :department="currentDepartment"
-  @close="showMaterialsModal = false"
-  @save="handleMaterialsSave"
-/>
-
-<!-- Budget Modal -->
-<BudgetModal
-  :is-visible="showBudgetModal"
-  :enquiry="enquiry"
-  :material-costs="budgetMaterialCosts"
-  :material-elements="quoteMaterialElements"
-  @close="showBudgetModal = false"
-  @save="handleBudgetSave"
-  @generate-quote="handleGenerateQuote"
-/>
-
-<!-- Quote Modal -->
-<QuoteModal
-  :is-visible="showQuoteModal"
-  :enquiry="enquiry"
-  :material-elements="quoteMaterialElements"
-  @close="showQuoteModal = false"
-  @save="handleQuoteSave"
-/>
-
-<!-- Quotation Viewer -->
-<QuotationViewer
-  :is-visible="showQuotationViewer"
-  :quotation="currentQuotation"
-  @close="showQuotationViewer = false"
-/>
-
-<!-- Site Survey Modal -->
-<SiteSurveyModal
-  :is-visible="showSiteSurveyModal"
-  :enquiry="enquiry"
-  :survey="selectedSurvey"
-  @close="showSiteSurveyModal = false"
-  @save="handleSiteSurveySave"
-/>
 </div>
 </template>
 
@@ -1301,11 +1535,6 @@ import { useEnquiries } from '../composables/useEnquiries'
 import { useSiteSurveys } from '../composables/useSiteSurveys'
 import { useEnquiryIntegration } from '../../creatives/composables'
 import { useDepartmentWorkflow } from '../composables/useDepartmentWorkflow'
-import MaterialsModal from '../components/MaterialsModal.vue'
-import BudgetModal from '../components/BudgetModal.vue'
-import QuoteModal from '../components/QuoteModal.vue'
-import QuotationViewer from '../components/QuotationViewer.vue'
-import SiteSurveyModal from '../components/SiteSurveyModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -1350,12 +1579,18 @@ const budgetMaterialCosts = ref([])
 const quoteMaterialElements = ref([])
 const currentQuotation = ref<any>(null)
 
-// Workflow step statuses (reactive)
+// Workflow step statuses (reactive) - Updated for 10 phases
 const stepStatuses = ref({
-  1: 'completed', // Enquiry & Site Survey
-  2: 'pending',   // Material Specification
-  3: 'pending',   // Budget & Quote Preparation
-  4: 'pending'    // Project Conversion
+  1: 'completed', // Site Survey
+  2: 'pending',   // Client Service
+  3: 'pending',   // Creatives & Design
+  4: 'pending',   // Finance & Costing
+  5: 'pending',   // Procurement
+  6: 'pending',   // Production
+  7: 'pending',   // Event Setup & Execution
+  8: 'pending',   // Client Handover & Feedback
+  9: 'pending',   // Set Down & Return
+  10: 'pending'   // Archival & Reporting
 })
 
 // Mock data for demonstration
@@ -1365,16 +1600,16 @@ const materialTotalCost = ref(250000)
 // Computed properties
 const overallProgress = computed(() => {
   let completed = 0
-  // Step 1: Enquiry & Site Survey - always completed if enquiry exists
+  // Step 1: Client Service - always completed if enquiry exists
   if (enquiry.value) completed++
-  // Step 2: Material Specification - check if materials exist
+  // Step 2: Creatives & Design - check if materials exist
   if (materialItemsCount.value > 0) completed++
-  // Step 3: Budget & Quote Preparation - check if quotation exists
+  // Step 3: Finance & Costing - check if quotation exists
   if (selectedQuotation.value) completed++
-  // Step 4: Project Conversion - check if project exists
-  if (selectedProject.value) completed++
+  // Steps 4-9: Other phases - for now, mark as pending
+  // In a real implementation, these would check actual departmental task completion
 
-  return Math.round((completed / 4) * 100)
+  return Math.round((completed / 9) * 100)
 })
 
 
@@ -1676,6 +1911,19 @@ const getPhaseStatusText = (status: string) => {
   }
 }
 
+const getTaskStatusClass = (status: string) => {
+  switch (status) {
+    case 'completed':
+      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+    case 'in_progress':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+    case 'pending':
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+  }
+}
+
 const getPhaseIconClass = (status: string) => {
   switch (status) {
     case 'Completed': return 'bg-green-500'
@@ -1742,12 +1990,17 @@ const remainingPhases = computed(() => {
 
 const getCurrentStepTitle = () => {
   const titles = [
-    'Enquiry & Site Survey',
-    'Design Concept and Material Specification',
-    'Budget & Quote Preparation',
-    'Project Conversion'
+    'Client Service',
+    'Creatives & Design',
+    'Finance & Costing',
+    'Procurement',
+    'Production',
+    'Event Setup & Execution',
+    'Client Handover & Feedback',
+    'Set Down & Return',
+    'Archival & Reporting'
   ]
-  return titles[currentDetailStep.value - 1] || 'Enquiry & Site Survey'
+  return titles[currentDetailStep.value - 1] || 'Client Service'
 }
 
 const formatDate = (date: string) => {
@@ -1777,7 +2030,7 @@ const updateStepStatus = (stepNumber: number, status: string) => {
 }
 
 const nextStep = () => {
-  if (currentDetailStep.value < 4) {
+  if (currentDetailStep.value < 9) {
     // Update the status of current step to completed
     updateStepStatus(currentDetailStep.value, 'completed')
 
@@ -1785,7 +2038,7 @@ const nextStep = () => {
     currentDetailStep.value++
 
     // Update the status of new current step to in_progress
-    if (currentDetailStep.value <= 4) {
+    if (currentDetailStep.value <= 9) {
       updateStepStatus(currentDetailStep.value, 'in_progress')
     }
   }

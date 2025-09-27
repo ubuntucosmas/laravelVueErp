@@ -118,11 +118,11 @@
                 <div class="flex items-center">
                   <div class="flex-shrink-0 h-10 w-10">
                     <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                      <span class="text-sm font-medium text-gray-700">{{ employee.name.charAt(0) }}</span>
+                      <span class="text-sm font-medium text-gray-700">{{ employee.first_name.charAt(0) }}</span>
                     </div>
                   </div>
                   <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ employee.name }}</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ employee.first_name }} {{ employee.last_name }}</div>
                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ employee.email }}</div>
                   </div>
                 </div>
@@ -137,12 +137,12 @@
                 <span
                   :class="[
                     'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                    employee.is_active
+                    employee.status === 'active'
                       ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                       : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                   ]"
                 >
-                  {{ employee.is_active ? 'Active' : 'Inactive' }}
+                  {{ employee.status === 'active' ? 'Active' : 'Inactive' }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -156,12 +156,12 @@
                   @click="toggleEmployeeStatus(employee)"
                   :class="[
                     'mr-3',
-                    employee.is_active
+                    employee.status === 'active'
                       ? 'text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300'
                       : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300'
                   ]"
                 >
-                  {{ employee.is_active ? 'Deactivate' : 'Activate' }}
+                  {{ employee.status === 'active' ? 'Deactivate' : 'Activate' }}
                 </button>
               </td>
             </tr>
@@ -200,8 +200,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import type { Employee } from './types/employee'
-import { useEmployees } from './composables/useEmployees'
+import type { Employee } from '../../shared/types/employee'
+import { useEmployees } from '../../shared/composables/useEmployees'
 
 const { employees, loading, error, fetchEmployees } = useEmployees()
 const filters = ref({ search: '', department_id: undefined as number | undefined, is_active: undefined as boolean | undefined })
@@ -220,8 +220,8 @@ const editEmployee = (employee: Employee) => {
 
 const toggleEmployeeStatus = async (employee: Employee) => {
   // Mock toggle - in real implementation, call updateEmployee
-  employee.is_active = !employee.is_active
-  console.log(`Toggled employee ${employee.id} status to ${employee.is_active}`)
+  employee.status = employee.status === 'active' ? 'inactive' : 'active'
+  console.log(`Toggled employee ${employee.id} status to ${employee.status}`)
 }
 
 onMounted(() => {

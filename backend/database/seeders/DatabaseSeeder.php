@@ -16,6 +16,9 @@ class DatabaseSeeder extends Seeder
         // Seed departments first
         $this->call(DepartmentSeeder::class);
 
+        // Seed project phases
+        $this->call(PhaseSeeder::class);
+
         // Then seed employees
         $this->call(EmployeeSeeder::class);
 
@@ -47,5 +50,11 @@ class DatabaseSeeder extends Seeder
             DesignerUserSeeder::class,
             FinanceRolesSeeder::class,
         ]);
+
+        // Seed projects and project phases
+        // $this->call(ProjectsSeeder::class);
+
+        // Seed departmental tasks (after all prerequisites are created)
+        $this->call(DepartmentalTaskSeeder::class);
     }
 }

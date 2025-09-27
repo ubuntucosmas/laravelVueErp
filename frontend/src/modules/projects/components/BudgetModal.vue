@@ -366,6 +366,239 @@
               </div>
             </div>
 
+            <!-- Additional Items -->
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-600">
+                <button
+                  @click="toggleSection('additionals')"
+                  class="w-full flex items-center justify-between text-left"
+                >
+                  <div class="flex items-center space-x-2">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                      <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 class="text-md font-semibold text-gray-900 dark:text-white">Additional Items</h4>
+                      <p class="text-sm text-gray-600 dark:text-gray-400">Client-requested additional items with separate budgets</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-sm font-medium text-indigo-600 dark:text-indigo-400">KES {{ additionalsSubtotal.toLocaleString() }}</span>
+                    <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': expandedSections.additionals }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+
+              <div v-if="expandedSections.additionals" class="p-4 space-y-4">
+                <div v-for="(additional, additionalIndex) in additionals" :key="additional.id"
+                     class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                  <!-- Additional Item Header -->
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex-1 space-y-2">
+                      <input
+                        v-model="additional.name"
+                        type="text"
+                        placeholder="Additional item name"
+                        class="w-full text-sm font-medium border border-gray-300 dark:border-gray-500 rounded px-3 py-2"
+                      />
+                      <input
+                        v-model="additional.description"
+                        type="text"
+                        placeholder="Description"
+                        class="w-full text-sm border border-gray-300 dark:border-gray-500 rounded px-3 py-2"
+                      />
+                    </div>
+                    <div class="flex items-center space-x-2 ml-4">
+                      <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">KES {{ additional.subtotal.toLocaleString() }}</span>
+                      <button
+                        @click="removeAdditionalItem(additionalIndex)"
+                        class="text-red-600 hover:text-red-800"
+                      >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Additional Item Budget Breakdown -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <!-- Materials for this additional -->
+                    <div class="space-y-2">
+                      <h5 class="text-sm font-medium text-gray-900 dark:text-white">Materials</h5>
+                      <div v-for="(material, materialIndex) in additional.materials" :key="material.id"
+                           class="flex items-center space-x-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                        <input
+                          v-model="material.name"
+                          type="text"
+                          placeholder="Material name"
+                          class="flex-1 text-xs border border-gray-300 dark:border-gray-500 rounded px-2 py-1"
+                        />
+                        <input
+                          v-model.number="material.quantity"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="Qty"
+                          class="w-16 text-xs border border-gray-300 dark:border-gray-500 rounded px-2 py-1"
+                        />
+                        <input
+                          v-model.number="material.unitPrice"
+                          type="number"
+                          min="0"
+                          placeholder="Unit Price"
+                          class="w-20 text-xs border border-gray-300 dark:border-gray-500 rounded px-2 py-1"
+                        />
+                        <span class="text-xs font-medium w-16 text-right">KES {{ (material.quantity * material.unitPrice).toLocaleString() }}</span>
+                        <button
+                          @click="additional.materials.splice(materialIndex, 1); updateAdditionalSubtotal(additionalIndex)"
+                          class="text-red-600 hover:text-red-800"
+                        >
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        </button>
+                      </div>
+                      <button
+                        @click="additional.materials.push({ id: Date.now().toString(), name: '', quantity: 0, unit: 'pcs', unitPrice: 0, category: 'production', totalCost: 0 }); updateAdditionalSubtotal(additionalIndex)"
+                        class="w-full p-1 border border-dashed border-green-300 dark:border-green-600 rounded text-xs text-green-600 dark:text-green-400 hover:border-green-400"
+                      >
+                        + Add Material
+                      </button>
+                    </div>
+
+                    <!-- Labor for this additional -->
+                    <div class="space-y-2">
+                      <h5 class="text-sm font-medium text-gray-900 dark:text-white">Labor</h5>
+                      <div v-for="(labor, laborIndex) in additional.workshopLabor" :key="labor.id"
+                           class="flex items-center space-x-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+                        <input
+                          v-model="labor.description"
+                          type="text"
+                          placeholder="Labor description"
+                          class="flex-1 text-xs border border-gray-300 dark:border-gray-500 rounded px-2 py-1"
+                        />
+                        <input
+                          v-model.number="labor.hours"
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          placeholder="Hours"
+                          class="w-12 text-xs border border-gray-300 dark:border-gray-500 rounded px-2 py-1"
+                        />
+                        <input
+                          v-model.number="labor.ratePerHour"
+                          type="number"
+                          min="0"
+                          placeholder="Rate/hr"
+                          class="w-16 text-xs border border-gray-300 dark:border-gray-500 rounded px-2 py-1"
+                        />
+                        <span class="text-xs font-medium w-16 text-right">KES {{ (labor.hours * labor.ratePerHour).toLocaleString() }}</span>
+                        <button
+                          @click="additional.workshopLabor.splice(laborIndex, 1); updateAdditionalSubtotal(additionalIndex)"
+                          class="text-red-600 hover:text-red-800"
+                        >
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        </button>
+                      </div>
+                      <button
+                        @click="additional.workshopLabor.push({ id: Date.now().toString(), description: '', hours: 0, ratePerHour: 0 }); updateAdditionalSubtotal(additionalIndex)"
+                        class="w-full p-1 border border-dashed border-orange-300 dark:border-orange-600 rounded text-xs text-orange-600 dark:text-orange-400 hover:border-orange-400"
+                      >
+                        + Add Labor
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Logistics and Misc for this additional -->
+                  <div class="grid grid-cols-2 gap-4 mt-4">
+                    <!-- Logistics for this additional -->
+                    <div class="space-y-2">
+                      <h5 class="text-sm font-medium text-gray-900 dark:text-white">Logistics</h5>
+                      <div v-for="(logistic, logisticIndex) in additional.logisticsCosts" :key="logistic.id"
+                           class="flex items-center space-x-2 p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+                        <input
+                          v-model="logistic.description"
+                          type="text"
+                          placeholder="Logistics description"
+                          class="flex-1 text-xs border border-gray-300 dark:border-gray-500 rounded px-2 py-1"
+                        />
+                        <input
+                          v-model.number="logistic.amount"
+                          type="number"
+                          min="0"
+                          placeholder="Amount"
+                          class="w-20 text-xs border border-gray-300 dark:border-gray-500 rounded px-2 py-1"
+                        />
+                        <button
+                          @click="additional.logisticsCosts.splice(logisticIndex, 1); updateAdditionalSubtotal(additionalIndex)"
+                          class="text-red-600 hover:text-red-800"
+                        >
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        </button>
+                      </div>
+                      <button
+                        @click="additional.logisticsCosts.push({ id: Date.now().toString(), description: '', amount: 0 }); updateAdditionalSubtotal(additionalIndex)"
+                        class="w-full p-1 border border-dashed border-purple-300 dark:border-purple-600 rounded text-xs text-purple-600 dark:text-purple-400 hover:border-purple-400"
+                      >
+                        + Add Logistics
+                      </button>
+                    </div>
+
+                    <!-- Misc for this additional -->
+                    <div class="space-y-2">
+                      <h5 class="text-sm font-medium text-gray-900 dark:text-white">Miscellaneous</h5>
+                      <div v-for="(misc, miscIndex) in additional.miscCosts" :key="misc.id"
+                           class="flex items-center space-x-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                        <input
+                          v-model="misc.name"
+                          type="text"
+                          placeholder="Misc description"
+                          class="flex-1 text-xs border border-gray-300 dark:border-gray-500 rounded px-2 py-1"
+                        />
+                        <input
+                          v-model.number="misc.amount"
+                          type="number"
+                          min="0"
+                          placeholder="Amount"
+                          class="w-20 text-xs border border-gray-300 dark:border-gray-500 rounded px-2 py-1"
+                        />
+                        <button
+                          @click="additional.miscCosts.splice(miscIndex, 1); updateAdditionalSubtotal(additionalIndex)"
+                          class="text-red-600 hover:text-red-800"
+                        >
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        </button>
+                      </div>
+                      <button
+                        @click="additional.miscCosts.push({ id: Date.now().toString(), name: '', amount: 0, notes: '' }); updateAdditionalSubtotal(additionalIndex)"
+                        class="w-full p-1 border border-dashed border-gray-300 dark:border-gray-600 rounded text-xs text-gray-600 dark:text-gray-400 hover:border-gray-400"
+                      >
+                        + Add Misc
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  @click="addAdditionalItem"
+                  class="w-full p-3 border-2 border-dashed border-indigo-300 dark:border-indigo-600 rounded-lg text-indigo-600 dark:text-indigo-400 hover:border-indigo-400 dark:hover:border-indigo-500 text-sm font-medium"
+                >
+                  + Add Additional Item
+                </button>
+              </div>
+            </div>
+
             <!-- Budget Summary -->
             <div class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg p-4">
               <h4 class="font-semibold text-gray-900 dark:text-white mb-4">Budget Summary</h4>
@@ -385,6 +618,10 @@
                 <div class="flex justify-between text-sm">
                   <span class="text-gray-600 dark:text-gray-400">Miscellaneous:</span>
                   <span class="font-medium">KES {{ miscSubtotal.toLocaleString() }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600 dark:text-gray-400">Additional Items:</span>
+                  <span class="font-medium">KES {{ additionalsSubtotal.toLocaleString() }}</span>
                 </div>
                 <div class="border-t border-gray-300 dark:border-gray-600 pt-2 mt-2">
                   <div class="flex justify-between">
@@ -417,7 +654,17 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
-            <span>Generate Quotation</span>
+            <span>Generate Main Quotation</span>
+          </button>
+          <button
+            v-if="additionals.length > 0"
+            @click="generateAdditionalsQuote"
+            class="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            <span>Generate Additionals Quote</span>
           </button>
           <button
             @click="saveBudget"
@@ -463,6 +710,7 @@ const emit = defineEmits<{
   close: []
   save: [budget: BudgetData]
   generateQuote: [materialElements: any[]]
+  generateAdditionalsQuote: [additionals: AdditionalItem[]]
 }>()
 
 // Types
@@ -496,17 +744,31 @@ interface MiscItem {
   notes: string
 }
 
+interface AdditionalItem {
+  id: string
+  name: string
+  description: string
+  materials: MaterialCost[]
+  workshopLabor: LaborItem[]
+  siteLabor: LaborItem[]
+  logisticsCosts: LogisticsItem[]
+  miscCosts: MiscItem[]
+  subtotal: number
+}
+
 interface BudgetData {
   materialCosts: MaterialCost[]
   workshopLabor: LaborItem[]
   siteLabor: LaborItem[]
   logisticsCosts: LogisticsItem[]
   miscCosts: MiscItem[]
+  additionals: AdditionalItem[]
   totals: {
     materialSubtotal: number
     laborSubtotal: number
     logisticsSubtotal: number
     miscSubtotal: number
+    additionalsSubtotal: number
     totalBudget: number
   }
 }
@@ -518,10 +780,12 @@ const workshopLabor = ref<LaborItem[]>([])
 const siteLabor = ref<LaborItem[]>([])
 const logisticsCosts = ref<LogisticsItem[]>([])
 const miscCosts = ref<MiscItem[]>([])
+const additionals = ref<AdditionalItem[]>([])
 const expandedSections = ref({
   labor: false,
   logistics: false,
-  misc: false
+  misc: false,
+  additionals: false
 })
 const error = ref('')
 const successMessage = ref('')
@@ -561,8 +825,12 @@ const miscSubtotal = computed(() => {
   return miscCosts.value.reduce((total, item) => total + item.amount, 0)
 })
 
+const additionalsSubtotal = computed(() => {
+  return additionals.value.reduce((total, item) => total + item.subtotal, 0)
+})
+
 const totalBudget = computed(() => {
-  return materialSubtotal.value + laborSubtotal.value + logisticsSubtotal.value + miscSubtotal.value
+  return materialSubtotal.value + laborSubtotal.value + logisticsSubtotal.value + miscSubtotal.value + additionalsSubtotal.value
 })
 
 // Methods
@@ -580,6 +848,12 @@ const getElementTotalCost = (element: any): number => {
 const generateQuote = () => {
   // Emit event to open quote modal with material elements
   emit('generateQuote', materialElements.value)
+  closeModal()
+}
+
+const generateAdditionalsQuote = () => {
+  // Emit event to generate quote for additionals only
+  emit('generateAdditionalsQuote', additionals.value)
   closeModal()
 }
 
@@ -635,6 +909,38 @@ const removeMiscItem = (index: number) => {
   miscCosts.value.splice(index, 1)
 }
 
+const addAdditionalItem = () => {
+  const newItem: AdditionalItem = {
+    id: Date.now().toString(),
+    name: '',
+    description: '',
+    materials: [],
+    workshopLabor: [],
+    siteLabor: [],
+    logisticsCosts: [],
+    miscCosts: [],
+    subtotal: 0
+  }
+  additionals.value.push(newItem)
+}
+
+const removeAdditionalItem = (index: number) => {
+  additionals.value.splice(index, 1)
+}
+
+const calculateAdditionalSubtotal = (additional: AdditionalItem): number => {
+  const materialTotal = additional.materials.reduce((total, item) => total + item.totalCost, 0)
+  const workshopTotal = additional.workshopLabor.reduce((total, item) => total + (item.hours * item.ratePerHour), 0)
+  const siteTotal = additional.siteLabor.reduce((total, item) => total + (item.hours * item.ratePerHour), 0)
+  const logisticsTotal = additional.logisticsCosts.reduce((total, item) => total + item.amount, 0)
+  const miscTotal = additional.miscCosts.reduce((total, item) => total + item.amount, 0)
+  return materialTotal + workshopTotal + siteTotal + logisticsTotal + miscTotal
+}
+
+const updateAdditionalSubtotal = (index: number) => {
+  additionals.value[index].subtotal = calculateAdditionalSubtotal(additionals.value[index])
+}
+
 const calculateTotal = () => {
   // Force recalculation of computed properties
   console.log('Total budget calculated:', totalBudget.value)
@@ -667,11 +973,13 @@ const saveBudget = async () => {
       siteLabor: siteLabor.value,
       logisticsCosts: logisticsCosts.value,
       miscCosts: miscCosts.value,
+      additionals: additionals.value,
       totals: {
         materialSubtotal: materialSubtotal.value,
         laborSubtotal: laborSubtotal.value,
         logisticsSubtotal: logisticsSubtotal.value,
         miscSubtotal: miscSubtotal.value,
+        additionalsSubtotal: additionalsSubtotal.value,
         totalBudget: totalBudget.value
       }
     }

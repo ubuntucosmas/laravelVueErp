@@ -6,7 +6,8 @@ import { mainRoutes } from './main'
 import { adminRoutes } from './admin'
 import { hrRoutes } from './hr'
 import { projectsRoutes } from './projects'
-import { clientServiceRoutes } from './clientService'
+import { procurementRoutes } from './procurement'
+import { clientServiceRoutes } from './clientservice'
 import { creativesRoutes } from './creatives'
 import financeRoutes from './finance'
 
@@ -16,6 +17,7 @@ const routes: RouteRecordRaw[] = [
   ...adminRoutes,
   ...hrRoutes,
   ...projectsRoutes,
+  ...procurementRoutes,
   ...clientServiceRoutes,
   ...creativesRoutes,
   ...financeRoutes,
@@ -106,6 +108,18 @@ router.beforeEach(async (to, from, next) => {
 
     if (!canAccessFinance(['Accounts', 'Costing'])) {
       console.log('Access denied to finance - redirecting to dashboard')
+      next('/dashboard')
+      return
+    }
+  }
+
+  // Check procurement access
+  if (to.meta.requiresProcurementAccess) {
+    const { useRouteGuard } = await import('@/composables/useRouteGuard')
+    const { canAccessProcurement } = useRouteGuard()
+
+    if (!canAccessProcurement()) {
+      console.log('Access denied to procurement - redirecting to dashboard')
       next('/dashboard')
       return
     }

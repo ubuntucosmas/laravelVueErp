@@ -1,6 +1,7 @@
 import { ref, readonly } from 'vue'
 import type { Employee, EmployeeFilters, CreateEmployeeData, UpdateEmployeeData } from '../types/employee'
-import { useApi } from '../../shared/composables/useApi'
+import { useApi } from '../../admin/shared/composables/useApi'
+
 
 export function useEmployees() {
   const employees = ref<Employee[]>([])
@@ -13,10 +14,14 @@ export function useEmployees() {
     error.value = null
     try {
       // Build query parameters
-      const params: Record<string, any> = {}
+      const params: Record<string, string | number | undefined> = {}
       if (filters?.search) params.search = filters.search
+      if (filters?.department) params.department_id = filters.department
       if (filters?.department_id) params.department_id = filters.department_id
-      if (filters?.is_active !== undefined) params.is_active = filters.is_active
+      if (filters?.position) params.position = filters.position
+      if (filters?.status) params.status = filters.status
+      if (filters?.is_active !== undefined) params.status = filters.is_active ? 'active' : 'inactive'
+      if (filters?.employment_type) params.employment_type = filters.employment_type
       if (filters?.page) params.page = filters.page
       if (filters?.per_page) params.per_page = filters.per_page
 
@@ -33,8 +38,8 @@ export function useEmployees() {
       } else {
         employees.value = []
       }
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch employees'
+    } catch (err) {
+      error.value = 'Failed to fetch employees'
       console.error('Error fetching employees:', err)
     } finally {
       loading.value = false
@@ -54,8 +59,8 @@ export function useEmployees() {
         : responseData as Employee
       employees.value = [newEmployee, ...employees.value]
       return newEmployee
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to create employee'
+    } catch (err) {
+      error.value = 'Failed to create employee'
       throw err
     } finally {
       loading.value = false
@@ -78,8 +83,8 @@ export function useEmployees() {
         employees.value[index] = updatedEmployee
       }
       return updatedEmployee
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to update employee'
+    } catch (err) {
+      error.value = 'Failed to update employee'
       throw err
     } finally {
       loading.value = false
@@ -92,8 +97,8 @@ export function useEmployees() {
     try {
       await deleteApi(`/api/hr/employees/${id}`)
       employees.value = employees.value.filter(e => e.id !== id)
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to delete employee'
+    } catch (err) {
+      error.value = 'Failed to delete employee'
       throw err
     } finally {
       loading.value = false

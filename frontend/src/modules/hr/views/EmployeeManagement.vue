@@ -761,8 +761,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import type { Employee, EmployeeFilters } from '../types/employee'
-import { useEmployees } from '../composables/useEmployees'
+import type { Employee, EmployeeFilters } from '../../shared/types/employee'
+import { useEmployees } from '../../shared/composables/useEmployees'
 import { useApi } from '../../admin/shared/composables/useApi'
 
 console.log('EmployeeManagement component script loaded')

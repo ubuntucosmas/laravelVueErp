@@ -34,6 +34,23 @@
     <!-- Step Content -->
     <div class="p-4">
       <slot />
+
+      <!-- Departmental Tasks Progress -->
+      <div v-if="showDepartmentalProgress && departmentalTasks > 0" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+        <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
+          <span>Departmental Tasks</span>
+          <span>{{ departmentalCompleted }}/{{ departmentalTasks }} completed</span>
+        </div>
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+          <div
+            :style="{ width: `${(departmentalCompleted / departmentalTasks) * 100}%` }"
+            class="bg-purple-500 h-1.5 rounded-full transition-all duration-300"
+          ></div>
+        </div>
+        <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+          {{ Math.round((departmentalCompleted / departmentalTasks) * 100) }}% departmental completion
+        </div>
+      </div>
     </div>
 
     <!-- Step Footer -->
@@ -62,10 +79,16 @@ interface Props {
   isActive: boolean
   canAccess: boolean
   stepCompletion?: number
+  departmentalTasks?: number
+  departmentalCompleted?: number
+  showDepartmentalProgress?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  stepCompletion: 0
+  stepCompletion: 0,
+  departmentalTasks: 0,
+  departmentalCompleted: 0,
+  showDepartmentalProgress: false
 })
 
 defineEmits<{

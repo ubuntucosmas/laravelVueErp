@@ -100,6 +100,33 @@
           </div>
         </div>
 
+        <!-- Departmental Tasks Overview -->
+        <div class="mb-4">
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Departmental Tasks</p>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
+              <p class="text-lg font-semibold text-green-600 dark:text-green-400">{{ getDepartmentalTaskStatsForProject(project).completed_tasks }}</p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">Completed</p>
+            </div>
+            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
+              <p class="text-lg font-semibold text-blue-600 dark:text-blue-400">{{ getDepartmentalTaskStatsForProject(project).in_progress_tasks }}</p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">In Progress</p>
+            </div>
+          </div>
+          <div class="mt-2">
+            <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+              <span>Task Completion</span>
+              <span>{{ Math.round(getDepartmentalTaskStatsForProject(project).completion_rate) }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+              <div
+                :style="{ width: getDepartmentalTaskStatsForProject(project).completion_rate + '%' }"
+                class="bg-green-600 h-1 rounded-full transition-all duration-300"
+              ></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Phase Actions -->
         <div class="flex space-x-2">
           <button
@@ -107,6 +134,12 @@
             class="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             View Details
+          </button>
+          <button
+            @click="viewDepartmentalTasks(project)"
+            class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Tasks
           </button>
           <button
             v-if="canAdvancePhase(project)"
@@ -131,11 +164,47 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import type { Project } from '../types'
+import type { DepartmentalTaskStats } from '../types/departmentalTask'
 import { useProjects } from '../composables/useProjects'
 
-const { projects, loading, error, fetchProjects, updateProjectPhase } = useProjects()
+const router = useRouter()
+
+const { projects, loading, error, fetchProjects, updateProjectPhase, getDepartmentalTaskStats } = useProjects()
+
+// Store departmental task stats for each project
+const projectTaskStats = ref<Record<number, DepartmentalTaskStats>>({})
+
+// Function to get stats for a project (with caching)
+const getProjectTaskStats = async (project: Project): Promise<DepartmentalTaskStats> => {
+  if (!projectTaskStats.value[project.id]) {
+    projectTaskStats.value[project.id] = await getDepartmentalTaskStats(project.id)
+  }
+  return projectTaskStats.value[project.id]
+}
+
+// Computed property for template use (returns cached stats or default)
+const getDepartmentalTaskStatsForProject = (project: Project): DepartmentalTaskStats => {
+  return projectTaskStats.value[project.id] || {
+    total_tasks: 0,
+    completed_tasks: 0,
+    in_progress_tasks: 0,
+    pending_tasks: 0,
+    overdue_tasks: 0,
+    completion_rate: 0,
+    average_completion_time: 0,
+    department_breakdown: []
+  }
+}
+
+// Load stats for all projects
+const loadProjectTaskStats = async () => {
+  for (const project of projects.value) {
+    await getProjectTaskStats(project)
+  }
+}
 
 const getStatusClass = (status: string) => {
   const classes = {
@@ -180,7 +249,13 @@ const viewProjectDetails = (project: Project) => {
   // Could navigate to project detail view
 }
 
-onMounted(() => {
-  fetchProjects()
+const viewDepartmentalTasks = (project: Project) => {
+  console.log('View departmental tasks for project:', project.name)
+  router.push(`/projects/projects/${project.id}/tasks`)
+}
+
+onMounted(async () => {
+   await fetchProjects()
+   await loadProjectTaskStats()
 })
 </script>

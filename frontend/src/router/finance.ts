@@ -20,7 +20,15 @@ const financeRoutes: RouteRecordRaw[] = [
         path: 'budgeting',
         name: 'finance-budgeting',
         component: () => import('../modules/finance/views/BudgetManagement.vue'),
-        meta: { title: 'Budget Management' }
+        meta: { title: 'Budget Management' },
+        children: [
+          {
+            path: 'create',
+            name: 'finance-budget-create',
+            component: () => import('../modules/finance/views/BudgetCreation.vue'),
+            meta: { title: 'Create Budget' }
+          }
+        ]
       },
       {
         path: 'costing',

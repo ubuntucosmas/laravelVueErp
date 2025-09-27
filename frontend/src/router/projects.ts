@@ -1,6 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
 import MainLayout from '../layouts/MainLayout.vue'
-import ProjectsDashboard from '../modules/projects/views/ProjectsDashboard.vue'
 
 export const projectsRoutes: RouteRecordRaw[] = [
   {
@@ -12,10 +11,10 @@ export const projectsRoutes: RouteRecordRaw[] = [
     },
     children: [
       {
-        path: '',
-        name: 'projects-dashboard',
-        component: ProjectsDashboard,
-        meta: { title: 'Projects Dashboard' }
+        path: 'department',
+        name: 'projects-department-dashboard',
+        component: () => import('../modules/projects/views/ProjectsDepartmentDashboard.vue'),
+        meta: { title: 'Project Coordination' }
       },
       {
         path: 'enquiries',
@@ -26,7 +25,7 @@ export const projectsRoutes: RouteRecordRaw[] = [
       {
         path: 'enquiries/:id',
         name: 'projects-enquiry-detail',
-        component: () => import('../modules/projects/views/EnquiryDetailWorkflow.vue'),
+        component: () => import('../modules/projects/views/EnquiryWorkflow.vue'),
         meta: { title: 'Enquiry Workflow' }
       },
       {
@@ -43,21 +42,38 @@ export const projectsRoutes: RouteRecordRaw[] = [
         }
       },
 
-      {
-        path: 'site-surveys',
-        name: 'projects-site-surveys',
-        component: () => import('../modules/projects/views/SiteSurveysManagement.vue'),
-        meta: { title: 'Site Surveys Management' }
-      },
-      {
-        path: 'materials',
-        redirect: '/projects/enquiries'
-      },
+
+      // Materials management is now handled through departmental tasks
       {
         path: 'close-out-report/:projectId?',
         name: 'projects-close-out-report',
         component: () => import('../modules/projects/views/ProjectCloseOutReport.vue'),
         meta: { title: 'Project Close-Out Report' }
+      },
+      {
+        path: 'departmental-tasks',
+        name: 'projects-departmental-tasks',
+        component: () => import('../modules/projects/components/DepartmentalTaskDashboard.vue'),
+        meta: { title: 'Departmental Tasks' }
+      },
+      {
+        path: 'projects/:projectId/tasks',
+        name: 'projects-project-tasks',
+        component: () => import('../modules/projects/components/DepartmentalTaskDashboard.vue'),
+        meta: { title: 'Project Departmental Tasks' },
+        props: (route) => ({
+          projectId: parseInt(route.params.projectId as string)
+        })
+      },
+      {
+        path: 'projects/:projectId/phases/:phaseId/tasks',
+        name: 'projects-phase-tasks',
+        component: () => import('../modules/projects/components/DepartmentalTaskDashboard.vue'),
+        meta: { title: 'Phase Departmental Tasks' },
+        props: (route) => ({
+          projectId: parseInt(route.params.projectId as string),
+          phaseId: parseInt(route.params.phaseId as string)
+        })
       }
     ],
   },

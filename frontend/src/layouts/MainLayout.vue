@@ -46,6 +46,9 @@
                   </div>
                 </div>
 
+                <!-- Notification Center -->
+                <NotificationCenter ref="notificationCenter" class="notification-center" />
+
                 <!-- Theme Toggle Button -->
                 <button
                   @click="toggleTheme"
@@ -77,7 +80,7 @@
 
         <!-- Page Content -->
         <main class="flex-1 p-6">
-          <router-view />
+          <router-view @taskAssigned="handleGlobalTaskAssigned" />
         </main>
       </div>
     </div>
@@ -88,6 +91,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import DynamicSidebar from '../components/DynamicSidebar.vue'
+import NotificationCenter from '../modules/shared/components/NotificationCenter.vue'
 import { useAuth } from '../composables/useAuth'
 import { useRouteGuard } from '../composables/useRouteGuard'
 import { useTheme } from '../composables/useTheme'
@@ -99,6 +103,7 @@ const router = useRouter()
 const route = useRoute()
 
 const sidebarCollapsed = ref(false)
+const notificationCenter = ref()
 
 const navigationItems = computed(() => {
   return getAllowedRoutes()
@@ -165,7 +170,50 @@ const handleLogout = async () => {
   router.push('/login')
 }
 
+const handleTaskAssigned = (data: {
+  userId: number
+  userName: string
+  userEmail: string
+  taskCount: number
+  taskNames: string
+  message: string
+  tasks: any[]
+}) => {
+  // Add notification to the notification center
+  if (notificationCenter.value) {
+    // Extract enquiry_id and task_id from the first task (assuming all tasks are from the same enquiry)
+    const enquiryId = data.tasks[0]?.enquiry_id
+    const taskId = data.tasks[0]?.id
+
+    notificationCenter.value.addNotification({
+      type: 'task_assigned',
+      title: 'New Task Assigned',
+      message: data.message,
+      metadata: {
+        taskCount: data.taskCount,
+        taskNames: data.taskNames,
+        assignedBy: user.value?.name || 'System',
+        enquiry_id: enquiryId,
+        task_id: taskId
+      }
+    })
+  }
+}
+
 onMounted(() => {
   // Initialize sidebar state
 })
+
+// Listen for task assignment events from child components
+const handleGlobalTaskAssigned = (data: {
+  userId: number
+  userName: string
+  userEmail: string
+  taskCount: number
+  taskNames: string
+  message: string
+  tasks: any[]
+}) => {
+  handleTaskAssigned(data)
+}
 </script>

@@ -13,7 +13,7 @@ export const clientServiceRoutes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'client-service-dashboard',
-        component: () => import('../modules/clientService/views/ClientServiceDashboard.vue'),
+        component: () => import('../modules/clientservice/views/ClientServiceDashboard.vue'),
         meta: { title: 'Client Service Dashboard' }
       },
       {

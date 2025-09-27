@@ -4,6 +4,8 @@ export interface ProjectTask {
   deliverables: string[];
 }
 
+import type { DepartmentalTask } from './departmentalTask'
+
 export interface ProjectPhase {
   id: string;
   name: string;
@@ -21,6 +23,12 @@ export interface ProjectPhase {
   offsetStart?: number;
   offsetEnd?: number;
   tasks?: ProjectTask[];
+
+  // Departmental task fields
+  departmental_completion_count?: number;
+  total_departmental_tasks?: number;
+  auto_progress_enabled?: boolean;
+  departmental_tasks?: DepartmentalTask[];
 }
 
 export interface Project {

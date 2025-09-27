@@ -11,6 +11,8 @@ use App\Modules\Admin\Http\Controllers\PermissionController;
 use App\Modules\ClientService\Http\Controllers\ClientController;
 use App\Modules\ClientService\Http\Controllers\EnquiryController as ClientServiceEnquiryController;
 use App\Modules\Projects\Http\Controllers\EnquiryController;
+use App\Modules\Projects\Http\Controllers\ProjectController;
+use App\Modules\Projects\Http\Controllers\PhaseDepartmentalTaskController;
 
 // Authentication routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -70,13 +72,26 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Projects Module Routes
-    // Route::prefix('projects')->group(function () {
-    //     // Enquiry management
-    //     Route::get('enquiries', [EnquiryController::class, 'index']);
-    //     Route::get('enquiries/{enquiry}', [EnquiryController::class, 'show']);
-    //     Route::post('enquiries', [EnquiryController::class, 'store']);
-    //     Route::put('enquiries/{enquiry}/phases/{phase}', [EnquiryController::class, 'updatePhase']);
-    //     Route::post('enquiries/{enquiry}/approve-quote', [EnquiryController::class, 'approveQuote']);
-    //     Route::post('enquiries/{enquiry}/convert', [EnquiryController::class, 'convertToProject']);
-    // });
+    Route::prefix('projects')->group(function () {
+        // Enquiry management
+        Route::get('enquiries', [EnquiryController::class, 'index']);
+        Route::get('enquiries/{enquiry}', [EnquiryController::class, 'show']);
+        Route::post('enquiries', [EnquiryController::class, 'store']);
+        Route::put('enquiries/{enquiry}/phases/{phase}', [EnquiryController::class, 'updatePhase']);
+        Route::post('enquiries/{enquiry}/approve-quote', [EnquiryController::class, 'approveQuote']);
+        Route::post('enquiries/{enquiry}/convert', [EnquiryController::class, 'convertToProject']);
+
+        // Departmental tasks management
+        Route::apiResource('departmental-tasks', PhaseDepartmentalTaskController::class);
+        Route::post('departmental-tasks/{task}/action', [PhaseDepartmentalTaskController::class, 'performAction']);
+        Route::get('departmental-tasks-stats', [PhaseDepartmentalTaskController::class, 'getStats']);
+
+        // Project workflow management
+        Route::get('{project}/workflow-status', [ProjectController::class, 'getWorkflowStatus']);
+        Route::post('{project}/phases/{phaseId}/tasks/{taskId}/claim', [ProjectController::class, 'claimTask']);
+        Route::post('{project}/phases/{phaseId}/tasks/{taskId}/start', [ProjectController::class, 'startTask']);
+        Route::post('{project}/phases/{phaseId}/tasks/{taskId}/complete', [ProjectController::class, 'completeTask']);
+        Route::post('{project}/phases/{phaseId}/tasks/{taskId}/submit', [ProjectController::class, 'submitTask']);
+        Route::put('{project}/phases/{phaseId}/tasks/{taskId}/status', [ProjectController::class, 'updateTaskStatus']);
+    });
 });

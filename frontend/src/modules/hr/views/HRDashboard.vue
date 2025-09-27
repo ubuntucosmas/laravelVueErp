@@ -159,7 +159,7 @@
 
 <script setup lang="ts">
 import { onMounted, computed } from 'vue'
-import { useEmployees } from '../composables/useEmployees'
+import { useEmployees } from '../../shared/composables/useEmployees'
 
 const { employees, fetchEmployees } = useEmployees()
 

@@ -842,6 +842,9 @@ const saveSurvey = async () => {
   isSaving.value = true
 
   try {
+    console.log('Saving site survey with enquiry ID:', props.enquiry?.id)
+    console.log('Form data being sent:', formData.value)
+
     let savedSurvey: SiteSurvey
 
     if (isEditing.value && props.survey) {

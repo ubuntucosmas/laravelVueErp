@@ -141,14 +141,14 @@ const workflowSteps = ref([
     secondaryDescription: 'Some projects may not require a physical site survey depending on the scope.'
   },
   {
-    title: 'Create Materials List',
-    description: 'Compile a comprehensive list of all materials needed for the project.',
-    primaryAction: 'Build Materials List',
-    primaryDescription: 'Create a detailed inventory of all materials, quantities, and specifications required.',
-    primaryRoute: '/projects/materials',
-    primaryButtonText: 'Create Materials',
-    secondaryAction: 'Use Material Templates',
-    secondaryDescription: 'Leverage pre-configured material lists for similar project types.'
+    title: 'Design Concept and Material Specification',
+    description: 'Create design concepts and specify all required materials with departmental task coordination.',
+    primaryAction: 'Start Creative Workflow',
+    primaryDescription: 'Initiate design creation and material specification with departmental task assignments.',
+    primaryRoute: '/projects/enquiries',
+    primaryButtonText: 'Begin Design Phase',
+    secondaryAction: 'View Departmental Tasks',
+    secondaryDescription: 'Monitor progress across Creatives, Procurement, and other departments involved in this phase.'
   },
   {
     title: 'Prepare Budget & Quotation',
@@ -171,14 +171,14 @@ const workflowSteps = ref([
     secondaryDescription: 'Contact client for any clarifications or additional requirements.'
   },
   {
-    title: 'Project Kickoff & Planning',
-    description: 'Initialize the project and begin detailed planning and resource allocation.',
+    title: 'Project Execution with Departmental Coordination',
+    description: 'Execute project phases with coordinated departmental task management and progress tracking.',
     primaryAction: 'Start Project Execution',
-    primaryDescription: 'Begin production phase with assigned team members and timeline.',
+    primaryDescription: 'Begin production phases with assigned team members, departmental tasks, and timeline management.',
     primaryRoute: '/projects/projects',
     primaryButtonText: 'Start Project',
-    secondaryAction: 'Assign Team Members',
-    secondaryDescription: 'Allocate project team members and define their responsibilities.'
+    secondaryAction: 'Monitor Departmental Progress',
+    secondaryDescription: 'Track departmental task completion across Procurement, Production, Logistics, and other departments.'
   }
 ])
 

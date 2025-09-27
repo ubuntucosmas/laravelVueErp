@@ -142,6 +142,34 @@ export function useRouteGuard() {
     return requiredRoles.some(role => userRoles.includes(role))
   }
 
+  const canAccessProcurement = (): boolean => {
+    if (!isLoggedIn.value || !user.value) {
+      return false
+    }
+
+    const userRoles = user.value.roles || []
+
+    // Super Admin can access everything
+    if (userRoles.includes('Super Admin')) {
+      return true
+    }
+
+    // Check if user has Procurement role
+    if (userRoles.includes('Procurement Officer')) {
+      return true
+    }
+
+    // Check if user belongs to procurement department
+    if (permissions.value?.user_department) {
+      const deptName = permissions.value.user_department.name.toLowerCase()
+      if (deptName === 'procurement' || deptName === 'purchasing') {
+        return true
+      }
+    }
+
+    return false
+  }
+
   const redirectToAppropriateRoute = () => {
     if (!isLoggedIn.value || !user.value) {
       router.push('/login')
@@ -199,7 +227,8 @@ export function useRouteGuard() {
         { name: 'admin-roles', path: '/admin/roles', label: 'Role Management', icon: '🔐' },
         { name: 'admin-departments', path: '/admin/departments', label: 'Department Management', icon: '🏢' },
         { name: 'hr-dashboard', path: '/hr', label: 'HR Dashboard', icon: '👥' },
-        { name: 'hr-employees', path: '/hr/employees', label: 'HR Employees', icon: '👷' }
+        { name: 'hr-employees', path: '/hr/employees', label: 'HR Employees', icon: '👷' },
+        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
       )
     }
     // Admin gets admin routes
@@ -209,32 +238,34 @@ export function useRouteGuard() {
         { name: 'admin-users', path: '/admin/users', label: 'User Management', icon: '👥' },
         { name: 'admin-employees', path: '/admin/employees', label: 'Employee Management', icon: '👷' },
         { name: 'admin-roles', path: '/admin/roles', label: 'Role Management', icon: '🔐' },
-        { name: 'admin-departments', path: '/admin/departments', label: 'Department Management', icon: '🏢' }
+        { name: 'admin-departments', path: '/admin/departments', label: 'Department Management', icon: '🏢' },
+        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
       )
     }
     // HR gets HR routes
     else if (userRoles.includes('HR')) {
       routes.push(
         { name: 'hr-dashboard', path: '/hr', label: 'HR Dashboard', icon: '👥' },
-        { name: 'hr-employees', path: '/hr/employees', label: 'Employee Management', icon: '👷' }
+        { name: 'hr-employees', path: '/hr/employees', label: 'Employee Management', icon: '👷' },
+        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
       )
     }
     // Department users get department routes
-    else if (userRoles.includes('Manager') || userRoles.includes('Employee')) {
-      if (permissions.value?.user_department) {
-        routes.push({
-          name: `department-${permissions.value.user_department.id}`,
-          path: `/department/${permissions.value.user_department.id}`,
-          label: `${permissions.value.user_department.name} Dashboard`,
-          icon: '🏢'
-        })
-      }
-    }
+    // else if (userRoles.includes('Manager') || userRoles.includes('Employee')) {
+    //   if (permissions.value?.user_department) {
+    //     routes.push({
+    //       name: `department-${permissions.value.user_department.id}`,
+    //       path: `/department/${permissions.value.user_department.id}`,
+    //       label: `${permissions.value.user_department.name} Dashboard`,
+    //       icon: '🏢'
+    //     })
+    //   }
+    // }
 
     // Add projects routes for authorized users
     if (canAccessProjects()) {
       routes.push(
-        { name: 'projects-dashboard', path: '/projects', label: 'Projects Dashboard', icon: '📊' },
+        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' },
         { name: 'projects-enquiries', path: '/projects/enquiries', label: 'Enquiries', icon: '📝' },
         { name: 'projects-list', path: '/projects/projects', label: 'Approved Projects', icon: '✅' },
         { name: 'projects-close-out-report', path: '/projects/close-out-report', label: 'Close-Out Report', icon: '📋' }
@@ -246,22 +277,20 @@ export function useRouteGuard() {
       routes.push(
         { name: 'client-service-dashboard', path: '/client-service', label: 'Client Service Dashboard', icon: '📊' },
         { name: 'client-service-clients', path: '/client-service/clients', label: 'Client Management', icon: '👥' },
-        { name: 'client-service-enquiries', path: '/client-service/enquiries', label: 'Enquiry Management', icon: '📝' }
+        { name: 'client-service-enquiries', path: '/client-service/enquiries', label: 'Enquiry Management', icon: '📝' },
+        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
       )
     }
 
     // Add creatives routes for authorized users
     if (canAccessCreatives()) {
       routes.push(
-        { name: 'design-dashboard', path: '/creatives/design', label: 'Design Department', icon: '📐' },
+        { name: 'design-dashboard', path: '/creatives/design', label: 'Design Department', icon: '🎨' },
+        { name: 'creatives-materials', path: '/creatives/materials', label: 'Material & Cost Listing', icon: '📦' },
+        { name: 'creatives-final-design', path: '/creatives/final-design', label: 'Final Design', icon: '✨' },
         { name: 'creatives-enquiries', path: '/creatives/enquiries', label: 'Enquiries', icon: '📝' },
         { name: 'creatives-element-templates', path: '/creatives/element-templates', label: 'Element Templates', icon: '📋' },
-
-        // TODO: Add individual management routes when components are created
-        // { name: 'creatives-designs', path: '/creatives/designs', label: 'Designs', icon: '📐' },
-        // { name: 'creatives-mockups', path: '/creatives/mockups', label: 'Mockups', icon: '🏗️' },
-        // { name: 'creatives-renders', path: '/creatives/renders', label: 'Renders', icon: '🎬' },
-        // { name: 'creatives-materials', path: '/creatives/materials', label: 'Materials', icon: '📦' }
+        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
       )
     }
 
@@ -274,7 +303,20 @@ export function useRouteGuard() {
         { name: 'finance-invoicing', path: '/finance/invoicing', label: 'Invoice Management', icon: '📄' },
         { name: 'finance-reporting', path: '/finance/reporting', label: 'Financial Reports', icon: '📈' },
         { name: 'finance-enquiries', path: '/finance/enquiries', label: 'Project Enquiries', icon: '📋' },
-        { name: 'finance-analytics', path: '/finance/analytics', label: 'Financial Analytics', icon: '📉' }
+        { name: 'finance-analytics', path: '/finance/analytics', label: 'Financial Analytics', icon: '📉' },
+        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
+      )
+    }
+
+    // Add procurement routes for authorized users
+    if (canAccessProcurement()) {
+      routes.push(
+        { name: 'procurement-dashboard', path: '/procurement', label: 'Procurement Dashboard', icon: '📦' },
+        { name: 'procurement-materials', path: '/procurement/materials', label: 'Material Requests', icon: '📋' },
+        { name: 'procurement-vendors', path: '/procurement/vendors', label: 'Vendor Management', icon: '🏪' },
+        { name: 'procurement-orders', path: '/procurement/orders', label: 'Purchase Orders', icon: '📄' },
+        { name: 'procurement-quotations', path: '/procurement/quotations', label: 'Supplier Quotations', icon: '💰' },
+        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
       )
     }
 
@@ -316,6 +358,10 @@ export function useRouteGuard() {
 
     if (canAccessFinance(['Accounts', 'Costing'])) {
       return 'Finance Panel'
+    }
+
+    if (canAccessProcurement()) {
+      return 'Procurement Panel'
     }
 
     // Department fallback
@@ -363,6 +409,10 @@ export function useRouteGuard() {
       return 'Financial Management'
     }
 
+    if (canAccessProcurement()) {
+      return 'Procurement & Supply Chain'
+    }
+
     // Department fallback
     if (permissions.value?.user_department) {
       return 'Department Dashboard'
@@ -378,6 +428,7 @@ export function useRouteGuard() {
     canAccessClientService,
     canAccessCreatives,
     canAccessFinance,
+    canAccessProcurement,
     redirectToAppropriateRoute,
     getAllowedRoutes,
     getPanelTitle,

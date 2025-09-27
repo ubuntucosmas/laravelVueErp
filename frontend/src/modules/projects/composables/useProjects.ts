@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import type { Project, CreateProjectData, UpdateProjectData, ProjectPhase } from '../types'
+import type { DepartmentalTask, DepartmentalTaskStats } from '../types/departmentalTask'
 
 // Project phases from config - now with dynamic properties
 const defaultPhases: ProjectPhase[] = [
@@ -588,6 +589,144 @@ export function useProjects() {
     }
   }
 
+  // Departmental task functions
+  const fetchDepartmentalTasksForProject = async (projectId: number): Promise<DepartmentalTask[]> => {
+    loading.value = true
+    error.value = null
+
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300))
+
+      // Mock departmental tasks data
+      const mockTasks: DepartmentalTask[] = [
+        {
+          id: 1,
+          project_phase_id: 1,
+          department_id: 1,
+          task_name: 'Design Concept Review',
+          task_description: 'Review and approve initial design concepts',
+          status: 'completed',
+          assigned_user_id: 1,
+          priority: 'high',
+          estimated_hours: 4,
+          actual_hours: 3.5,
+          due_date: '2024-10-05',
+          started_at: '2024-10-01T09:00:00Z',
+          completed_at: '2024-10-03T14:30:00Z',
+          notes: 'Approved with minor revisions',
+          order: 1,
+          created_at: '2024-09-28T10:00:00Z',
+          updated_at: '2024-10-03T14:30:00Z'
+        },
+        {
+          id: 2,
+          project_phase_id: 1,
+          department_id: 2,
+          task_name: 'Material Specification',
+          task_description: 'Specify materials required for production',
+          status: 'in_progress',
+          assigned_user_id: 2,
+          priority: 'medium',
+          estimated_hours: 6,
+          actual_hours: 2,
+          due_date: '2024-10-10',
+          started_at: '2024-10-04T11:00:00Z',
+          notes: 'Working on material sourcing',
+          order: 2,
+          created_at: '2024-09-29T08:00:00Z',
+          updated_at: '2024-10-04T11:00:00Z'
+        }
+      ]
+
+      return mockTasks.filter(task => {
+        // Find the project and check if any phase belongs to this project
+        const project = projects.value.find(p => p.id === projectId)
+        if (!project) return false
+        return project.phases.some(phase => phase.id === `phase-${task.project_phase_id}`)
+      })
+    } catch (err) {
+      error.value = 'Failed to fetch departmental tasks'
+      console.error('Error fetching departmental tasks:', err)
+      return []
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const getDepartmentalTaskStats = async (projectId?: number): Promise<DepartmentalTaskStats> => {
+    try {
+      const tasks = projectId ? await fetchDepartmentalTasksForProject(projectId) : []
+
+      const total_tasks = tasks.length
+      const completed_tasks = tasks.filter(t => t.status === 'completed').length
+      const in_progress_tasks = tasks.filter(t => t.status === 'in_progress').length
+      const pending_tasks = tasks.filter(t => t.status === 'pending').length
+      const overdue_tasks = tasks.filter(t =>
+        t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed'
+      ).length
+
+      const completion_rate = total_tasks > 0 ? (completed_tasks / total_tasks) * 100 : 0
+
+      // Calculate average completion time
+      const completedTasksWithTime = tasks.filter(t =>
+        t.status === 'completed' && t.started_at && t.completed_at
+      )
+      const average_completion_time = completedTasksWithTime.length > 0
+        ? completedTasksWithTime.reduce((sum, task) => {
+            const start = new Date(task.started_at!)
+            const end = new Date(task.completed_at!)
+            return sum + (end.getTime() - start.getTime()) / (1000 * 60 * 60) // hours
+          }, 0) / completedTasksWithTime.length
+        : 0
+
+      // Department breakdown
+      const departmentMap = new Map<number, { name: string; tasks: DepartmentalTask[] }>()
+      tasks.forEach(task => {
+        if (!departmentMap.has(task.department_id)) {
+          departmentMap.set(task.department_id, {
+            name: `Department ${task.department_id}`,
+            tasks: []
+          })
+        }
+        departmentMap.get(task.department_id)!.tasks.push(task)
+      })
+
+      const department_breakdown = Array.from(departmentMap.entries()).map(([deptId, data]) => ({
+        department_id: deptId,
+        department_name: data.name,
+        task_count: data.tasks.length,
+        completed_count: data.tasks.filter(t => t.status === 'completed').length,
+        completion_rate: data.tasks.length > 0
+          ? (data.tasks.filter(t => t.status === 'completed').length / data.tasks.length) * 100
+          : 0
+      }))
+
+      return {
+        total_tasks,
+        completed_tasks,
+        in_progress_tasks,
+        pending_tasks,
+        overdue_tasks,
+        completion_rate,
+        average_completion_time,
+        department_breakdown
+      }
+    } catch (err) {
+      console.error('Error calculating departmental task stats:', err)
+      return {
+        total_tasks: 0,
+        completed_tasks: 0,
+        in_progress_tasks: 0,
+        pending_tasks: 0,
+        overdue_tasks: 0,
+        completion_rate: 0,
+        average_completion_time: 0,
+        department_breakdown: []
+      }
+    }
+  }
+
   const planningProjects = computed(() => projects.value.filter(project => project.status === 'planning'))
   const inProgressProjects = computed(() => projects.value.filter(project => project.status === 'in_progress'))
   const completedProjects = computed(() => projects.value.filter(project => project.status === 'completed'))
@@ -607,6 +746,8 @@ export function useProjects() {
     inProgressProjects,
     completedProjects,
     totalProjects,
-    defaultPhases
+    defaultPhases,
+    fetchDepartmentalTasksForProject,
+    getDepartmentalTaskStats
   }
 }
