@@ -33,6 +33,7 @@ export interface ProjectPhase {
 
 export interface Project {
   id: number;
+  project_id?: string; // WNG-YYYYMM-JOB_NUMBER format
   enquiry_id: number;
   enquiry?: {
     id: number;

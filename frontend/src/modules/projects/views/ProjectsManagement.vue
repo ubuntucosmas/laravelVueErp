@@ -32,123 +32,135 @@
       </ol>
     </nav>
 
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Approved Projects</h1>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Track project progress through all phases</p>
+    <!-- Status Tabs -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+      <div class="flex space-x-1">
+        <button
+          v-for="status in statusTabs"
+          :key="status.key"
+          @click="activeTab = status.key"
+          :class="activeTab === status.key ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'"
+          class="px-4 py-2 rounded-lg font-medium transition-colors"
+        >
+          {{ status.label }} ({{ status.count }})
+        </button>
       </div>
     </div>
 
-    <!-- Projects Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div
-        v-for="project in projects"
-        :key="project.id"
-        class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6"
-      >
-        <!-- Project Header -->
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ project.name }}</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">{{ project.enquiry?.client.name }}</p>
-          </div>
-          <span
-            :class="getStatusClass(project.status)"
-            class="px-2 py-1 text-xs font-medium rounded-full"
-          >
-            {{ project.status.replace('_', ' ') }}
-          </span>
-        </div>
+    <!-- Projects Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+      <div v-if="loading" class="p-8 text-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">Loading projects...</p>
+      </div>
 
-        <!-- Project Info -->
-        <div class="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Budget</p>
-            <p class="font-semibold text-gray-900 dark:text-white">KES {{ project.budget.toLocaleString() }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Start Date</p>
-            <p class="font-semibold text-gray-900 dark:text-white">{{ project.start_date }}</p>
-          </div>
-        </div>
+      <div v-else-if="error" class="p-8 text-center text-red-600">
+        Error: {{ error }}
+      </div>
 
-        <!-- Progress Bar -->
-        <div class="mb-4">
-          <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-            <span>Progress</span>
-            <span>{{ completedPhases(project) }}/{{ project.phases.length }} phases</span>
-          </div>
-          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div
-              :style="{ width: progressPercentage(project) + '%' }"
-              class="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            ></div>
-          </div>
-        </div>
-
-        <!-- Current Phase -->
-        <div class="mb-4">
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Current Phase</p>
-          <div class="flex items-center">
-            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
-              <i :class="project.phases[project.current_phase]?.icon" class="text-blue-600 dark:text-blue-400 text-sm"></i>
-            </div>
-            <div>
-              <p class="font-medium text-gray-900 dark:text-white">{{ project.phases[project.current_phase]?.name }}</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ project.phases[project.current_phase]?.summary }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Departmental Tasks Overview -->
-        <div class="mb-4">
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Departmental Tasks</p>
-          <div class="grid grid-cols-2 gap-2">
-            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
-              <p class="text-lg font-semibold text-green-600 dark:text-green-400">{{ getDepartmentalTaskStatsForProject(project).completed_tasks }}</p>
-              <p class="text-xs text-gray-600 dark:text-gray-400">Completed</p>
-            </div>
-            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
-              <p class="text-lg font-semibold text-blue-600 dark:text-blue-400">{{ getDepartmentalTaskStatsForProject(project).in_progress_tasks }}</p>
-              <p class="text-xs text-gray-600 dark:text-gray-400">In Progress</p>
-            </div>
-          </div>
-          <div class="mt-2">
-            <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-              <span>Task Completion</span>
-              <span>{{ Math.round(getDepartmentalTaskStatsForProject(project).completion_rate) }}%</span>
-            </div>
-            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-              <div
-                :style="{ width: getDepartmentalTaskStatsForProject(project).completion_rate + '%' }"
-                class="bg-green-600 h-1 rounded-full transition-all duration-300"
-              ></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Phase Actions -->
-        <div class="flex space-x-2">
-          <button
-            @click="viewProjectDetails(project)"
-            class="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            View Details
-          </button>
-          <button
-            @click="viewDepartmentalTasks(project)"
-            class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Tasks
-          </button>
-          <button
-            v-if="canAdvancePhase(project)"
-            @click="advancePhase(project)"
-            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Advance Phase
-          </button>
-        </div>
+      <div v-else class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead class="bg-gray-50 dark:bg-gray-700">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Project
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Client
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Project ID
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Status
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Budget
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Progress
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <tr v-for="project in filteredProjects" :key="project.id">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-10 w-10">
+                    <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                      <span class="text-sm font-medium text-white">{{ project.name.charAt(0) }}</span>
+                    </div>
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ project.name }}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ project.created_at.split('T')[0] }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                {{ project.enquiry?.client.name }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300">
+                  {{ project.project_id || 'Pending' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span
+                  :class="getStatusClass(project.status)"
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                >
+                  {{ project.status.replace('_', ' ') }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                KES {{ project.budget.toLocaleString() }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center space-x-2">
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      {{ completedPhases(project) }}/{{ project.phases.length }} phases
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div
+                        :style="{ width: progressPercentage(project) + '%' }"
+                        class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      ></div>
+                    </div>
+                  </div>
+                  <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    {{ progressPercentage(project) }}%
+                  </span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button
+                  @click="viewProjectDetails(project)"
+                  class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3"
+                >
+                  View
+                </button>
+                <button
+                  @click="viewDepartmentalTasks(project)"
+                  class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 mr-3"
+                >
+                  Tasks
+                </button>
+                <button
+                  v-if="canAdvancePhase(project)"
+                  @click="advancePhase(project)"
+                  class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  Advance
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -174,8 +186,31 @@ const router = useRouter()
 
 const { projects, loading, error, fetchProjects, updateProjectPhase, getDepartmentalTaskStats } = useProjects()
 
+// Filters and tabs
+const filters = ref({ search: '', status: '' })
+const activeTab = ref('all')
+
 // Store departmental task stats for each project
 const projectTaskStats = ref<Record<number, DepartmentalTaskStats>>({})
+
+// Status tabs
+const statusTabs = computed(() => [
+  { key: 'all', label: 'All', count: projects.value.length },
+  { key: 'planning', label: 'Planning', count: projects.value.filter(p => p.status === 'planning').length },
+  { key: 'in_progress', label: 'In Progress', count: projects.value.filter(p => p.status === 'in_progress').length },
+  { key: 'completed', label: 'Completed', count: projects.value.filter(p => p.status === 'completed').length }
+])
+
+// Filtered projects
+const filteredProjects = computed(() => {
+  let filtered = projects.value
+
+  if (activeTab.value !== 'all') {
+    filtered = projects.value.filter(project => project.status === activeTab.value)
+  }
+
+  return filtered
+})
 
 // Function to get stats for a project (with caching)
 const getProjectTaskStats = async (project: Project): Promise<DepartmentalTaskStats> => {
@@ -252,6 +287,70 @@ const viewProjectDetails = (project: Project) => {
 const viewDepartmentalTasks = (project: Project) => {
   console.log('View departmental tasks for project:', project.name)
   router.push(`/projects/projects/${project.id}/tasks`)
+}
+
+// Generate project ID in format WNG-YYYYMM-JOB_NUMBER(001)
+const generateProjectId = async (): Promise<string> => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0') // getMonth() returns 0-11
+  const datePrefix = `${year}${month}`
+
+  // Get the last project created this month to determine the next job number
+  const thisMonthProjects = projects.value.filter(project => {
+    if (!project.created_at) return false
+    const projectDate = new Date(project.created_at)
+    const projectYear = projectDate.getFullYear()
+    const projectMonth = projectDate.getMonth() + 1
+    return projectYear === year && projectMonth === parseInt(month)
+  })
+
+  // Find the highest job number for this month
+  let maxJobNumber = 0
+  thisMonthProjects.forEach(project => {
+    if (project.project_id && project.project_id.startsWith(`WNG-${datePrefix}-`)) {
+      const jobNumberPart = project.project_id.split('-')[2]
+      if (jobNumberPart) {
+        const jobNumber = parseInt(jobNumberPart.replace('(', '').replace(')', ''))
+        if (jobNumber > maxJobNumber) {
+          maxJobNumber = jobNumber
+        }
+      }
+    }
+  })
+
+  // Increment job number
+  const nextJobNumber = maxJobNumber + 1
+  const formattedJobNumber = String(nextJobNumber).padStart(3, '0')
+
+  return `WNG-${datePrefix}-${formattedJobNumber}`
+}
+
+// Approve project when quote is approved
+const approveProject = async (enquiryId: number) => {
+  try {
+    // Generate project ID
+    const projectId = await generateProjectId()
+
+    // Create project data
+    const projectData = {
+      enquiry_id: enquiryId,
+      name: `Project for Enquiry ${enquiryId}`, // This should be populated from enquiry data
+      description: 'Project created from approved quote',
+      start_date: new Date().toISOString().split('T')[0],
+      budget: 0, // This should be populated from quote data
+      assigned_users: [],
+      project_id: projectId
+    }
+
+    // Here you would call an API to create the project
+    console.log('Creating project:', projectData)
+
+    // Refresh projects list
+    await fetchProjects()
+  } catch (error) {
+    console.error('Error approving project:', error)
+  }
 }
 
 onMounted(async () => {

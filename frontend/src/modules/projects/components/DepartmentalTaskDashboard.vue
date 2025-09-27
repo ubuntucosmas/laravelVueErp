@@ -8,17 +8,6 @@
           {{ context === 'enquiry' ? 'Tasks for this enquiry' : 'Tasks for this project phase' }}
         </p>
       </div>
-      <div class="flex items-center space-x-3">
-        <button
-          @click="assignTasks"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          HANDOVER
-        </button>
-      </div>
     </div>
 
     <!-- Task Statistics -->
@@ -163,12 +152,13 @@
                         <span
                           :class="[
                             'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                            task.status === 'completed' && task.notes?.startsWith('SKIPPED:') ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
                             task.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
                             task.status === 'in_progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
                             'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                           ]"
                         >
-                          {{ task.status.replace('_', ' ') }}
+                          {{ task.status === 'completed' && task.notes?.startsWith('SKIPPED:') ? 'skipped' : task.status.replace('_', ' ') }}
                         </span>
                         <span
                           :class="[
@@ -205,10 +195,23 @@
                     </div>
                     <div class="flex items-center space-x-2">
                       <button
+                        @click.stop="assignSingleTask(task)"
+                        class="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 text-sm font-medium"
+                        :title="'Assign/handover task: ' + task.task_name"
+                      >
+                        HANDOVER
+                      </button>
+                      <button
                         @click.stop="handleViewTaskDetails(task)"
                         class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
                       >
                         View Details
+                      </button>
+                      <button
+                        @click.stop="openSkipTaskModal(task)"
+                        class="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 text-sm font-medium"
+                      >
+                        {{ task.notes?.startsWith('SKIPPED:') ? 'Unskip Task' : 'Skip Task' }}
                       </button>
                       <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -289,9 +292,9 @@
     <!-- Task Assignment Modal -->
     <TaskAssignmentModal
       :is-visible="showTaskAssignmentModal"
-      :tasks="tasks"
+      :tasks="assignmentModalTasks"
       :enquiry="enquiry"
-      @close="showTaskAssignmentModal = false"
+      @close="closeTaskAssignmentModal"
       @save="handleTaskAssignmentsSave"
     />
 
@@ -301,6 +304,50 @@
       :notifications="taskAssignmentNotifications"
       @close="showTaskAssignmentNotification = false"
     />
+
+    <!-- Skip Task Modal -->
+    <div v-if="showSkipTaskModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+        <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+          {{ isTaskSkipped ? 'Unskip Task' : 'Skip Task' }}
+        </h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          {{ isTaskSkipped
+            ? `Are you sure you want to unskip the task "${selectedTask?.task_name}"? This will make it available again.`
+            : `Are you sure you want to skip the task "${selectedTask?.task_name}"?`
+          }}
+        </p>
+
+        <div v-if="!isTaskSkipped" class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Reason for skipping (required)
+          </label>
+          <textarea
+            v-model="skipReason"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Please provide a reason for skipping this task..."
+            required
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-3">
+          <button
+            @click="showSkipTaskModal = false"
+            class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            @click="confirmSkipTask"
+            :disabled="!isTaskSkipped && !skipReason.trim()"
+            class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {{ isTaskSkipped ? 'Unskip Task' : 'Skip Task' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -342,6 +389,10 @@ const emit = defineEmits<{
     message: string
     tasks: DepartmentalTask[]
   }]
+  quoteApproved: [data: {
+    enquiryId: number
+    quotationData: any
+  }]
 }>()
 
 // Reactive data
@@ -356,6 +407,7 @@ const showQuoteModal = ref(false)
 const showTaskDetailsModal = ref(false)
 const showTaskAssignmentModal = ref(false)
 const showTaskAssignmentNotification = ref(false)
+const showSkipTaskModal = ref(false)
 const selectedPhase = ref('site-survey')
 const savedMaterials = ref<any[]>([])
 const savedMaterialElements = ref<any[]>([])
@@ -1095,8 +1147,23 @@ const generateDepartmentalTasks = (): DepartmentalTask[] => {
 
 
 const assignTasks = () => {
+  // Clear selected task to show all tasks for bulk assignment
+  selectedTask.value = null
   // Show task assignment recommendations
   showTaskAssignmentModal.value = true
+}
+
+const assignSingleTask = (task: DepartmentalTask) => {
+  // Set the selected task for assignment
+  selectedTask.value = task
+  // Show task assignment modal with just this single task
+  showTaskAssignmentModal.value = true
+}
+
+const closeTaskAssignmentModal = () => {
+  // Clear selected task and close modal
+  selectedTask.value = null
+  showTaskAssignmentModal.value = false
 }
 
 const handleTaskUpdate = (task: DepartmentalTask) => {
@@ -1186,10 +1253,72 @@ const handleQuoteSave = (quotationData: any) => {
       completed_at: new Date().toISOString()
     }
     handleTaskUpdate(updatedTask)
+
+    // Emit quote approved event for project creation
+    emit('quoteApproved', {
+      enquiryId: props.contextId,
+      quotationData
+    })
   }
 
   // Close the modal
   showQuoteModal.value = false
+}
+
+const openSkipTaskModal = (task: DepartmentalTask) => {
+  selectedTask.value = task
+  // Only reset skip reason if we're skipping (not unskipping)
+  if (!task.notes?.startsWith('SKIPPED:')) {
+    skipReason.value = ''
+  }
+  showSkipTaskModal.value = true
+}
+
+const skipReason = ref('')
+
+// Computed property to check if task is skipped
+const isTaskSkipped = computed(() => {
+  return selectedTask.value?.notes?.startsWith('SKIPPED:') || false
+})
+
+// Computed property for assignment modal tasks
+const assignmentModalTasks = computed(() => {
+  // If we have a selected task for single assignment, return just that task
+  // Otherwise return all tasks for bulk assignment
+  return selectedTask.value && showTaskAssignmentModal.value ? [selectedTask.value] : tasks.value
+})
+
+const confirmSkipTask = () => {
+  if (!selectedTask.value) return
+
+  let updatedTask
+
+  if (isTaskSkipped.value) {
+    // Unskip the task - remove SKIPPED prefix and set status to pending
+    const originalNotes = selectedTask.value.notes?.replace(/^SKIPPED:\s*/, '') || ''
+    updatedTask = {
+      ...selectedTask.value,
+      status: 'pending' as const,
+      notes: originalNotes,
+      completed_at: undefined
+    }
+  } else {
+    // Skip the task - add SKIPPED prefix and set status to completed
+    if (!skipReason.value.trim()) return
+
+    updatedTask = {
+      ...selectedTask.value,
+      status: 'completed' as const,
+      notes: `SKIPPED: ${skipReason.value}`,
+      completed_at: new Date().toISOString()
+    }
+  }
+
+  handleTaskUpdate(updatedTask)
+
+  // Close the modal
+  showSkipTaskModal.value = false
+  skipReason.value = ''
 }
 
 const handleViewTaskDetails = (task: DepartmentalTask) => {
@@ -1214,7 +1343,8 @@ const handleTaskAssignmentsSave = (updatedTasks: DepartmentalTask[]) => {
   // Send notifications to global notification center
   sendNotificationsToCenter(updatedTasks)
 
-  // Close the assignment modal and show notification modal
+  // Clear selected task and close the assignment modal
+  selectedTask.value = null
   showTaskAssignmentModal.value = false
   showTaskAssignmentNotification.value = true
 }

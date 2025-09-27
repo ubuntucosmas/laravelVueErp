@@ -55,6 +55,7 @@
         :enquiry="selectedEnquiryForTasks"
         :department="selectedEnquiryForTasks.assigned_department || selectedEnquiryForTasks.department?.name || 'projects'"
         @taskAssigned="handleTaskAssigned"
+        @quoteApproved="handleQuoteApproved"
       />
     </div>
 
@@ -369,9 +370,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types'
+import type { CreateProjectData } from '../types/project'
 import { useEnquiries } from '../composables/useEnquiries'
 import { useClients } from '../../clientService/composables/useClients'
 import { useDepartmentWorkflow } from '../composables/useDepartmentWorkflow'
+import { useProjects } from '../composables/useProjects'
 import DepartmentalTaskDashboard from '../components/DepartmentalTaskDashboard.vue'
 
 // Emits
@@ -393,6 +396,7 @@ const route = useRoute()
 const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry, convertToProject, canConvertToProject, newEnquiries, inProgressEnquiries, convertedEnquiries } = useEnquiries()
 const { activeClients, fetchClients } = useClients()
 const { navigateToDepartmentWorkflow, getAvailablePhases, getNextAvailablePhase } = useDepartmentWorkflow()
+const { createProject } = useProjects()
 
 const filters = ref({ search: '', priority: '', client_id: '' })
 const activeTab = ref('all')
@@ -589,6 +593,61 @@ const handleTaskAssigned = (data: {
 }) => {
   // Emit the event up to the parent (MainLayout)
   emit('taskAssigned', data)
+}
+
+const handleQuoteApproved = async (data: { enquiryId: number; quotationData: { summary: { totalQuoteAmount: number } } }) => {
+  try {
+    // Find the enquiry
+    const enquiry = enquiries.value.find(e => e.id === data.enquiryId)
+    if (!enquiry) {
+      console.error('Enquiry not found for quote approval')
+      return
+    }
+
+    // Generate project ID
+    const projectId = await generateProjectId()
+
+    // Create project data
+    const projectData: CreateProjectData = {
+      enquiry_id: data.enquiryId,
+      name: enquiry.project_name,
+      description: enquiry.project_deliverables || enquiry.description || 'Project created from approved quote',
+      start_date: new Date().toISOString().split('T')[0],
+      budget: data.quotationData.summary.totalQuoteAmount,
+      assigned_users: []
+    }
+
+    // Create the project (this would need to be updated to include project_id in the backend)
+    await createProject(projectData)
+
+    // Update enquiry status to converted
+    await updateEnquiry(data.enquiryId, { status: 'converted_to_project' })
+
+    // Refresh enquiries
+    await fetchEnquiries()
+
+    console.log('Project created successfully:', projectId)
+  } catch (error) {
+    console.error('Error creating project from approved quote:', error)
+  }
+}
+
+// Generate project ID in format WNG-YYYYMM-JOB_NUMBER(001)
+const generateProjectId = async (): Promise<string> => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0') // getMonth() returns 0-11
+  const datePrefix = `${year}${month}`
+
+  // For now, simulate getting the last project number
+  // In a real app, this would query the backend
+  const mockLastProjectNumber = 0 // This should come from API
+
+  // Increment job number
+  const nextJobNumber = mockLastProjectNumber + 1
+  const formattedJobNumber = String(nextJobNumber).padStart(3, '0')
+
+  return `WNG-${datePrefix}-${formattedJobNumber}`
 }
 
 const closeModal = () => {
