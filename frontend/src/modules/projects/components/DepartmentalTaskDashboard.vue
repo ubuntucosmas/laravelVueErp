@@ -10,229 +10,304 @@
       </div>
     </div>
 
-    <!-- Task Statistics -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center">
-          <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
+    <!-- Compact Task Statistics -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-6">
+          <div class="flex items-center space-x-2">
+            <div class="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center">
+              <svg class="w-3 h-3 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs text-gray-600 dark:text-gray-400">Total</p>
+              <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ stats.total }}</p>
+            </div>
           </div>
-          <div class="ml-3">
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total</p>
-            <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.total }}</p>
+
+          <div class="flex items-center space-x-2">
+            <div class="w-6 h-6 bg-yellow-100 dark:bg-yellow-900 rounded flex items-center justify-center">
+              <svg class="w-3 h-3 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs text-gray-600 dark:text-gray-400">In Progress</p>
+              <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ stats.inProgress }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <div class="w-6 h-6 bg-green-100 dark:bg-green-900 rounded flex items-center justify-center">
+              <svg class="w-3 h-3 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs text-gray-600 dark:text-gray-400">Completed</p>
+              <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ stats.completed }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <div class="w-6 h-6 bg-red-100 dark:bg-red-900 rounded flex items-center justify-center">
+              <svg class="w-3 h-3 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs text-gray-600 dark:text-gray-400">Overdue</p>
+              <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ stats.overdue }}</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center">
-          <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
-            <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        <!-- Quick Actions -->
+        <div class="flex items-center space-x-2">
+          <button
+            @click="assignTasks"
+            class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+            title="Assign/handover tasks to team members"
+          >
+            <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">In Progress</p>
-            <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.inProgress }}</p>
-          </div>
+            ASSIGN
+          </button>
+
+          <button
+            @click="createNewTask"
+            class="px-3 py-1.5 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+            title="Create a new task"
+          >
+            <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            NEW
+          </button>
+
+          <button
+            @click="exportTasks"
+            class="px-3 py-1.5 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 transition-colors"
+            title="Export tasks to CSV"
+          >
+            <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            EXPORT
+          </button>
+
+          <button
+            @click="showFilters = !showFilters"
+            class="px-3 py-1.5 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
+            title="Toggle filters"
+          >
+            <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+            </svg>
+            FILTER
+          </button>
         </div>
       </div>
+    </div>
 
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center">
-          <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-            <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</p>
-            <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.completed }}</p>
-          </div>
+    <!-- Quick Filters (Collapsible) -->
+    <div v-if="showFilters" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+          <select
+            v-model="filterStatus"
+            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          >
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
         </div>
-      </div>
 
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center">
-          <div class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
-            <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-            </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Overdue</p>
-            <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.overdue }}</p>
-          </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+          <select
+            v-model="filterPriority"
+            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          >
+            <option value="">All Priorities</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assigned To</label>
+          <select
+            v-model="filterAssignee"
+            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          >
+            <option value="">All Assignees</option>
+            <option value="unassigned">Unassigned</option>
+            <!-- Add dynamic options based on available users -->
+          </select>
+        </div>
+
+        <div class="flex items-end">
+          <button
+            @click="clearFilters"
+            class="w-full px-3 py-1.5 bg-gray-500 text-white text-sm rounded hover:bg-gray-600 transition-colors"
+          >
+            Clear Filters
+          </button>
         </div>
       </div>
     </div>
 
 
-    <!-- Sidebar Layout -->
+    <!-- Tabbed Layout -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div class="flex h-[600px]">
-        <!-- Sidebar -->
-        <div class="w-80 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Workflow Phases</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Select a phase to view tasks</p>
-          </div>
-          <nav class="p-2 space-y-1">
-            <button
-              v-for="phase in workflowPhases"
-              :key="phase.id"
-              @click="selectedPhase = phase.id"
-              :class="[
-                'w-full text-left px-3 py-3 rounded-md text-sm font-medium transition-colors',
-                selectedPhase === phase.id
-                  ? 'bg-blue-100 text-blue-900 dark:bg-blue-900/50 dark:text-blue-200 border-r-2 border-blue-500'
-                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              ]"
-            >
-              <div class="flex items-center justify-between">
-                <div class="flex-1 min-w-0">
-                  <div class="font-medium truncate">{{ phase.name }}</div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ phase.description }}</div>
-                </div>
-                <div v-if="getPhaseTaskCount(phase.id) > 0" class="ml-2 flex-shrink-0">
-                  <span
+      <!-- Tab Navigation -->
+      <div class="border-b border-gray-200 dark:border-gray-700">
+        <nav class="flex overflow-x-auto">
+          <button
+            v-for="phase in workflowPhases"
+            :key="phase.id"
+            @click="selectedPhase = phase.id"
+            :class="[
+              'flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+              selectedPhase === phase.id
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+            ]"
+          >
+            <div class="flex items-center space-x-2">
+              <span>{{ phase.name }}</span>
+              <span v-if="getPhaseTaskCount(phase.id) > 0"
                     :class="[
-                      'inline-flex items-center justify-center px-2 py-1 rounded-full text-xs font-medium min-w-[1.5rem] h-5',
+                      'inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium min-w-[1.25rem] h-4',
                       selectedPhase === phase.id
                         ? 'bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200'
                         : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300'
                     ]"
-                  >
-                    {{ getPhaseTaskCount(phase.id) }}
-                  </span>
-                </div>
-              </div>
-            </button>
-          </nav>
+              >
+                {{ getPhaseTaskCount(phase.id) }}
+              </span>
+            </div>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Tab Content -->
+      <div v-for="phase in workflowPhases" :key="phase.id" v-show="selectedPhase === phase.id" class="p-4">
+        <!-- Phase Header -->
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ phase.name }}</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ phase.description }}</p>
+          </div>
+          <div class="flex items-center space-x-4">
+            <div class="text-center">
+              <div class="text-xs text-gray-600 dark:text-gray-400">Tasks</div>
+              <div class="text-lg font-bold text-gray-900 dark:text-white">{{ getPhaseTaskCount(phase.id) }}</div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs text-gray-600 dark:text-gray-400">Completed</div>
+              <div class="text-lg font-bold text-green-600 dark:text-green-400">{{ getPhaseCompletedCount(phase.id) }}</div>
+            </div>
+          </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
-          <div v-for="phase in workflowPhases" :key="phase.id" v-show="selectedPhase === phase.id" class="flex-1 flex flex-col">
-            <!-- Phase Header -->
-            <div class="p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-xl font-semibold text-gray-900 dark:text-white">{{ phase.name }}</h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ phase.description }}</p>
+        <!-- Task List -->
+        <div v-if="getPhaseTasks(phase.id).length > 0" class="space-y-3">
+          <div
+            v-for="task in getPhaseTasks(phase.id)"
+            :key="task.id"
+            class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
+            @click="handleTaskSelect(task)"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center space-x-2 mb-2">
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ task.task_name }}</h4>
+                  <span
+                    :class="[
+                      'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                      task.status === 'completed' && task.notes?.startsWith('SKIPPED:') ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
+                      task.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                      task.status === 'in_progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                      'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    ]"
+                  >
+                    {{ task.status === 'completed' && task.notes?.startsWith('SKIPPED:') ? 'skipped' : task.status.replace('_', ' ') }}
+                  </span>
+                  <span
+                    :class="[
+                      'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                      task.priority === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
+                      task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
+                      'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    ]"
+                  >
+                    {{ task.priority }}
+                  </span>
                 </div>
-                <div class="flex items-center space-x-6">
-                  <div class="text-center">
-                    <div class="text-sm text-gray-600 dark:text-gray-400">Tasks in Phase</div>
-                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ getPhaseTaskCount(phase.id) }}</div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ task.task_description }}</p>
+                <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                  <div class="flex items-center space-x-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span>Due: {{ formatDate(task.due_date) }}</span>
                   </div>
-                  <div class="text-center">
-                    <div class="text-sm text-gray-600 dark:text-gray-400">Completed</div>
-                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ getPhaseCompletedCount(phase.id) }}</div>
+                  <div class="flex items-center space-x-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>{{ task.estimated_hours }}h</span>
+                  </div>
+                  <div v-if="task.assigned_user" class="flex items-center space-x-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <span>{{ task.assigned_user.name }}</span>
                   </div>
                 </div>
               </div>
-            </div>
-
-            <!-- Task List -->
-            <div class="flex-1 overflow-y-auto p-6">
-              <div v-if="getPhaseTasks(phase.id).length > 0" class="space-y-4">
-                <div
-                  v-for="task in getPhaseTasks(phase.id)"
-                  :key="task.id"
-                  class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
-                  @click="handleTaskSelect(task)"
+              <div class="flex items-center space-x-2 ml-4">
+                <button
+                  @click.stop="assignSingleTask(task)"
+                  class="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 text-xs font-medium"
+                  :title="'Assign/handover task: ' + task.task_name"
                 >
-                  <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                      <div class="flex items-center space-x-3 mb-2">
-                        <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ task.task_name }}</h4>
-                        <span
-                          :class="[
-                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                            task.status === 'completed' && task.notes?.startsWith('SKIPPED:') ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
-                            task.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                            task.status === 'in_progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
-                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                          ]"
-                        >
-                          {{ task.status === 'completed' && task.notes?.startsWith('SKIPPED:') ? 'skipped' : task.status.replace('_', ' ') }}
-                        </span>
-                        <span
-                          :class="[
-                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                            task.priority === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
-                            task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
-                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                          ]"
-                        >
-                          {{ task.priority }}
-                        </span>
-                      </div>
-                      <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ task.task_description }}</p>
-                      <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
-                        <div class="flex items-center space-x-1">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                          </svg>
-                          <span>Due: {{ formatDate(task.due_date) }}</span>
-                        </div>
-                        <div class="flex items-center space-x-1">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                          </svg>
-                          <span>{{ task.estimated_hours }}h estimated</span>
-                        </div>
-                        <div v-if="task.assigned_user" class="flex items-center space-x-1">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                          </svg>
-                          <span>{{ task.assigned_user.name }}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                      <button
-                        @click.stop="assignSingleTask(task)"
-                        class="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 text-sm font-medium"
-                        :title="'Assign/handover task: ' + task.task_name"
-                      >
-                        HANDOVER
-                      </button>
-                      <button
-                        @click.stop="handleViewTaskDetails(task)"
-                        class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
-                      >
-                        View Details
-                      </button>
-                      <button
-                        @click.stop="openSkipTaskModal(task)"
-                        class="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 text-sm font-medium"
-                      >
-                        {{ task.notes?.startsWith('SKIPPED:') ? 'Unskip Task' : 'Skip Task' }}
-                      </button>
-                      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Empty State -->
-              <div v-else class="text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No tasks in this phase</h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Tasks for {{ phase.name.toLowerCase() }} will appear here when assigned.
-                </p>
+                  HANDOVER
+                </button>
+                <button
+                  @click.stop="handleViewTaskDetails(task)"
+                  class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs font-medium"
+                >
+                  Details
+                </button>
+                <button
+                  @click.stop="openSkipTaskModal(task)"
+                  class="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 text-xs font-medium"
+                >
+                  {{ task.notes?.startsWith('SKIPPED:') ? 'Unskip' : 'Skip' }}
+                </button>
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="text-center py-8">
+          <svg class="mx-auto h-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No tasks in this phase</h3>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Tasks for {{ phase.name.toLowerCase() }} will appear here when assigned.
+          </p>
         </div>
       </div>
     </div>
@@ -418,6 +493,12 @@ const taskAssignmentNotifications = ref<Array<{
   taskCount: number
   tasks: DepartmentalTask[]
 }>>([])
+
+// Quick actions and filters
+const showFilters = ref(false)
+const filterStatus = ref('')
+const filterPriority = ref('')
+const filterAssignee = ref('')
 
 // Workflow phases definition
 const workflowPhases = ref([
@@ -1151,6 +1232,57 @@ const assignTasks = () => {
   selectedTask.value = null
   // Show task assignment recommendations
   showTaskAssignmentModal.value = true
+}
+
+const createNewTask = () => {
+  // Create a new task - for now, just show a placeholder
+  console.log('Create new task functionality would be implemented here')
+  // In a real implementation, this would open a task creation modal
+  alert('New task creation functionality would be implemented here')
+}
+
+const exportTasks = () => {
+  // Export tasks to CSV
+  const csvContent = generateTasksCSV()
+  downloadCSV(csvContent, `tasks-${new Date().toISOString().split('T')[0]}.csv`)
+}
+
+const clearFilters = () => {
+  filterStatus.value = ''
+  filterPriority.value = ''
+  filterAssignee.value = ''
+}
+
+const generateTasksCSV = (): string => {
+  const headers = ['Task Name', 'Description', 'Status', 'Priority', 'Due Date', 'Estimated Hours', 'Assigned User', 'Department']
+  const rows = tasks.value.map(task => [
+    task.task_name,
+    task.task_description,
+    task.status.replace('_', ' '),
+    task.priority,
+    formatDate(task.due_date),
+    (task.estimated_hours || 0).toString(),
+    task.assigned_user?.name || 'Unassigned',
+    task.department?.display_name || 'Unknown'
+  ])
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(field => `"${field}"`).join(','))
+    .join('\n')
+
+  return csvContent
+}
+
+const downloadCSV = (content: string, filename: string) => {
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', filename)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 const assignSingleTask = (task: DepartmentalTask) => {

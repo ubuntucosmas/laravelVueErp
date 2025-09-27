@@ -146,6 +146,8 @@
         </button>
       </div>
     </div>
+
+
     <!-- Active Projects with Task Relationships -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
       <div class="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -232,9 +234,6 @@
       </div>
     </div>
 
-    <!-- Recent Activity Logs -->
-    <DetailedActivityLogs :logs="activityLogs" />
-
     <!-- Project Guidelines -->
     <div class="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg p-6 border border-indigo-200 dark:border-indigo-800">
       <div class="flex items-start space-x-4">
@@ -267,8 +266,6 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import WorkflowGuide from '../components/WorkflowGuide.vue'
-import DetailedActivityLogs from '../components/DetailedActivityLogs.vue'
-import type { ActivityLog } from '../types'
 
 // Mock data - in real app, this would come from API
 const projectStats = ref({
@@ -305,71 +302,6 @@ const activeProjects = ref([
     progress: 15,
     deadline: '2025-11-05',
     budget: 650000
-  }
-])
-
-const activityLogs = ref<ActivityLog[]>([
-  {
-    id: 1,
-    action: 'handover',
-    user_id: 1,
-    user_name: 'John Smith',
-    from_department: 'projects',
-    to_department: 'creatives',
-    assigned_by_user_id: 2,
-    assigned_by_name: 'Project Manager',
-    task_id: 1,
-    task_name: 'Design Concept Development',
-    notes: 'Handover completed successfully for creative design phase',
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
-  },
-  {
-    id: 2,
-    action: 'assigned',
-    user_id: 3,
-    user_name: 'Sarah Johnson',
-    from_department: 'projects',
-    to_department: 'finance',
-    assigned_by_user_id: 2,
-    assigned_by_name: 'Project Manager',
-    task_id: 2,
-    task_name: 'Budget Preparation',
-    notes: 'Assigned budget preparation task to finance department',
-    created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() // 4 hours ago
-  },
-  {
-    id: 3,
-    action: 'completed',
-    user_id: 4,
-    user_name: 'Mike Davis',
-    task_id: 3,
-    task_name: 'Site Survey Report',
-    notes: 'Site survey completed and report submitted',
-    created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString() // 6 hours ago
-  },
-  {
-    id: 4,
-    action: 'started',
-    user_id: 5,
-    user_name: 'Emily Chen',
-    task_id: 4,
-    task_name: 'Material Procurement',
-    notes: 'Started procurement process for event materials',
-    created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString() // 8 hours ago
-  },
-  {
-    id: 5,
-    action: 'handover',
-    user_id: 6,
-    user_name: 'David Wilson',
-    from_department: 'creatives',
-    to_department: 'production',
-    assigned_by_user_id: 2,
-    assigned_by_name: 'Project Manager',
-    task_id: 5,
-    task_name: 'Final Design Approval',
-    notes: 'Design approved and handed over to production team',
-    created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() // 12 hours ago
   }
 ])
 

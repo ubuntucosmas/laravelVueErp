@@ -1,159 +1,150 @@
 <template>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+    <!-- Compact Header -->
+    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
       <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity Logs</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Project handovers, assignments, and task updates</p>
+          <h3 class="text-base font-semibold text-gray-900 dark:text-white">Activity Logs</h3>
+          <p class="text-xs text-gray-600 dark:text-gray-400">Recent handovers & task updates</p>
         </div>
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2">
           <select
             v-model="selectedFilter"
-            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            class="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
-            <option value="all">All Activities</option>
+            <option value="all">All</option>
             <option value="handover">Handovers</option>
             <option value="assigned">Assignments</option>
-            <option value="completed">Completions</option>
-            <option value="started">Started Tasks</option>
+            <option value="completed">Completed</option>
+            <option value="started">Started</option>
           </select>
         </div>
       </div>
     </div>
 
-    <div v-if="filteredLogs.length === 0" class="text-center py-12">
-      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <!-- Horizontal Scrolling Activity Feed -->
+    <div v-if="filteredLogs.length === 0" class="text-center py-8">
+      <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
       </svg>
-      <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No activity logs</h3>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        Activity logs will appear here when tasks are assigned or handed over.
-      </p>
+      <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No activities</h3>
+      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Activity logs will appear here</p>
     </div>
 
-    <div v-else class="timeline px-6 py-4">
-      <div
-        v-for="(log, index) in filteredLogs"
-        :key="log.id"
-        class="timeline-item flex items-start space-x-4 mb-8 last:mb-0"
-      >
-        <div class="timeline-marker flex-shrink-0 relative">
-          <div
-            :class="[
-              'w-12 h-12 rounded-full flex items-center justify-center border-2 border-gray-300 dark:border-gray-600',
-              getActionIconClass(log.action)
-            ]"
-          >
-            <svg
+    <div v-else class="p-4">
+      <!-- Horizontal Scroll Container -->
+      <div class="flex space-x-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+        <div
+          v-for="log in filteredLogs"
+          :key="log.id"
+          class="flex-shrink-0 w-80 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow"
+        >
+          <!-- Activity Header -->
+          <div class="flex items-start space-x-3 mb-3">
+            <div
               :class="[
-                'w-6 h-6',
-                getActionIconColor(log.action)
-              ]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                v-if="log.action === 'assigned'"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-              <path
-                v-else-if="log.action === 'handover'"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-              />
-              <path
-                v-else-if="log.action === 'completed'"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-              <path
-                v-else-if="log.action === 'started'"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 11H13m-3 3h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 14H13m-3 3h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 17H13M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-              <path
-                v-else
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-          </div>
-          <!-- Connecting line -->
-          <div v-if="index < filteredLogs.length - 1" class="timeline-line absolute top-12 left-1/2 transform -translate-x-1/2 w-0.5 h-8 bg-gray-300 dark:bg-gray-600"></div>
-        </div>
-
-        <div class="timeline-content flex-1 min-w-0">
-          <div class="flex items-center space-x-2 mb-2">
-            <span class="text-sm font-medium text-gray-900 dark:text-white">{{ log.user_name }}</span>
-            <span class="text-sm text-gray-600 dark:text-gray-400">
-              {{ getActionText(log) }}
-            </span>
-            <span
-              :class="[
-                'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-                getActionBadgeClass(log.action)
+                'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
+                getActionIconClass(log.action)
               ]"
             >
-              {{ log.action }}
-            </span>
+              <svg
+                :class="[
+                  'w-5 h-5',
+                  getActionIconColor(log.action)
+                ]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  v-if="log.action === 'assigned'"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+                <path
+                  v-else-if="log.action === 'handover'"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                />
+                <path
+                  v-else-if="log.action === 'completed'"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+                <path
+                  v-else-if="log.action === 'started'"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 11H13m-3 3h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 14H13m-3 3h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 17H13M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+                <path
+                  v-else
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center space-x-2 mb-1">
+                <span class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ log.user_name }}</span>
+                <span
+                  :class="[
+                    'inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium',
+                    getActionBadgeClass(log.action)
+                  ]"
+                >
+                  {{ log.action }}
+                </span>
+              </div>
+              <p class="text-xs text-gray-600 dark:text-gray-400">{{ getActionText(log) }}</p>
+            </div>
           </div>
 
+          <!-- Task Name -->
           <div v-if="log.task_name" class="mb-2">
             <span class="text-sm font-medium text-blue-600 dark:text-blue-400">{{ log.task_name }}</span>
           </div>
 
-          <div v-if="log.notes" class="mb-3">
-            <p class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-md">
+          <!-- Notes -->
+          <div v-if="log.notes" class="mb-2">
+            <p class="text-xs text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600/50 p-2 rounded border-l-2 border-gray-300 dark:border-gray-500">
               {{ log.notes }}
             </p>
           </div>
 
-          <!-- Additional Details for Handovers -->
-          <div v-if="log.action === 'handover' && log.from_department && log.to_department" class="mb-3">
-            <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
-              <div class="flex items-center space-x-1">
-                <span class="font-medium">From:</span>
-                <span class="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded">{{ log.from_department }}</span>
-              </div>
-              <div class="flex items-center space-x-1">
-                <span class="font-medium">To:</span>
-                <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded">{{ log.to_department }}</span>
-              </div>
-              <div v-if="log.assigned_by_name" class="flex items-center space-x-1">
-                <span class="font-medium">By:</span>
-                <span>{{ log.assigned_by_name }}</span>
-              </div>
+          <!-- Handover Details -->
+          <div v-if="log.action === 'handover' && log.from_department && log.to_department" class="mb-2">
+            <div class="flex items-center space-x-2 text-xs">
+              <span class="px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded">From: {{ log.from_department }}</span>
+              <span class="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded">To: {{ log.to_department }}</span>
             </div>
           </div>
 
           <!-- Timestamp -->
-          <div class="text-xs text-gray-500 dark:text-gray-400">
+          <div class="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-600">
             {{ formatDate(log.created_at) }}
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Load More Button -->
-    <div v-if="filteredLogs.length >= 10" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-      <button
-        @click="loadMore"
-        class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
-      >
-        Load More Activities
-      </button>
+      <!-- Load More Button -->
+      <div v-if="filteredLogs.length >= 10" class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
+        <button
+          @click="loadMore"
+          class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+        >
+          Load More Activities
+        </button>
+      </div>
     </div>
   </div>
 </template>

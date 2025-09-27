@@ -1,4 +1,4 @@
-export interface Budget {
+ xport interface Budget {
   id: number
   project: string
   total: number
