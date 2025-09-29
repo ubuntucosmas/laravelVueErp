@@ -16,9 +16,6 @@ class DatabaseSeeder extends Seeder
         // Seed departments first
         $this->call(DepartmentSeeder::class);
 
-        // Seed project phases
-        $this->call(PhaseSeeder::class);
-
         // Then seed employees
         $this->call(EmployeeSeeder::class);
 
@@ -30,6 +27,9 @@ class DatabaseSeeder extends Seeder
             CreativesDepartmentSeeder::class,
             DesignerRoleSeeder::class,
         ]);
+
+        // Seed sample enquiries for testing
+        $this->call(EnquirySeeder::class);
 
         // Create a default admin user
         $adminUser = \App\Models\User::factory()->create([
@@ -49,6 +49,7 @@ class DatabaseSeeder extends Seeder
             ClientServiceUserSeeder::class,
             DesignerUserSeeder::class,
             FinanceRolesSeeder::class,
+            ProjectsUserSeeder::class,
         ]);
 
         // Seed projects and project phases

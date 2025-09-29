@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
             'department.access' => \App\Http\Middleware\CheckDepartmentAccess::class,
+            'permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
 
         $middleware->api(prepend: [

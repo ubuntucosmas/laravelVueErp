@@ -164,6 +164,7 @@
                </div>
              </div>
            </div>
+           </div>
           <button
             @click="$router.push('/projects/enquiries')"
             class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"

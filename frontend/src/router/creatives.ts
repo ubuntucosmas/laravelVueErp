@@ -29,7 +29,14 @@ export const creativesRoutes: RouteRecordRaw[] = [
       {
         path: 'enquiries',
         name: 'creatives-enquiries',
-        component: () => import('../modules/projects/views/EnquiriesManagement.vue'),
+        component: () => import('../modules/shared/views/ProjectEnquiries.vue'),
+        props: {
+          department: 'creatives',
+          pageTitle: 'Creatives Enquiries',
+          pageDescription: 'Manage enquiries for creative design and development',
+          breadcrumbText: 'Creatives',
+          breadcrumbLink: '/creatives'
+        },
         meta: {
           title: 'Creatives Enquiries',
           requiresAuth: true,

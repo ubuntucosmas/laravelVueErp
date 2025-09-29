@@ -324,7 +324,9 @@
     <SiteSurveyModal
       :is-visible="showSiteSurveyModal"
       :enquiry="enquiry as unknown as Enquiry || null"
-      @close="showSiteSurveyModal = false"
+      :survey="selectedSurvey"
+      :readonly="viewingSurvey"
+      @close="closeSiteSurveyModal"
       @save="handleSiteSurveySave"
     />
 
@@ -437,6 +439,9 @@ import QuoteModal from './QuoteModal.vue'
 import TaskDetailsModal from './TaskDetailsModal.vue'
 import TaskAssignmentModal from './TaskAssignmentModal.vue'
 import TaskAssignmentNotification from './TaskAssignmentNotification.vue'
+import { useDepartmentalTasks } from '../composables/useDepartmentalTasks'
+import { useSiteSurveys } from '../composables/useSiteSurveys'
+import api from '@/plugins/axios'
 
 // Props
 interface Props {
@@ -470,10 +475,16 @@ const emit = defineEmits<{
   }]
 }>()
 
+// Composables
+const { updateTask } = useDepartmentalTasks()
+const { fetchSiteSurveys } = useSiteSurveys()
+
 // Reactive data
 const tasks = ref<DepartmentalTask[]>([])
 const loading = ref(false)
 const selectedTask = ref<DepartmentalTask | null>(null)
+const selectedSurvey = ref<SiteSurvey | null>(null)
+const viewingSurvey = ref(false)
 const showTaskModal = ref(false)
 const showSiteSurveyModal = ref(false)
 const showMaterialsModal = ref(false)
@@ -575,14 +586,14 @@ const stats = computed(() => {
 const fetchTasks = async () => {
   loading.value = true
   try {
-    // TODO: Implement API call based on context
     if (props.context === 'enquiry') {
       // Fetch enquiry departmental tasks
-      console.log('Fetching enquiry tasks for:', props.contextId, 'department:', props.department)
-      // tasks.value = await api.get(`/api/enquiries/${props.contextId}/departmental-tasks`)
-
-      // Generate mock tasks based on department
-      tasks.value = generateDepartmentalTasks()
+      console.log('Fetching enquiry tasks for:', props.contextId)
+      const response = await api.get('/api/projects/departmental-tasks', {
+        params: { enquiry_id: props.contextId }
+      })
+      tasks.value = response.data.data.data || []
+      console.log('Fetched tasks:', tasks.value)
     } else {
       // Fetch project phase departmental tasks
       console.log('Fetching project tasks for:', props.contextId)
@@ -593,6 +604,8 @@ const fetchTasks = async () => {
     }
   } catch (error) {
     console.error('Error fetching tasks:', error)
+    // Fallback to empty array if API fails
+    tasks.value = []
   } finally {
     loading.value = false
   }
@@ -1298,6 +1311,12 @@ const closeTaskAssignmentModal = () => {
   showTaskAssignmentModal.value = false
 }
 
+const closeSiteSurveyModal = () => {
+  showSiteSurveyModal.value = false
+  selectedSurvey.value = null
+  viewingSurvey.value = false
+}
+
 const handleTaskUpdate = (task: DepartmentalTask) => {
   const index = tasks.value.findIndex(t => t.id === task.id)
   if (index !== -1) {
@@ -1307,10 +1326,12 @@ const handleTaskUpdate = (task: DepartmentalTask) => {
 }
 
 const handleTaskSelect = (task: DepartmentalTask) => {
+  console.log('Task selected:', task.task_name, task)
   selectedTask.value = task
 
   // Check if this is the "Conduct Site Survey" task
   if (task.task_name === 'Conduct Site Survey') {
+    console.log('Opening site survey modal')
     showSiteSurveyModal.value = true
   } else if (task.task_name === 'Design Assets and Material Specification') {
     // Check if this is the "Design Assets and Material Specification" task
@@ -1327,15 +1348,24 @@ const handleTaskSelect = (task: DepartmentalTask) => {
   }
 }
 
-const handleSiteSurveySave = (survey: SiteSurvey) => {
+const handleSiteSurveySave = async (survey: SiteSurvey) => {
   // Update the "Conduct Site Survey" task status to completed
   if (selectedTask.value && selectedTask.value.task_name === 'Conduct Site Survey') {
-    const updatedTask = {
-      ...selectedTask.value,
-      status: 'completed' as const,
-      completed_at: new Date().toISOString()
+    try {
+      const updatedTask = await updateTask(selectedTask.value.id, {
+        status: 'completed'
+      })
+      handleTaskUpdate(updatedTask)
+    } catch (error) {
+      console.error('Failed to update task status:', error)
+      // Fallback to local update if API fails
+      const updatedTask = {
+        ...selectedTask.value,
+        status: 'completed' as const,
+        completed_at: new Date().toISOString()
+      }
+      handleTaskUpdate(updatedTask)
     }
-    handleTaskUpdate(updatedTask)
   }
 
   // Close the modal
@@ -1453,9 +1483,29 @@ const confirmSkipTask = () => {
   skipReason.value = ''
 }
 
-const handleViewTaskDetails = (task: DepartmentalTask) => {
+const handleViewTaskDetails = async (task: DepartmentalTask) => {
   selectedTask.value = task
-  showTaskDetailsModal.value = true
+
+  // For site survey tasks, fetch and display the survey details
+  if (task.task_name === 'Conduct Site Survey') {
+    try {
+      // Fetch the survey for this enquiry
+      const surveys = await fetchSiteSurveys({ enquiry_id: props.contextId })
+      if (surveys && surveys.length > 0) {
+        selectedSurvey.value = surveys[0] // Assuming one survey per enquiry
+        viewingSurvey.value = true
+        showSiteSurveyModal.value = true
+      } else {
+        // No survey found, show message
+        alert('No site survey data found for this enquiry.')
+      }
+    } catch (error) {
+      console.error('Error fetching site survey:', error)
+      alert('Failed to load site survey details.')
+    }
+  } else {
+    showTaskDetailsModal.value = true
+  }
 }
 
 const handleTaskAssignmentsSave = (updatedTasks: DepartmentalTask[]) => {

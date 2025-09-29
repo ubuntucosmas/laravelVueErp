@@ -2,10 +2,7 @@ import { ref, computed } from 'vue'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types'
 import api from '@/plugins/axios'
 
-// Import shared dummy data
-import { dummyEnquiries } from '../../shared/data/dummyData'
-
-const enquiries = ref<Enquiry[]>([...dummyEnquiries])
+const enquiries = ref<Enquiry[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
@@ -20,62 +17,51 @@ export function useEnquiries() {
     error.value = null
 
     try {
-      // Fetch from client service API
-      const response = await api.get('/api/clientservice/enquiries', { params: filters })
+      // Fetch from projects API
+      const response = await api.get('/api/projects/enquiries', { params: filters })
       const clientServiceEnquiries = response.data.data.data || []
 
-      // Map client service enquiries to projects module format
+      // Map enquiries to projects module format
       const mappedEnquiries: Enquiry[] = clientServiceEnquiries.map((enquiry: any) => ({
-        // Core fields from client service
         id: enquiry.id,
         date_received: enquiry.date_received,
         expected_delivery_date: enquiry.expected_delivery_date,
-        client_name: enquiry.client_name,
-        project_name: enquiry.project_name,
+        client_id: enquiry.client_id,
+        client: enquiry.client,
+        title: enquiry.title,
+        description: enquiry.description,
+        project_scope: enquiry.project_scope,
+        priority: enquiry.priority,
+        status: enquiry.status,
+        department_id: enquiry.department_id,
+        assigned_department: enquiry.assigned_department,
         project_deliverables: enquiry.project_deliverables,
         contact_person: enquiry.contact_person,
-        status: enquiry.status,
         assigned_po: enquiry.assigned_po,
         follow_up_notes: enquiry.follow_up_notes,
-        project_id: enquiry.project_id,
         enquiry_number: enquiry.enquiry_number,
         converted_to_project_id: enquiry.converted_to_project_id,
         venue: enquiry.venue,
         site_survey_skipped: enquiry.site_survey_skipped,
         site_survey_skip_reason: enquiry.site_survey_skip_reason,
-        created_by: enquiry.created_by,
-        created_by_user: enquiry.created_by_user,
-        created_at: enquiry.created_at,
-        updated_at: enquiry.updated_at,
-
-        // Legacy fields for backward compatibility
-        client_id: enquiry.client_id || undefined,
-        client: enquiry.client || undefined,
-        title: enquiry.project_name, // Map project_name to title
-        description: enquiry.project_deliverables, // Map project_deliverables to description
-        project_scope: enquiry.project_deliverables, // Map project_deliverables to project_scope
-        priority: 'medium', // Default priority since client service doesn't have priority
-        department_id: undefined,
-        department: undefined,
-        assigned_department: undefined,
-        estimated_budget: undefined
+        quote_approved: enquiry.quote_approved,
+        quote_approved_at: enquiry.quote_approved_at,
+        quote_approved_by: enquiry.quote_approved_by,
+        created_by: enquiry.created_by
       }))
 
       enquiries.value = mappedEnquiries
     } catch (err) {
       error.value = 'Failed to fetch enquiries'
       console.error('Error fetching enquiries:', err)
-      // Fallback to dummy data if API fails
-      enquiries.value = [...dummyEnquiries]
+      enquiries.value = []
     } finally {
       loading.value = false
     }
   }
 
   const getEnquiry = (id: number): Enquiry | undefined => {
-    // First check current enquiries ref, then fall back to dummy data
-    return enquiries.value.find(enquiry => enquiry.id === id) ||
-           dummyEnquiries.find(enquiry => enquiry.id === id)
+    return enquiries.value.find(enquiry => enquiry.id === id)
   }
 
   const createEnquiry = async (data: CreateEnquiryData): Promise<Enquiry> => {
@@ -83,15 +69,20 @@ export function useEnquiries() {
     error.value = null
 
     try {
-      // Use client service API for creating enquiries
-      const response = await api.post('/api/clientservice/enquiries', {
+      // Use projects API for creating enquiries
+      const response = await api.post('/api/projects/enquiries', {
         date_received: data.date_received || new Date().toISOString().split('T')[0],
         expected_delivery_date: data.expected_delivery_date,
-        client_name: data.client_name,
-        project_name: data.project_name || data.title, // Fallback to title if project_name not provided
-        project_deliverables: data.project_deliverables || data.description, // Fallback to description
-        contact_person: data.contact_person,
+        client_id: data.client_id,
+        title: data.title,
+        description: data.description,
+        project_scope: data.project_scope,
+        priority: data.priority,
         status: data.status || 'enquiry_logged',
+        department_id: data.department_id,
+        assigned_department: data.assigned_department,
+        project_deliverables: data.project_deliverables,
+        contact_person: data.contact_person,
         assigned_po: data.assigned_po,
         follow_up_notes: data.follow_up_notes,
         venue: data.venue,
@@ -103,39 +94,31 @@ export function useEnquiries() {
 
       // Map to projects module format
       const newEnquiry: Enquiry = {
-        // Core fields from client service
         id: backendEnquiry.id,
         date_received: backendEnquiry.date_received,
         expected_delivery_date: backendEnquiry.expected_delivery_date,
-        client_name: backendEnquiry.client_name,
-        project_name: backendEnquiry.project_name,
+        client_id: backendEnquiry.client_id,
+        client: backendEnquiry.client,
+        title: backendEnquiry.title,
+        description: backendEnquiry.description,
+        project_scope: backendEnquiry.project_scope,
+        priority: backendEnquiry.priority,
+        status: backendEnquiry.status,
+        department_id: backendEnquiry.department_id,
+        assigned_department: backendEnquiry.assigned_department,
         project_deliverables: backendEnquiry.project_deliverables,
         contact_person: backendEnquiry.contact_person,
-        status: backendEnquiry.status,
         assigned_po: backendEnquiry.assigned_po,
         follow_up_notes: backendEnquiry.follow_up_notes,
-        project_id: backendEnquiry.project_id,
         enquiry_number: backendEnquiry.enquiry_number,
         converted_to_project_id: backendEnquiry.converted_to_project_id,
         venue: backendEnquiry.venue,
         site_survey_skipped: backendEnquiry.site_survey_skipped,
         site_survey_skip_reason: backendEnquiry.site_survey_skip_reason,
-        created_by: backendEnquiry.created_by,
-        created_by_user: backendEnquiry.created_by_user,
-        created_at: backendEnquiry.created_at,
-        updated_at: backendEnquiry.updated_at,
-
-        // Legacy fields for backward compatibility
-        client_id: backendEnquiry.client_id || undefined,
-        client: backendEnquiry.client || undefined,
-        title: backendEnquiry.project_name,
-        description: backendEnquiry.project_deliverables,
-        project_scope: backendEnquiry.project_deliverables,
-        priority: data.priority || 'medium',
-        department_id: data.department_id,
-        department: undefined,
-        assigned_department: data.assigned_department,
-        estimated_budget: data.estimated_budget
+        quote_approved: backendEnquiry.quote_approved,
+        quote_approved_at: backendEnquiry.quote_approved_at,
+        quote_approved_by: backendEnquiry.quote_approved_by,
+        created_by: backendEnquiry.created_by
       }
 
       enquiries.value.push(newEnquiry)
@@ -153,15 +136,20 @@ export function useEnquiries() {
     error.value = null
 
     try {
-      // Use client service API for updating enquiries
+      // Use projects API for updating enquiries
       const updateData = {
         date_received: data.date_received,
         expected_delivery_date: data.expected_delivery_date,
-        client_name: data.client_name,
-        project_name: data.project_name || data.title,
-        project_deliverables: data.project_deliverables || data.description,
-        contact_person: data.contact_person,
+        client_id: data.client_id,
+        title: data.title,
+        description: data.description,
+        project_scope: data.project_scope,
+        priority: data.priority,
         status: data.status,
+        department_id: data.department_id,
+        assigned_department: data.assigned_department,
+        project_deliverables: data.project_deliverables,
+        contact_person: data.contact_person,
         assigned_po: data.assigned_po,
         follow_up_notes: data.follow_up_notes,
         venue: data.venue,
@@ -169,44 +157,36 @@ export function useEnquiries() {
         site_survey_skip_reason: data.site_survey_skip_reason
       }
 
-      const response = await api.put(`/api/clientservice/enquiries/${id}`, updateData)
+      const response = await api.put(`/api/projects/enquiries/${id}`, updateData)
       const updatedBackendEnquiry = response.data.data
 
       // Map to projects module format
       const updatedEnquiry: Enquiry = {
-        // Core fields from client service
         id: updatedBackendEnquiry.id,
         date_received: updatedBackendEnquiry.date_received,
         expected_delivery_date: updatedBackendEnquiry.expected_delivery_date,
-        client_name: updatedBackendEnquiry.client_name,
-        project_name: updatedBackendEnquiry.project_name,
+        client_id: updatedBackendEnquiry.client_id,
+        client: updatedBackendEnquiry.client,
+        title: updatedBackendEnquiry.title,
+        description: updatedBackendEnquiry.description,
+        project_scope: updatedBackendEnquiry.project_scope,
+        priority: updatedBackendEnquiry.priority,
+        status: updatedBackendEnquiry.status,
+        department_id: updatedBackendEnquiry.department_id,
+        assigned_department: updatedBackendEnquiry.assigned_department,
         project_deliverables: updatedBackendEnquiry.project_deliverables,
         contact_person: updatedBackendEnquiry.contact_person,
-        status: updatedBackendEnquiry.status,
         assigned_po: updatedBackendEnquiry.assigned_po,
         follow_up_notes: updatedBackendEnquiry.follow_up_notes,
-        project_id: updatedBackendEnquiry.project_id,
         enquiry_number: updatedBackendEnquiry.enquiry_number,
         converted_to_project_id: updatedBackendEnquiry.converted_to_project_id,
         venue: updatedBackendEnquiry.venue,
         site_survey_skipped: updatedBackendEnquiry.site_survey_skipped,
         site_survey_skip_reason: updatedBackendEnquiry.site_survey_skip_reason,
-        created_by: updatedBackendEnquiry.created_by,
-        created_by_user: updatedBackendEnquiry.created_by_user,
-        created_at: updatedBackendEnquiry.created_at,
-        updated_at: updatedBackendEnquiry.updated_at,
-
-        // Legacy fields for backward compatibility
-        client_id: updatedBackendEnquiry.client_id || undefined,
-        client: updatedBackendEnquiry.client || undefined,
-        title: updatedBackendEnquiry.project_name,
-        description: updatedBackendEnquiry.project_deliverables,
-        project_scope: updatedBackendEnquiry.project_deliverables,
-        priority: data.priority || 'medium',
-        department_id: data.department_id,
-        department: undefined,
-        assigned_department: data.assigned_department,
-        estimated_budget: data.estimated_budget
+        quote_approved: updatedBackendEnquiry.quote_approved,
+        quote_approved_at: updatedBackendEnquiry.quote_approved_at,
+        quote_approved_by: updatedBackendEnquiry.quote_approved_by,
+        created_by: updatedBackendEnquiry.created_by
       }
 
       // Update the enquiry in the local array

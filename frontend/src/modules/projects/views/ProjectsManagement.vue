@@ -86,7 +86,7 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="project in filteredProjects" :key="project.id">
+            <tr v-for="project in paginatedProjects" :key="project.id">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <div class="flex-shrink-0 h-10 w-10">
@@ -162,6 +162,15 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      <Pagination
+        v-if="filteredProjects.length > itemsPerPage"
+        :current-page="currentPage"
+        :total-items="filteredProjects.length"
+        :items-per-page="itemsPerPage"
+        @page-change="handlePageChange"
+      />
     </div>
 
     <!-- Empty State -->
@@ -181,6 +190,7 @@ import { useRouter } from 'vue-router'
 import type { Project } from '../types'
 import type { DepartmentalTaskStats } from '../types/departmentalTask'
 import { useProjects } from '../composables/useProjects'
+import Pagination from '../../../components/Pagination.vue'
 
 const router = useRouter()
 
@@ -189,6 +199,10 @@ const { projects, loading, error, fetchProjects, updateProjectPhase, getDepartme
 // Filters and tabs
 const filters = ref({ search: '', status: '' })
 const activeTab = ref('all')
+
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
 
 // Store departmental task stats for each project
 const projectTaskStats = ref<Record<number, DepartmentalTaskStats>>({})
@@ -211,6 +225,18 @@ const filteredProjects = computed(() => {
 
   return filtered
 })
+
+// Paginated projects
+const paginatedProjects = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredProjects.value.slice(start, end)
+})
+
+// Pagination handlers
+const handlePageChange = (page: number) => {
+  currentPage.value = page
+}
 
 // Function to get stats for a project (with caching)
 const getProjectTaskStats = async (project: Project): Promise<DepartmentalTaskStats> => {

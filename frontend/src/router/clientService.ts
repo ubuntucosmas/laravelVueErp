@@ -25,13 +25,20 @@ export const clientServiceRoutes: RouteRecordRaw[] = [
       {
         path: 'enquiries',
         name: 'client-service-enquiries',
-        component: () => import('../modules/clientService/views/EnquiriesManagement.vue'),
+        component: () => import('../modules/shared/views/ProjectEnquiries.vue'),
+        props: {
+          department: 'client-service',
+          pageTitle: 'Client Service Enquiries',
+          pageDescription: 'Manage client enquiries and service requests',
+          breadcrumbText: 'Client Service',
+          breadcrumbLink: '/client-service'
+        },
         meta: { title: 'Enquiry Management' }
       },
       {
         path: 'enquiries/:id',
         name: 'client-service-enquiry-detail',
-        component: () => import('../modules/clientService/views/EnquiryDetail.vue'),
+        component: () => import('../modules/projects/views/EnquiryDetailWorkflow.vue'),
         meta: { title: 'Enquiry Details' }
       }
     ],

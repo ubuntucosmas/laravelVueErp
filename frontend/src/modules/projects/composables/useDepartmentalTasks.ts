@@ -179,7 +179,7 @@ export function useDepartmentalTasks(projectId?: number, phaseId?: number) {
   })
 
   // Methods
-  const fetchTasks = async (projectPhaseId?: number) => {
+  const fetchTasks = async (projectPhaseId?: number, enquiryId?: number) => {
     try {
       loading.value = true
       error.value = null
@@ -188,8 +188,9 @@ export function useDepartmentalTasks(projectId?: number, phaseId?: number) {
       if (projectId) params.append('project_id', projectId.toString())
       if (phaseId) params.append('phase_id', phaseId.toString())
       if (projectPhaseId) params.append('project_phase_id', projectPhaseId.toString())
+      if (enquiryId) params.append('enquiry_id', enquiryId.toString())
 
-      const response = await get<DepartmentalTask[]>(`/api/departmental-tasks`, { project_id: projectId, phase_id: phaseId, project_phase_id: projectPhaseId })
+      const response = await get<DepartmentalTask[]>(`/api/projects/departmental-tasks`, { project_id: projectId, phase_id: phaseId, project_phase_id: projectPhaseId, enquiry_id: enquiryId })
       tasks.value = response.data || []
 
       // Update current project phase if we have tasks
@@ -206,7 +207,7 @@ export function useDepartmentalTasks(projectId?: number, phaseId?: number) {
 
   const createTask = async (data: CreateDepartmentalTaskData): Promise<DepartmentalTask> => {
     try {
-      const response = await post<DepartmentalTask>('/api/departmental-tasks', data as unknown as Record<string, unknown>)
+      const response = await post<DepartmentalTask>('/api/projects/departmental-tasks', data as unknown as Record<string, unknown>)
       const newTask = response.data
       tasks.value.push(newTask)
       return newTask
@@ -219,7 +220,7 @@ export function useDepartmentalTasks(projectId?: number, phaseId?: number) {
 
   const updateTask = async (taskId: number, data: UpdateDepartmentalTaskData): Promise<DepartmentalTask> => {
     try {
-      const response = await put<DepartmentalTask>(`/api/departmental-tasks/${taskId}`, data as Record<string, unknown>)
+      const response = await put<DepartmentalTask>(`/api/projects/departmental-tasks/${taskId}`, data as Record<string, unknown>)
       const updatedTask = response.data
 
       // Update in local state
@@ -238,7 +239,7 @@ export function useDepartmentalTasks(projectId?: number, phaseId?: number) {
 
   const deleteTask = async (taskId: number): Promise<void> => {
     try {
-      await deleteRequest(`/api/departmental-tasks/${taskId}`)
+      await deleteRequest(`/api/projects/departmental-tasks/${taskId}`)
       tasks.value = tasks.value.filter(t => t.id !== taskId)
     } catch (err: unknown) {
       const apiError = err as { response?: { data?: { message?: string } } }
@@ -249,7 +250,7 @@ export function useDepartmentalTasks(projectId?: number, phaseId?: number) {
 
   const performTaskAction = async (request: TaskActionRequest): Promise<TaskActionResponse> => {
     try {
-      const response = await post<TaskActionResponse>(`/api/departmental-tasks/${request.task_id}/action`, request as unknown as Record<string, unknown>)
+      const response = await post<TaskActionResponse>(`/api/projects/departmental-tasks/${request.task_id}/action`, request as unknown as Record<string, unknown>)
       const result = response.data
 
       // Update local task state

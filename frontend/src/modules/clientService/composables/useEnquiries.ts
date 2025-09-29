@@ -20,7 +20,9 @@ export function useEnquiries() {
 
     try {
       const response = await api.get('/api/clientservice/enquiries', { params: filters })
-      enquiries.value = response.data.data.data || []
+      const apiEnquiries = response.data.data.data || []
+
+      enquiries.value = apiEnquiries
     } catch (err) {
       error.value = 'Failed to fetch enquiries'
       console.error('Error fetching enquiries:', err)
@@ -43,7 +45,9 @@ export function useEnquiries() {
 
     try {
       const response = await api.post('/api/clientservice/enquiries', data)
-      const newEnquiry = response.data.data
+      const apiEnquiry = response.data.data
+
+      const newEnquiry = apiEnquiry
 
       enquiries.value.push(newEnquiry)
       return newEnquiry
@@ -60,21 +64,16 @@ export function useEnquiries() {
     error.value = null
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
+      const response = await api.put(`/api/clientservice/enquiries/${id}`, data)
+      const apiEnquiry = response.data.data
+
+      const updatedEnquiry = apiEnquiry
 
       const index = enquiries.value.findIndex(enquiry => enquiry.id === id)
-      if (index === -1) {
-        throw new Error('Enquiry not found')
+      if (index !== -1) {
+        enquiries.value[index] = updatedEnquiry
       }
 
-      const updatedEnquiry = {
-        ...enquiries.value[index],
-        ...data,
-        updated_at: new Date().toISOString()
-      }
-
-      enquiries.value[index] = updatedEnquiry
       return updatedEnquiry
     } catch (err) {
       error.value = 'Failed to update enquiry'

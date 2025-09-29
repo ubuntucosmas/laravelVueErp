@@ -31,6 +31,12 @@ class UserController
             });
         }
 
+        if ($request->has('role_name') && $request->role_name) {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('roles.name', $request->role_name);
+            });
+        }
+
         if ($request->has('is_active') && $request->is_active !== null) {
             $query->where('is_active', $request->boolean('is_active'));
         }
@@ -214,6 +220,37 @@ class UserController
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Get list of project officers for enquiry assignment.
+     */
+    public function getProjectOfficers(Request $request): JsonResponse
+    {
+        $query = User::query();
+
+        // Filter by Project Officer role
+        $query->whereHas('roles', function ($q) {
+            $q->where('roles.name', 'Project Officer');
+        });
+
+        // Apply active filter
+        $query->where('is_active', true);
+
+        $users = $query->with(['employee', 'department', 'roles'])->get();
+
+        // Format for frontend
+        $formattedUsers = $users->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ];
+        });
+
+        return response()->json([
+            'data' => $formattedUsers
+        ]);
     }
 
     /**

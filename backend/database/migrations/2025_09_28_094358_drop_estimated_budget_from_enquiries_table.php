@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('enquiry_departmental_tasks', function (Blueprint $table) {
-            $table->timestamp('submitted_at')->nullable()->after('completed_at');
+        Schema::table('enquiries', function (Blueprint $table) {
+            $table->dropColumn('estimated_budget');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('enquiry_departmental_tasks', function (Blueprint $table) {
-            $table->dropColumn('submitted_at');
+        Schema::table('enquiries', function (Blueprint $table) {
+            $table->decimal('estimated_budget', 15, 2)->nullable();
         });
     }
 };

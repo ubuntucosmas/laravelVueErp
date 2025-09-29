@@ -113,7 +113,7 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="user in users" :key="user.id">
+            <tr v-for="user in paginatedUsers" :key="user.id">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <div class="flex-shrink-0 h-10 w-10">
@@ -182,6 +182,15 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      <Pagination
+        v-if="users.length > itemsPerPage"
+        :current-page="currentPage"
+        :total-items="users.length"
+        :items-per-page="itemsPerPage"
+        @page-change="handlePageChange"
+      />
     </div>
 
     <!-- Create/Edit User Modal -->
@@ -295,11 +304,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import type { User, UserFilters, CreateUserData } from './types/user'
 import { useUsers } from './composables/useUsers'
 import { useDepartments } from '../departmentManagement/composables/useDepartments'
 import UserForm from './components/UserForm.vue'
+import Pagination from '../../../components/Pagination.vue'
 
 
 const { users, loading, error, fetchUsers, createUser, updateUser } = useUsers()
@@ -314,6 +324,10 @@ const saving = ref(false)
 const formError = ref('')
 const formSuccess = ref('')
 const selectedEmployeeId = ref<number | null>(null)
+
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
 
 const userFormData = ref<CreateUserData>({
   name: '',
@@ -349,6 +363,18 @@ const availableRoles = ref<RoleOption[]>([])
 
 const applyFilters = () => {
   fetchUsers(filters.value)
+}
+
+// Paginated users
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return users.value.slice(start, end)
+})
+
+// Pagination handlers
+const handlePageChange = (page: number) => {
+  currentPage.value = page
 }
 
 const editUser = (user: User) => {

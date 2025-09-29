@@ -150,7 +150,7 @@
                   </div>
                   <div class="space-y-2">
                     <div v-for="(item, index) in workshopLabor" :key="item.id"
-                         class="flex items-center space-x-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+                         class="flex items-center space-x-2 p-2 text-white rounded">
                       <input
                         v-model="item.description"
                         type="text"
@@ -198,7 +198,7 @@
                   </div>
                   <div class="space-y-2">
                     <div v-for="(item, index) in siteLabor" :key="item.id"
-                         class="flex items-center space-x-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+                         class="flex items-center space-x-2 p-2 text-white rounded">
                       <input
                         v-model="item.description"
                         type="text"
@@ -267,7 +267,7 @@
 
               <div v-if="expandedSections.logistics" class="p-4 space-y-3">
                 <div v-for="(item, index) in logisticsCosts" :key="item.id"
-                     class="flex items-center space-x-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                     class="flex items-center space-x-2 p-3 text-white rounded-lg">
                   <input
                     v-model="item.description"
                     type="text"
@@ -328,7 +328,7 @@
 
               <div v-if="expandedSections.misc" class="p-4 space-y-3">
                 <div v-for="(item, index) in miscCosts" :key="item.id"
-                     class="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                     class="flex items-center space-x-2 p-3 text-white rounded-lg">
                   <input
                     v-model="item.name"
                     type="text"
@@ -403,13 +403,13 @@
                         v-model="additional.name"
                         type="text"
                         placeholder="Additional item name"
-                        class="w-full text-sm font-medium border border-gray-300 dark:border-gray-500 rounded px-3 py-2"
+                        class="w-full text-sm font-medium text-white border border-gray-300 dark:border-gray-500 rounded px-3 py-2"
                       />
                       <input
                         v-model="additional.description"
                         type="text"
                         placeholder="Description"
-                        class="w-full text-sm border border-gray-300 dark:border-gray-500 rounded px-3 py-2"
+                        class="w-full text-sm text-white border border-gray-300 dark:border-gray-500 rounded px-3 py-2"
                       />
                     </div>
                     <div class="flex items-center space-x-2 ml-4">

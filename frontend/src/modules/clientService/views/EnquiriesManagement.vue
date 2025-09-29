@@ -32,17 +32,60 @@
       </ol>
     </nav>
 
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Enquiry Management</h1>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Log and manage client enquiries</p>
+    <!-- Task Dashboard View -->
+    <div v-if="showTaskDashboard && selectedEnquiryForTasks">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <button
+            @click="closeTaskDashboard"
+            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to Enquiries
+          </button>
+        </div>
       </div>
-      <button
-        @click="showCreateModal = true"
-        class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-lg font-medium transition-colors"
-      >
-        Log Enquiry
-      </button>
+
+      <DepartmentalTaskDashboard
+        :context="'enquiry'"
+        :context-id="selectedEnquiryForTasks.id"
+        :title="`Tasks for ${selectedEnquiryForTasks.title}`"
+        :enquiry="selectedEnquiryForTasks"
+        :department="selectedEnquiryForTasks.assigned_department || selectedEnquiryForTasks.department?.name || 'client-service'"
+        @taskAssigned="handleTaskAssigned"
+      />
+    </div>
+
+    <!-- Enquiries Table View -->
+    <div v-else>
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Enquiry Management</h1>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Log and manage client enquiries</p>
+        </div>
+        <button
+          @click="showCreateModal = true"
+          class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-lg font-medium transition-colors"
+        >
+          Log Enquiry
+        </button>
+      </div>
+
+    <!-- Status Tabs -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+      <div class="flex space-x-1">
+        <button
+          v-for="status in statusTabs"
+          :key="status.key"
+          @click="activeTab = status.key"
+          :class="activeTab === status.key ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'"
+          class="px-4 py-2 rounded-lg font-medium transition-colors"
+        >
+          {{ status.label }} ({{ status.count }})
+        </button>
+      </div>
     </div>
 
     <!-- Filters -->
@@ -105,7 +148,16 @@
                 Contact Person
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Department
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Status
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Enquiry Number
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Departmental Tasks
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Actions
@@ -113,26 +165,44 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="enquiry in enquiries" :key="enquiry.id">
+           <tr v-for="enquiry in filteredEnquiries" :key="enquiry.id">
                <td class="px-6 py-4 whitespace-nowrap">
-                 <div class="text-sm font-medium text-gray-900 dark:text-white">{{ enquiry.project_name }}</div>
-                 <div class="text-sm text-gray-500 dark:text-gray-400">{{ (enquiry.project_deliverables || '').substring(0, 50) }}{{ (enquiry.project_deliverables || '').length > 50 ? '...' : '' }}</div>
-                 <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                   {{ new Date(enquiry.created_at).toLocaleDateString() }}
-                 </div>
+                 <div class="text-sm font-medium text-gray-900 dark:text-white">{{ enquiry.title }}</div>
+                 <div class="text-sm text-gray-500 dark:text-gray-400">{{ (enquiry.description || '').substring(0, 50) }}{{ (enquiry.description || '').length > 50 ? '...' : '' }}</div>
                </td>
                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                 {{ enquiry.client_name }}
+                 {{ enquiry.client?.full_name || enquiry.client?.FullName || 'Unknown Client' }}
                </td>
                <td class="px-6 py-4 whitespace-nowrap">
                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                    {{ enquiry.contact_person }}
                  </span>
                </td>
+               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                 {{ enquiry.department?.name || 'No Department' }}
+               </td>
                <td class="px-6 py-4 whitespace-nowrap">
                  <span :class="getStatusColor(enquiry.status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
                    {{ getStatusLabel(enquiry.status) }}
                  </span>
+               </td>
+               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                 {{ enquiry.enquiry_number }}
+               </td>
+               <td class="px-6 py-4 whitespace-nowrap">
+                 <button
+                   @click="openTaskDashboard(enquiry)"
+                   class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                   :title="`View departmental tasks for ${enquiry.title}`"
+                 >
+                   <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                   </svg>
+                   <span class="mr-1">Tasks</span>
+                   <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full min-w-[1.25rem] h-4">
+                     3
+                   </span>
+                 </button>
                </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button
@@ -190,9 +260,24 @@
            </div>
 
            <div>
-             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client Name *</label>
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client *</label>
+             <select
+               v-model="enquiryFormData.client_id"
+               required
+               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+             >
+               <option value="">Select a client</option>
+               <option v-for="client in activeClients" :key="client.id" :value="client.id">
+                 {{ client.FullName }}
+               </option>
+             </select>
+           </div>
+
+
+           <div>
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Title *</label>
              <input
-               v-model="enquiryFormData.client_name"
+               v-model="enquiryFormData.title"
                type="text"
                required
                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -200,21 +285,20 @@
            </div>
 
            <div>
-             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Name *</label>
-             <input
-               v-model="enquiryFormData.project_name"
-               type="text"
-               required
-               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-             />
-           </div>
-
-           <div>
-             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Deliverables *</label>
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Description *</label>
              <textarea
-               v-model="enquiryFormData.project_deliverables"
+               v-model="enquiryFormData.description"
                required
                rows="3"
+               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+             ></textarea>
+           </div>
+
+           <div>
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Scope</label>
+             <textarea
+               v-model="enquiryFormData.project_scope"
+               rows="2"
                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
              ></textarea>
            </div>
@@ -230,35 +314,52 @@
                />
              </div>
              <div>
-               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status *</label>
+               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
                <select
-                 v-model="enquiryFormData.status"
-                 required
+                 v-model="enquiryFormData.priority"
                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                >
-                 <option value="client_registered">Client Registered</option>
-                 <option value="enquiry_logged">Enquiry Logged</option>
-                 <option value="site_survey_completed">Site Survey Completed</option>
-                 <option value="design_completed">Design Completed</option>
-                 <option value="design_approved">Design Approved</option>
-                 <option value="materials_specified">Materials Specified</option>
-                 <option value="budget_created">Budget Created</option>
-                 <option value="quote_prepared">Quote Prepared</option>
-                 <option value="quote_approved">Quote Approved</option>
-                 <option value="converted_to_project">Converted to Project</option>
-                 <option value="cancelled">Cancelled</option>
+                 <option value="low">Low</option>
+                 <option value="medium">Medium</option>
+                 <option value="high">High</option>
+                 <option value="urgent">Urgent</option>
                </select>
              </div>
            </div>
 
+           <div>
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status *</label>
+             <select
+               v-model="enquiryFormData.status"
+               required
+               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+             >
+               <option value="client_registered">Client Registered</option>
+               <option value="enquiry_logged">Enquiry Logged</option>
+               <option value="site_survey_completed">Site Survey Completed</option>
+               <option value="design_completed">Design Completed</option>
+               <option value="design_approved">Design Approved</option>
+               <option value="materials_specified">Materials Specified</option>
+               <option value="budget_created">Budget Created</option>
+               <option value="quote_prepared">Quote Prepared</option>
+               <option value="quote_approved">Quote Approved</option>
+               <option value="converted_to_project">Converted to Project</option>
+               <option value="cancelled">Cancelled</option>
+             </select>
+           </div>
+
            <div class="grid grid-cols-2 gap-4">
              <div>
-               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assigned PO</label>
-               <input
+               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assigned Project Officer</label>
+               <select
                  v-model="enquiryFormData.assigned_po"
-                 type="text"
                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-               />
+               >
+                 <option value="">Select Project Officer</option>
+                 <option v-for="po in projectOfficers" :key="po.id" :value="po.id">
+                   {{ po.name }}
+                 </option>
+               </select>
              </div>
              <div>
                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Venue</label>
@@ -328,38 +429,154 @@
         </div>
       </div>
     </div>
+
+    <!-- Budget Modal -->
+    <BudgetModal
+      :is-visible="showBudgetModal"
+      :enquiry="selectedEnquiryForTasks as any"
+      @close="showBudgetModal = false"
+      @save="handleBudgetSave"
+    />
+
+    <!-- Quote Modal -->
+    <QuoteModal
+      :is-visible="showQuoteModal"
+      :enquiry="selectedEnquiryForTasks as any"
+      @close="showQuoteModal = false"
+      @save="handleQuoteSave"
+    />
+
+    </div>
   </div>
 </template>
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types/enquiry'
 import { useEnquiries } from '../composables/useEnquiries'
+import { useClients } from '../composables/useClients'
+import { useDepartmentWorkflow } from '../../projects/composables/useDepartmentWorkflow'
+import DepartmentalTaskDashboard from '../../projects/components/DepartmentalTaskDashboard.vue'
+import BudgetModal from '../../projects/components/BudgetModal.vue'
+import QuoteModal from '../../projects/components/QuoteModal.vue'
+import api from '@/plugins/axios'
 
-const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry, convertToProject, canConvertToProject } = useEnquiries()
+const router = useRouter()
+
+const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry, convertToProject, canConvertToProject, newEnquiries, inProgressEnquiries, convertedEnquiries } = useEnquiries()
+const { activeClients, fetchClients } = useClients()
+const { navigateToDepartmentWorkflow, getAvailablePhases, getNextAvailablePhase } = useDepartmentWorkflow()
+
+// Task Dashboard
+const showTaskDashboard = ref(false)
+const selectedEnquiryForTasks = ref<Enquiry | null>(null)
+
+// Modals
+const showBudgetModal = ref(false)
+const showQuoteModal = ref(false)
+
+// Status Tabs
+const activeTab = ref('all')
 const filters = ref({ search: '', status: '', client_name: '' })
 const showCreateModal = ref(false)
 const editingEnquiry = ref<Enquiry | null>(null)
 const saving = ref(false)
 const formError = ref('')
 const formSuccess = ref('')
+const projectOfficers = ref<Array<{id: number, name: string, email: string}>>([])
 const enquiryFormData = ref<CreateEnquiryData>({
   date_received: new Date().toISOString().split('T')[0],
   expected_delivery_date: '',
-  client_name: '',
-  project_name: '',
-  project_deliverables: '',
-  contact_person: '',
+  client_id: 0,
+  title: '',
+  description: '',
+  project_scope: '',
+  priority: 'medium',
   status: 'enquiry_logged',
-  assigned_po: '',
+  contact_person: '',
+  assigned_po: undefined,
   follow_up_notes: '',
   venue: '',
   site_survey_skipped: false,
   site_survey_skip_reason: ''
 })
 
+const statusTabs = computed(() => [
+  { key: 'all', label: 'All', count: enquiries.value.length },
+  { key: 'new', label: 'New', count: newEnquiries.value.length },
+  { key: 'in_progress', label: 'In Progress', count: inProgressEnquiries.value.length },
+  { key: 'converted', label: 'Converted', count: convertedEnquiries.value.length }
+])
+
+const filteredEnquiries = computed(() => {
+  let filtered = enquiries.value
+
+  if (activeTab.value !== 'all') {
+    if (activeTab.value === 'new') {
+      filtered = newEnquiries.value
+    } else if (activeTab.value === 'in_progress') {
+      filtered = inProgressEnquiries.value
+    } else if (activeTab.value === 'converted') {
+      filtered = convertedEnquiries.value
+    }
+  }
+
+  return filtered
+})
+
 const applyFilters = () => {
   fetchEnquiries(filters.value)
+}
+
+const closeTaskDashboard = () => {
+  showTaskDashboard.value = false
+  selectedEnquiryForTasks.value = null
+}
+
+const openTaskDashboard = (enquiry: Enquiry) => {
+  selectedEnquiryForTasks.value = enquiry
+  showTaskDashboard.value = true
+}
+
+const handleTaskAssigned = (data: {
+  userId: number
+  userName: string
+  userEmail: string
+  taskCount: number
+  taskNames: string
+  message: string
+  tasks: any[]
+}) => {
+  // Emit the event up to the parent (MainLayout)
+  // emit('taskAssigned', data)
+  console.log('Task assigned:', data)
+}
+
+const handleBudgetSave = (budgetData: any) => {
+  // Update the "Budget Generation" task status to completed
+  if (selectedEnquiryForTasks.value) {
+    // Update enquiry status or handle budget save
+    console.log('Budget saved:', budgetData)
+  }
+  showBudgetModal.value = false
+}
+
+const handleQuoteSave = (quotationData: any) => {
+  // Update the "Quote & Invoice Management" task status to completed
+  if (selectedEnquiryForTasks.value) {
+    // Update enquiry status or handle quote save
+    console.log('Quote saved:', quotationData)
+  }
+  showQuoteModal.value = false
+}
+
+const fetchProjectOfficers = async () => {
+  try {
+    const response = await api.get('/api/project-officers')
+    projectOfficers.value = response.data.data || []
+  } catch (err) {
+    console.error('Error fetching project officers:', err)
+  }
 }
 
 const editEnquiry = (enquiry: Enquiry) => {
@@ -367,12 +584,14 @@ const editEnquiry = (enquiry: Enquiry) => {
   enquiryFormData.value = {
     date_received: enquiry.date_received,
     expected_delivery_date: enquiry.expected_delivery_date || '',
-    client_name: enquiry.client_name,
-    project_name: enquiry.project_name,
-    project_deliverables: enquiry.project_deliverables,
-    contact_person: enquiry.contact_person,
+    client_id: enquiry.client_id,
+    title: enquiry.title,
+    description: enquiry.description || '',
+    project_scope: enquiry.project_scope || '',
+    priority: enquiry.priority,
     status: enquiry.status,
-    assigned_po: enquiry.assigned_po || '',
+    contact_person: enquiry.contact_person,
+    assigned_po: enquiry.assigned_po,
     follow_up_notes: enquiry.follow_up_notes || '',
     venue: enquiry.venue || '',
     site_survey_skipped: enquiry.site_survey_skipped,
@@ -382,8 +601,7 @@ const editEnquiry = (enquiry: Enquiry) => {
 }
 
 const viewEnquiryDetails = (enquiry: Enquiry) => {
-  console.log('View enquiry details:', enquiry.project_name)
-  // Could navigate to enquiry detail view
+  router.push(`/client-service/enquiries/${enquiry.id}`)
 }
 
 const closeModal = () => {
@@ -394,12 +612,14 @@ const closeModal = () => {
   enquiryFormData.value = {
     date_received: new Date().toISOString().split('T')[0],
     expected_delivery_date: '',
-    client_name: '',
-    project_name: '',
-    project_deliverables: '',
-    contact_person: '',
+    client_id: 0,
+    title: '',
+    description: '',
+    project_scope: '',
+    priority: 'medium',
     status: 'enquiry_logged',
-    assigned_po: '',
+    contact_person: '',
+    assigned_po: undefined,
     follow_up_notes: '',
     venue: '',
     site_survey_skipped: false,
@@ -409,8 +629,8 @@ const closeModal = () => {
 
 const handleFormSubmit = async () => {
   // Basic validation
-  if (!enquiryFormData.value.date_received || !enquiryFormData.value.client_name ||
-      !enquiryFormData.value.project_name || !enquiryFormData.value.project_deliverables ||
+  if (!enquiryFormData.value.date_received || !enquiryFormData.value.client_id ||
+      !enquiryFormData.value.title || !enquiryFormData.value.description ||
       !enquiryFormData.value.contact_person) {
     formError.value = 'Please fill in all required fields'
     return
@@ -489,5 +709,7 @@ const getStatusLabel = (status: string) => {
 
 onMounted(async () => {
   await fetchEnquiries()
+  await fetchClients()
+  await fetchProjectOfficers()
 })
 </script>

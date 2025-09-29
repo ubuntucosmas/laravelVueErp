@@ -1,40 +1,164 @@
 import { useAuth } from './useAuth'
 import { useRouter } from 'vue-router'
 
+// Permission constants (mirroring backend)
+const PERMISSIONS = {
+  // User Management
+  USER_CREATE: 'user.create',
+  USER_READ: 'user.read',
+  USER_UPDATE: 'user.update',
+  USER_DELETE: 'user.delete',
+  USER_ASSIGN_ROLE: 'user.assign_role',
+  USER_ASSIGN_DEPARTMENT: 'user.assign_department',
+
+  // Role Management
+  ROLE_READ: 'role.read',
+  ROLE_CREATE: 'role.create',
+  ROLE_UPDATE: 'role.update',
+  ROLE_DELETE: 'role.delete',
+
+  // Department Management
+  DEPARTMENT_READ: 'department.read',
+  DEPARTMENT_CREATE: 'department.create',
+  DEPARTMENT_UPDATE: 'department.update',
+  DEPARTMENT_DELETE: 'department.delete',
+
+  // Employee Management
+  EMPLOYEE_READ: 'employee.read',
+  EMPLOYEE_CREATE: 'employee.create',
+  EMPLOYEE_UPDATE: 'employee.update',
+  EMPLOYEE_DELETE: 'employee.delete',
+
+  // Project Management
+  PROJECT_READ: 'project.read',
+  PROJECT_CREATE: 'project.create',
+  PROJECT_UPDATE: 'project.update',
+  PROJECT_DELETE: 'project.delete',
+
+  // Enquiry Management
+  ENQUIRY_READ: 'enquiry.read',
+  ENQUIRY_CREATE: 'enquiry.create',
+  ENQUIRY_UPDATE: 'enquiry.update',
+
+  // Finance
+  FINANCE_VIEW: 'finance.view',
+  FINANCE_BUDGET_CREATE: 'finance.budget.create',
+  FINANCE_BUDGET_APPROVE: 'finance.budget.approve',
+  FINANCE_QUOTE_CREATE: 'finance.quote.create',
+  FINANCE_QUOTE_APPROVE: 'finance.quote.approve',
+  FINANCE_INVOICE_CREATE: 'finance.invoice.create',
+  FINANCE_REPORTS_VIEW: 'finance.reports.view',
+
+  // HR
+  HR_VIEW_EMPLOYEES: 'hr.view_employees',
+  HR_MANAGE_PAYROLL: 'hr.manage_payroll',
+
+  // Creatives
+  CREATIVES_VIEW: 'creatives.view',
+  CREATIVES_DESIGN_CREATE: 'creatives.design.create',
+
+  // Client Service
+  CLIENT_READ: 'client.read',
+  CLIENT_CREATE: 'client.create',
+  CLIENT_UPDATE: 'client.update',
+
+  // Procurement
+  PROCUREMENT_VIEW: 'procurement.view',
+  PROCUREMENT_ORDERS_CREATE: 'procurement.orders.create',
+
+  // Admin
+  ADMIN_ACCESS: 'admin.access',
+  ADMIN_LOGS_VIEW: 'admin.logs.view',
+
+  // Dashboard
+  DASHBOARD_VIEW: 'dashboard.view',
+  DASHBOARD_ADMIN: 'dashboard.admin',
+  DASHBOARD_HR: 'dashboard.hr',
+  DASHBOARD_FINANCE: 'dashboard.finance',
+  DASHBOARD_PROJECTS: 'dashboard.projects',
+}
+
 export function useRouteGuard() {
   const { permissions, isLoggedIn, user } = useAuth()
   const router = useRouter()
+
+  // Helper function to check if user has a specific permission
+  const hasPermission = (permission: string): boolean => {
+    if (!isLoggedIn.value || !user.value) return false
+
+    // Super Admin bypasses all permission checks
+    if (user.value.roles?.includes('Super Admin')) return true
+
+    // Check if user has the specific permission
+    // Note: Frontend permissions are checked via backend API response
+    // For now, we'll use role-based fallback until full permission sync is implemented
+    return checkPermissionViaRoles(permission)
+  }
+
+  // Temporary function to check permissions via roles (until full permission sync)
+  const checkPermissionViaRoles = (permission: string): boolean => {
+    if (!user.value?.roles) return false
+
+    const userRoles = user.value.roles
+
+    // Super Admin has all permissions
+    if (userRoles.includes('Super Admin')) return true
+
+    // Map permissions to roles (temporary mapping)
+    const permissionRoleMap: Record<string, string[]> = {
+      [PERMISSIONS.USER_READ]: ['Admin', 'Super Admin'],
+      [PERMISSIONS.USER_CREATE]: ['Admin', 'Super Admin'],
+      [PERMISSIONS.USER_UPDATE]: ['Admin', 'Super Admin'],
+      [PERMISSIONS.USER_DELETE]: ['Admin', 'Super Admin'],
+      [PERMISSIONS.ROLE_READ]: ['Admin', 'Super Admin'],
+      [PERMISSIONS.DEPARTMENT_READ]: ['Admin', 'HR', 'Super Admin'],
+      [PERMISSIONS.EMPLOYEE_READ]: ['Admin', 'HR', 'Super Admin'],
+      [PERMISSIONS.PROJECT_READ]: ['Project Manager', 'Project Officer', 'Super Admin'],
+      [PERMISSIONS.ENQUIRY_READ]: ['Client Service', 'Project Manager', 'Super Admin'],
+      [PERMISSIONS.FINANCE_VIEW]: ['Accounts', 'Costing', 'Super Admin'],
+      [PERMISSIONS.HR_VIEW_EMPLOYEES]: ['HR', 'Super Admin'],
+      [PERMISSIONS.CREATIVES_VIEW]: ['Designer', 'Super Admin'],
+      [PERMISSIONS.CLIENT_READ]: ['Client Service', 'Super Admin'],
+      [PERMISSIONS.PROCUREMENT_VIEW]: ['Procurement Officer', 'Super Admin'],
+      [PERMISSIONS.ADMIN_ACCESS]: ['Admin', 'Super Admin'],
+      [PERMISSIONS.DASHBOARD_ADMIN]: ['Admin', 'Super Admin'],
+      [PERMISSIONS.DASHBOARD_HR]: ['HR', 'Super Admin'],
+      [PERMISSIONS.DASHBOARD_FINANCE]: ['Accounts', 'Costing', 'Super Admin'],
+      [PERMISSIONS.DASHBOARD_PROJECTS]: ['Project Manager', 'Project Officer', 'Super Admin'],
+    }
+
+    const allowedRoles = permissionRoleMap[permission] || []
+    return allowedRoles.some(role => userRoles.includes(role))
+  }
 
   const canAccessRoute = (routeName: string): boolean => {
     if (!isLoggedIn.value || !user.value) {
       return false
     }
 
-    const userRoles = user.value.roles || []
-
     // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
+    if (user.value.roles?.includes('Super Admin')) {
       return true
     }
 
     switch (routeName) {
-      // Admin routes - only Admin and Super Admin
+      // Admin routes - require admin access permission
       case 'admin-dashboard':
       case 'admin-users':
       case 'admin-employees':
       case 'admin-roles':
       case 'admin-departments':
-        return userRoles.includes('Admin') || userRoles.includes('Super Admin')
+        return hasPermission(PERMISSIONS.ADMIN_ACCESS)
 
-      // HR routes - only HR and Super Admin
+      // HR routes - require HR permissions
       case 'hr-dashboard':
       case 'hr-employees':
-        return userRoles.includes('HR') || userRoles.includes('Super Admin')
+        return hasPermission(PERMISSIONS.HR_VIEW_EMPLOYEES)
 
       // Department-specific routes - Managers, Employees, and Super Admin
       default:
         if (routeName.startsWith('department-')) {
-          return userRoles.includes('Manager') || userRoles.includes('Employee') || userRoles.includes('Super Admin')
+          return hasPermission(PERMISSIONS.DEPARTMENT_READ)
         }
         return true
     }
@@ -50,24 +174,13 @@ export function useRouteGuard() {
       return false
     }
 
-    const userRoles = user.value.roles || []
-
     // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
+    if (user.value.roles?.includes('Super Admin')) {
       return true
     }
 
-    // Check if user belongs to projects department
-    if (permissions.value?.user_department) {
-      const deptName = permissions.value.user_department.name.toLowerCase()
-      if (deptName === 'projects' || deptName === 'project') {
-        return true
-      }
-    }
-
-    // Check for projects-specific roles
-    const projectsRoles = ['Project Officer', 'Project Lead', 'Project Manager']
-    return projectsRoles.some(role => userRoles.includes(role))
+    // Check project read permission
+    return hasPermission(PERMISSIONS.PROJECT_READ)
   }
 
   const canAccessClientService = (): boolean => {
@@ -75,27 +188,13 @@ export function useRouteGuard() {
       return false
     }
 
-    const userRoles = user.value.roles || []
-
     // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
+    if (user.value.roles?.includes('Super Admin')) {
       return true
     }
 
-    // Check if user has Client Service role
-    if (userRoles.includes('Client Service')) {
-      return true
-    }
-
-    // Check if user belongs to client service department
-    if (permissions.value?.user_department) {
-      const deptName = permissions.value.user_department.name.toLowerCase()
-      if (deptName === 'client service' || deptName === 'client-service') {
-        return true
-      }
-    }
-
-    return false
+    // Check client read permission
+    return hasPermission(PERMISSIONS.CLIENT_READ)
   }
 
   const canAccessCreatives = (): boolean => {
@@ -103,27 +202,13 @@ export function useRouteGuard() {
       return false
     }
 
-    const userRoles = user.value.roles || []
-
     // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
+    if (user.value.roles?.includes('Super Admin')) {
       return true
     }
 
-    // Check if user has Designer role
-    if (userRoles.includes('Designer')) {
-      return true
-    }
-
-    // Check if user belongs to Creatives department
-    if (permissions.value?.user_department) {
-      const deptName = permissions.value.user_department.name.toLowerCase()
-      if (deptName === 'creatives' || deptName === 'creative' || deptName === 'design') {
-        return true
-      }
-    }
-
-    return false
+    // Check creatives view permission
+    return hasPermission(PERMISSIONS.CREATIVES_VIEW)
   }
 
   const canAccessFinance = (requiredRoles: string[]): boolean => {
@@ -131,15 +216,13 @@ export function useRouteGuard() {
       return false
     }
 
-    const userRoles = user.value.roles || []
-
     // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
+    if (user.value.roles?.includes('Super Admin')) {
       return true
     }
 
-    // Check if user has any of the required roles
-    return requiredRoles.some(role => userRoles.includes(role))
+    // Check finance view permission
+    return hasPermission(PERMISSIONS.FINANCE_VIEW)
   }
 
   const canAccessProcurement = (): boolean => {
@@ -147,27 +230,13 @@ export function useRouteGuard() {
       return false
     }
 
-    const userRoles = user.value.roles || []
-
     // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
+    if (user.value.roles?.includes('Super Admin')) {
       return true
     }
 
-    // Check if user has Procurement role
-    if (userRoles.includes('Procurement Officer')) {
-      return true
-    }
-
-    // Check if user belongs to procurement department
-    if (permissions.value?.user_department) {
-      const deptName = permissions.value.user_department.name.toLowerCase()
-      if (deptName === 'procurement' || deptName === 'purchasing') {
-        return true
-      }
-    }
-
-    return false
+    // Check procurement view permission
+    return hasPermission(PERMISSIONS.PROCUREMENT_VIEW)
   }
 
   const redirectToAppropriateRoute = () => {

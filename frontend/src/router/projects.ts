@@ -19,8 +19,8 @@ export const projectsRoutes: RouteRecordRaw[] = [
       {
         path: 'enquiries',
         name: 'projects-enquiries',
-        component: () => import('../modules/projects/views/EnquiriesManagement.vue'),
-        meta: { title: 'Enquiries Management' }
+        component: () => import('../modules/shared/views/ProjectEnquiries.vue'),
+        meta: { title: 'Project Enquiries' }
       },
       {
         path: 'enquiries/:id',

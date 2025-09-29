@@ -14,6 +14,19 @@ class DepartmentController
      */
     public function index(Request $request): JsonResponse
     {
+        // Log permission check details for debugging
+        $user = auth()->user();
+        \Log::info('DepartmentController@index - Permission Check', [
+            'user_id' => $user ? $user->id : null,
+            'user_email' => $user ? $user->email : null,
+            'user_roles' => $user ? $user->roles->pluck('name')->toArray() : [],
+            'user_permissions' => $user ? $user->getAllPermissions()->pluck('name')->toArray() : [],
+            'has_department_read' => $user ? $user->hasPermissionTo('department.read') : false,
+            'required_permission' => 'department.read',
+            'request_method' => $request->method(),
+            'request_url' => $request->fullUrl(),
+        ]);
+
         $query = Department::with(['manager', 'employees']);
 
         // Apply filters

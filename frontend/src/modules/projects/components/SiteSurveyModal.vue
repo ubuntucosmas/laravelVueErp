@@ -5,8 +5,8 @@
       <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
         <div>
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-            {{ isEditing ? 'Edit Site Survey' : 'Create Site Survey' }}
-          </h2>
+              {{ props.readonly ? 'View Site Survey' : (isEditing ? 'Edit Site Survey' : 'Create Site Survey') }}
+            </h2>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
             {{ isEditing ? 'Update site survey details' : 'Conduct site survey assessment for' }} {{ enquiry?.title }}
           </p>
@@ -45,8 +45,297 @@
           <p class="text-sm text-green-700 dark:text-green-300 mt-1">{{ successMessage }}</p>
         </div>
 
+        <!-- View Content (Professional Display) -->
+        <div v-if="props.readonly" class="space-y-6">
+          <!-- Survey Header -->
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
+            <div class="flex items-center space-x-3 mb-4">
+              <div class="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Site Survey Report</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Completed on {{ formatDate(formData.site_visit_date) }}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span class="font-medium text-gray-700 dark:text-gray-300">Surveyor:</span>
+                <span class="ml-2 text-gray-900 dark:text-white">{{ formData.prepared_by || 'Not specified' }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-700 dark:text-gray-300">Location:</span>
+                <span class="ml-2 text-gray-900 dark:text-white">{{ formData.location }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-700 dark:text-gray-300">Client:</span>
+                <span class="ml-2 text-gray-900 dark:text-white">{{ formData.client_name }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Basic Information -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-2 mb-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Basic Information</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-3">
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Client Details</span>
+                  <div class="mt-1">
+                    <p class="text-gray-900 dark:text-white font-medium">{{ formData.client_name }}</p>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">{{ formData.client_contact_person ? `Contact: ${formData.client_contact_person}` : '' }}</p>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">{{ formData.client_phone ? `Phone: ${formData.client_phone}` : '' }}</p>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">{{ formData.client_email ? `Email: ${formData.client_email}` : '' }}</p>
+                  </div>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Attendees</span>
+                  <div class="mt-1">
+                    <div v-if="attendeesText" class="text-gray-900 dark:text-white">
+                      <div v-for="attendee in attendeesText.split('\n').filter(a => a.trim())" :key="attendee" class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>{{ attendee }}</span>
+                      </div>
+                    </div>
+                    <p v-else class="text-gray-500 dark:text-gray-400 italic">No attendees recorded</p>
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-3">
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Project Overview</span>
+                  <div class="mt-1">
+                    <p class="text-gray-900 dark:text-white">{{ formData.project_description }}</p>
+                  </div>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Objectives</span>
+                  <div class="mt-1">
+                    <p class="text-gray-900 dark:text-white">{{ formData.objectives || 'Not specified' }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Site Assessment -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-2 mb-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Site Assessment</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-4">
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Current Condition</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.current_condition || 'Not assessed' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Existing Branding</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.existing_branding || 'None identified' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Site Measurements</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.site_measurements || 'Not measured' }}</p>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Room/Area Size</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.room_size || 'Not specified' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Constraints</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.constraints || 'None identified' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Access & Logistics -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-2 mb-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
+                <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Access & Logistics</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-3">
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Access Logistics</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.access_logistics || 'Not specified' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Parking</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.parking_availability || 'Not specified' }}</p>
+                </div>
+              </div>
+              <div class="space-y-3">
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Size & Accessibility</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.size_accessibility || 'Not specified' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Lifts/Elevators</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.lifts || 'Not specified' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Door Sizes</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.door_sizes || 'Not specified' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Loading Areas</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.loading_areas || 'Not specified' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Requirements & Preferences -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-2 mb-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Requirements & Preferences</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-3">
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Branding Preferences</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.branding_preferences || 'Not specified' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Material Preferences</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.material_preferences || 'Not specified' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Color Scheme</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.color_scheme || 'Not specified' }}</p>
+                </div>
+              </div>
+              <div class="space-y-3">
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Brand Guidelines</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.brand_guidelines || 'Not specified' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Special Instructions</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.special_instructions || 'None' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Electrical Requirements</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.electrical_outlets || 'Not specified' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Food & Refreshment</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.food_refreshment || 'Not specified' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Safety & Timeline -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-2 mb-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Safety & Timeline</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-3">
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Safety Conditions</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.safety_conditions || 'Not assessed' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Potential Hazards</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.potential_hazards || 'None identified' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Safety Requirements</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.safety_requirements || 'Not specified' }}</p>
+                </div>
+              </div>
+              <div class="space-y-3">
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Project Start Date</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.project_start_date ? formatDate(formData.project_start_date) : 'Not scheduled' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Project Deadline</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.project_deadline ? formatDate(formData.project_deadline) : 'Not set' }}</p>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Key Milestones</span>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ formData.milestones || 'Not defined' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Information -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-2 mb-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Additional Information</h3>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Additional Notes</span>
+                <p class="mt-1 text-gray-900 dark:text-white">{{ formData.additional_notes || 'No additional notes' }}</p>
+              </div>
+              <div>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Special Requests</span>
+                <p class="mt-1 text-gray-900 dark:text-white">{{ formData.special_requests || 'None' }}</p>
+              </div>
+              <div>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Action Items</span>
+                <div class="mt-1">
+                  <div v-if="actionItemsText" class="space-y-2">
+                    <div v-for="item in actionItemsText.split('\n').filter(i => i.trim())" :key="item" class="flex items-start space-x-2">
+                      <svg class="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                      </svg>
+                      <span class="text-gray-900 dark:text-white">{{ item }}</span>
+                    </div>
+                  </div>
+                  <p v-else class="text-gray-500 dark:text-gray-400 italic">No action items</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Form Content -->
-        <div class="space-y-6">
+        <div v-else class="space-y-6">
           <!-- Basic Information -->
           <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
             <div class="flex items-center space-x-2 mb-4">
@@ -68,8 +357,10 @@
                   id="site_visit_date"
                   v-model="formData.site_visit_date"
                   type="date"
+                  :readonly="props.readonly"
                   :class="[
                     'w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors',
+                    props.readonly ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed' : '',
                     !formData.site_visit_date ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                   ]"
                   required
@@ -667,7 +958,7 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+      <div v-if="!props.readonly" class="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         <div class="flex items-center space-x-4">
           <button
             @click="saveDraft"
@@ -714,6 +1005,7 @@ interface Props {
   isVisible: boolean
   enquiry: Enquiry | null
   survey?: SiteSurvey | null
+  readonly?: boolean
 }
 
 const props = defineProps<Props>()
@@ -731,12 +1023,12 @@ const { createSiteSurvey, updateSiteSurvey } = useSiteSurveys()
 const formData = ref<CreateSiteSurveyData>({
   enquiry_id: props.enquiry?.id || 0,
   site_visit_date: '',
-  client_name: props.enquiry?.client?.name || '',
+  client_name: props.enquiry?.client?.full_name || '',
   location: '',
   attendees: [],
   client_contact_person: '',
   client_phone: '',
-  client_email: props.enquiry?.client?.email || '',
+  client_email: '',
   project_description: '',
   objectives: '',
   current_condition: '',
@@ -797,6 +1089,15 @@ const parseActionItems = () => {
   formData.value.action_items = lines
 }
 
+const formatDate = (dateString?: string): string => {
+  if (!dateString) return 'Not specified'
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
 const saveDraft = () => {
   // Save to localStorage for draft functionality
   const draftKey = `site-survey-draft-${props.enquiry?.id}`
@@ -853,6 +1154,8 @@ const saveSurvey = async () => {
       savedSurvey = await createSiteSurvey(formData.value)
     }
 
+    console.log('Site survey saved successfully:', savedSurvey)
+
     // Clear draft
     const draftKey = `site-survey-draft-${props.enquiry?.id}`
     localStorage.removeItem(draftKey)
@@ -888,12 +1191,12 @@ watch(() => props.isVisible, (newValue) => {
       formData.value = {
         enquiry_id: props.enquiry?.id || 0,
         site_visit_date: '',
-        client_name: props.enquiry?.client?.name || '',
+        client_name: props.enquiry?.client?.full_name || '',
         location: '',
         attendees: [],
         client_contact_person: '',
         client_phone: '',
-        client_email: props.enquiry?.client?.email || '',
+        client_email: '',
         project_description: '',
         objectives: '',
         current_condition: '',

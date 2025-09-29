@@ -51,7 +51,14 @@ const financeRoutes: RouteRecordRaw[] = [
       {
         path: 'enquiries',
         name: 'finance-enquiries',
-        component: () => import('../modules/finance/views/FinanceEnquiries.vue'),
+        component: () => import('../modules/shared/views/ProjectEnquiries.vue'),
+        props: {
+          department: 'finance',
+          pageTitle: 'Financial Enquiries',
+          pageDescription: 'Manage enquiries with financial focus and budget preparation',
+          breadcrumbText: 'Finance',
+          breadcrumbLink: '/finance'
+        },
         meta: { title: 'Financial Enquiries' }
       },
       {

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\ClientService\Http\Controllers;
+namespace App\Modules\Projects\Http\Controllers;
 
 use App\Models\Enquiry;
 use Illuminate\Http\Request;
@@ -16,10 +16,8 @@ class EnquiryController extends Controller
     {
         $query = Enquiry::with('client', 'department');
 
-        // Apply department-based access control only if user doesn't have global enquiry read permission
-        if (!Auth::user()->hasPermissionTo('enquiry.read')) {
-            $query->accessibleByUser(Auth::user());
-        }
+        // Apply department-based access control
+        $query->accessibleByUser(Auth::user());
 
         // Apply filters
         if ($request->has('search') && $request->search) {
@@ -65,6 +63,7 @@ class EnquiryController extends Controller
             'priority' => 'nullable|string|in:low,medium,high,urgent',
             'contact_person' => 'required|string|max:255',
             'status' => 'required|string|in:client_registered,enquiry_logged,site_survey_completed,design_completed,design_approved,materials_specified,budget_created,quote_prepared,quote_approved,converted_to_project,cancelled',
+            'department_id' => 'nullable|integer|exists:departments,id',
             'assigned_po' => 'nullable|integer|exists:users,id',
             'follow_up_notes' => 'nullable|string',
             'venue' => 'nullable|string|max:255',
@@ -92,6 +91,7 @@ class EnquiryController extends Controller
             'priority' => $request->priority ?? 'medium',
             'contact_person' => $request->contact_person,
             'status' => $request->status,
+            'department_id' => $request->department_id,
             'assigned_po' => $request->assigned_po,
             'follow_up_notes' => $request->follow_up_notes,
             'enquiry_number' => $enquiryNumber,
@@ -131,6 +131,7 @@ class EnquiryController extends Controller
             'priority' => 'nullable|string|in:low,medium,high,urgent',
             'contact_person' => 'sometimes|required|string|max:255',
             'status' => 'sometimes|required|string|in:client_registered,enquiry_logged,site_survey_completed,design_completed,design_approved,materials_specified,budget_created,quote_prepared,quote_approved,converted_to_project,cancelled',
+            'department_id' => 'nullable|integer|exists:departments,id',
             'assigned_po' => 'nullable|integer|exists:users,id',
             'follow_up_notes' => 'nullable|string',
             'venue' => 'nullable|string|max:255',
@@ -155,6 +156,7 @@ class EnquiryController extends Controller
             'priority',
             'contact_person',
             'status',
+            'department_id',
             'assigned_po',
             'follow_up_notes',
             'venue',
