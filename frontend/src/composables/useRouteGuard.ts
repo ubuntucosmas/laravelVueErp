@@ -254,7 +254,8 @@ export function useRouteGuard() {
         { name: 'projects-clients', path: '/projects/clients', label: 'Client Management', icon: '👥' },
         { name: 'projects-enquiries', path: '/projects/enquiries', label: 'Enquiries', icon: '📝' },
         { name: 'projects-list', path: '/projects/projects', label: 'Approved Projects', icon: '✅' },
-        { name: 'projects-close-out-report', path: '/projects/close-out-report', label: 'Close-Out Report', icon: '📋' }
+        { name: 'projects-close-out-report', path: '/projects/close-out-report', label: 'Close-Out Report', icon: '📋' },
+        { name: 'projects-matrix', path: '/projects/matrix', label: 'Matrix', icon: '📋' }
       )
     }
 
