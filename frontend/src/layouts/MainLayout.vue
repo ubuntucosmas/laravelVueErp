@@ -77,18 +77,39 @@
 
         <!-- Page Content -->
         <main class="flex-1 p-6">
-          <router-view />
+          <router-view v-slot="{ Component, route }">
+            <transition name="fade" mode="out-in" appear>
+              <component 
+                :is="Component" 
+                :key="route.fullPath"
+                v-if="Component"
+              />
+            </transition>
+          </router-view>
         </main>
       </div>
     </div>
   </div>
 </template>
 
+<style scoped>
+/* Add transition for smooth content updates */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
+
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import DynamicSidebar from '../components/DynamicSidebar.vue'
-import { useAuth } from '../composables/useAuth'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import DynamicSidebar from '@/components/DynamicSidebar.vue'
+import { useAuth } from '@/composables/useAuth'
 import { useRouteGuard } from '../composables/useRouteGuard'
 import { useTheme } from '../composables/useTheme'
 
@@ -97,6 +118,14 @@ const { getAllowedRoutes } = useRouteGuard()
 const { theme, toggleTheme } = useTheme()
 const router = useRouter()
 const route = useRoute()
+
+// Watch for route changes to ensure content updates
+watch(
+  () => route.fullPath,
+  () => {
+    // This will force content to update when route changes
+  }
+)
 
 const sidebarCollapsed = ref(false)
 

@@ -1,203 +1,206 @@
 import { useAuth } from './useAuth'
 import { useRouter } from 'vue-router'
+import type { Ref } from 'vue'
+
+// Types
+interface RouteItem {
+  name: string
+  path: string
+  label: string
+  icon: string
+  children?: RouteItem[]
+}
+
+type UserRole = 'Super Admin' | 'Admin' | 'HR' | 'Designer' | 'Project Officer' | 'Project Lead' | 'Project Manager' | 'Client Service' | 'Logistics Manager' | 'Logistics Officer' | 'Dispatcher' | 'Production Manager' | 'Production Staff' | 'Accounts' | 'Costing' | 'Manager' | 'Employee'
+
+// Constants
+const SUPER_ADMIN: UserRole = 'Super Admin'
+const ADMIN: UserRole = 'Admin'
+const DESIGNER: UserRole = 'Designer'
+const CLIENT_SERVICE: UserRole = 'Client Service'
 
 export function useRouteGuard() {
   const { permissions, isLoggedIn, user } = useAuth()
   const router = useRouter()
 
-  const canAccessRoute = (routeName: string): boolean => {
-    if (!isLoggedIn.value || !user.value) {
-      return false
-    }
-
+  /**
+   * Checks if the current user has any of the specified roles
+   */
+  const hasAnyRole = (roles: UserRole[]): boolean => {
+    if (!isLoggedIn.value || !user.value) return false
     const userRoles = user.value.roles || []
-
-    // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
-      return true
-    }
-
-    switch (routeName) {
-      // Admin routes - only Admin and Super Admin
-      case 'admin-dashboard':
-      case 'admin-users':
-      case 'admin-employees':
-      case 'admin-roles':
-      case 'admin-departments':
-        return userRoles.includes('Admin') || userRoles.includes('Super Admin')
-
-      // HR routes - only HR and Super Admin
-      case 'hr-dashboard':
-      case 'hr-employees':
-        return userRoles.includes('HR') || userRoles.includes('Super Admin')
-
-      // Department-specific routes - Managers, Employees, and Super Admin
-      default:
-        if (routeName.startsWith('department-')) {
-          return userRoles.includes('Manager') || userRoles.includes('Employee') || userRoles.includes('Super Admin')
-        }
-        return true
-    }
+    return roles.some(role => userRoles.includes(role))
   }
 
+  /**
+   * Checks if the current user has super admin access
+   */
+  const isSuperAdmin = (): boolean => hasAnyRole([SUPER_ADMIN])
+
+  /**
+   * Checks if the current user has admin access
+   */
+  const isAdmin = (): boolean => hasAnyRole([SUPER_ADMIN, ADMIN])
+
+  /**
+   * Checks if the current user belongs to a specific department
+   */
+  const isInDepartment = (departmentNames: string[]): boolean => {
+    if (!permissions.value?.user_department) return false
+    const userDept = permissions.value.user_department.name.toLowerCase()
+    return departmentNames.some(dept => dept.toLowerCase() === userDept)
+  }
+
+  /**
+   * Main route access control function
+   */
+  const canAccessRoute = (routeName: string): boolean => {
+    if (!isLoggedIn.value || !user.value) return false
+    if (isSuperAdmin()) return true
+
+    const routeAccessMap: Record<string, () => boolean> = {
+      // Admin routes
+      'admin-dashboard': isAdmin,
+      'admin-users': isAdmin,
+      'admin-employees': isAdmin,
+      'admin-roles': isAdmin,
+      'admin-departments': isAdmin,
+      
+      // HR routes
+      'hr-dashboard': () => hasAnyRole(['HR']),
+      'hr-employees': () => hasAnyRole(['HR']),
+      
+      // Department routes
+      'department-*': () => hasAnyRole(['Manager', 'Employee'])
+    }
+
+    // Check exact match first
+    const exactMatch = routeAccessMap[routeName]
+    if (exactMatch) return exactMatch()
+
+    // Check wildcard matches (e.g., department-*)
+    for (const [pattern, check] of Object.entries(routeAccessMap)) {
+      if (pattern.endsWith('*') && routeName.startsWith(pattern.slice(0, -1))) {
+        return check()
+      }
+    }
+
+    // Default deny for unknown routes
+    return false
+  }
+
+  /**
+   * Checks if the user can access a specific department
+   */
   const canAccessDepartment = (departmentId: number): boolean => {
     if (!permissions.value) return false
-    return permissions.value.accessible_departments.includes(departmentId)
+    return (permissions.value.accessible_departments || []).includes(departmentId)
   }
 
+  /**
+   * Checks if the user can access projects
+   */
   const canAccessProjects = (): boolean => {
-    if (!isLoggedIn.value || !user.value) {
-      return false
-    }
+    if (!isLoggedIn.value || !user.value) return false
+    if (isSuperAdmin()) return true
 
-    const userRoles = user.value.roles || []
+    // Check department access
+    if (isInDepartment(['projects', 'project'])) return true
 
-    // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
-      return true
-    }
-
-    // Check if user belongs to projects department
-    if (permissions.value?.user_department) {
-      const deptName = permissions.value.user_department.name.toLowerCase()
-      if (deptName === 'projects' || deptName === 'project') {
-        return true
-      }
-    }
-
-    // Check for projects-specific roles
-    const projectsRoles = ['Project Officer', 'Project Lead', 'Project Manager']
-    return projectsRoles.some(role => userRoles.includes(role))
+    // Check project-specific roles
+    const projectRoles: UserRole[] = ['Project Officer', 'Project Lead', 'Project Manager']
+    return hasAnyRole(projectRoles)
   }
 
+  /**
+   * Checks if the user can access client service features
+   */
   const canAccessClientService = (): boolean => {
-    if (!isLoggedIn.value || !user.value) {
-      return false
-    }
+    if (!isLoggedIn.value || !user.value) return false
+    if (isSuperAdmin()) return true
 
-    const userRoles = user.value.roles || []
+    // Check role
+    if (hasAnyRole([CLIENT_SERVICE])) return true
 
-    // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
-      return true
-    }
-
-    // Check if user has Client Service role
-    if (userRoles.includes('Client Service')) {
-      return true
-    }
-
-    // Check if user belongs to client service department
-    if (permissions.value?.user_department) {
-      const deptName = permissions.value.user_department.name.toLowerCase()
-      if (deptName === 'client service' || deptName === 'client-service') {
-        return true
-      }
-    }
-
-    return false
+    // Check department
+    return isInDepartment(['client service', 'client-service'])
   }
 
+  /**
+   * Checks if the user can access creatives/design features
+   */
   const canAccessCreatives = (): boolean => {
-    if (!isLoggedIn.value || !user.value) {
-      return false
-    }
+    if (!isLoggedIn.value || !user.value) return false
+    if (isSuperAdmin()) return true
 
-    const userRoles = user.value.roles || []
+    // Check role
+    if (hasAnyRole([DESIGNER])) return true
 
-    // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
-      return true
-    }
-
-    // Check if user has Designer role
-    if (userRoles.includes('Designer')) {
-      return true
-    }
-
-    // Check if user belongs to Creatives department
-    if (permissions.value?.user_department) {
-      const deptName = permissions.value.user_department.name.toLowerCase()
-      if (deptName === 'creatives' || deptName === 'creative' || deptName === 'design') {
-        return true
-      }
-    }
-
-    return false
+    // Check department
+    return isInDepartment(['creatives', 'creative', 'design'])
   }
 
-  const canAccessFinance = (requiredRoles: string[]): boolean => {
-    if (!isLoggedIn.value || !user.value) {
-      return false
-    }
-
-    const userRoles = user.value.roles || []
-
-    // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
-      return true
-    }
-
-    // Check if user has any of the required roles
-    return requiredRoles.some(role => userRoles.includes(role))
+  /**
+   * Checks if the user can access finance features with required roles
+   */
+  const canAccessFinance = (requiredRoles: UserRole[]): boolean => {
+    if (!isLoggedIn.value || !user.value) return false
+    if (isSuperAdmin()) return true
+    return hasAnyRole(requiredRoles)
   }
 
-  const canAccessProduction = (allowedRoles: string[]): boolean => {
-    if (!isLoggedIn.value || !user.value) {
-      return false
-    }
-
+  /**
+   * Checks if the user can access logistics features
+   */
+  const canAccessLogistics = (): boolean => {
+    if (!isLoggedIn.value || !user.value) return false
+    
+    // Admins don't automatically get logistics access
+    if (isAdmin()) return false
+    
+    // Check if user has logistics role
     const userRoles = user.value.roles || []
-
-    // Super Admin can access everything
-    if (userRoles.includes('Super Admin')) {
-      return true
-    }
-
-    // Check if user has any of the allowed roles
-    return allowedRoles.some(role => userRoles.includes(role))
+    if (userRoles.includes('Logistics')) return true
+    
+    // Check department
+    if (isInDepartment(['logistics'])) return true
+    
+    // Check specific logistics-related roles
+    const logisticsRoles: UserRole[] = ['Logistics Manager', 'Logistics Officer', 'Dispatcher']
+    return hasAnyRole(logisticsRoles)
   }
 
-  const redirectToAppropriateRoute = () => {
+  /**
+   * Checks if the user can access production features with allowed roles
+   */
+  const canAccessProduction = (allowedRoles: UserRole[]): boolean => {
+    if (!isLoggedIn.value || !user.value) return false
+    if (isSuperAdmin()) return true
+    return hasAnyRole(allowedRoles)
+  }
+
+  /**
+   * Redirects the user to the appropriate route based on their role
+   */
+  const redirectToAppropriateRoute = (): void => {
     if (!isLoggedIn.value || !user.value) {
       router.push('/login')
       return
     }
 
-    const userRoles = user.value.roles || []
-
-    // Super Admin goes to admin dashboard
-    if (userRoles.includes('Super Admin')) {
+    // Check access in order of priority
+    if (isAdmin()) {
       router.push('/admin')
-      return
-    }
-
-    // Admin goes to admin dashboard
-    if (userRoles.includes('Admin')) {
-      router.push('/admin')
-      return
-    }
-
-    // HR goes to HR dashboard
-    if (userRoles.includes('HR')) {
+    } else if (hasAnyRole(['HR'])) {
       router.push('/hr')
-      return
-    }
-
-    // Creatives/Designers go to Design dashboard
-    if (userRoles.includes('Designer')) {
+    } else if (hasAnyRole(['Designer'])) {
       router.push('/creatives/design')
-      return
-    }
-
-    // Department users go to their department
-    if ((userRoles.includes('Manager') || userRoles.includes('Employee')) && permissions.value?.user_department) {
+    } else if (hasAnyRole(['Manager', 'Employee']) && permissions.value?.user_department) {
       router.push(`/department/${permissions.value.user_department.id}`)
-      return
+    } else {
+      // Fallback to dashboard
+      router.push('/dashboard')
     }
-
-    // Fallback to general dashboard
-    router.push('/dashboard')
   }
 
   const getAllowedRoutes = () => {
@@ -284,6 +287,21 @@ export function useRouteGuard() {
       )
     }
 
+    // Add logistics routes for authorized users
+    if (canAccessLogistics(['Logistics'])) {
+      routes.push(
+        { name: 'logistics-dashboard', path: '/logistics', label: 'Logistics Dashboard', icon: '🚚' },
+        { name: 'logistics-shipments', path: '/logistics/shipments', label: 'Shipments', icon: '📦' },
+        { name: 'logistics-vehicles', path: '/logistics/vehicles', label: 'Vehicles', icon: '🚛' },
+        { name: 'logistics-drivers', path: '/logistics/drivers', label: 'Drivers', icon: '👤' },
+        { name: 'logistics-routes', path: '/logistics/routes', label: 'Routes', icon: '🗺️' },
+        { name: 'logistics-reports', path: '/logistics/reports', label: 'Reports', icon: '📊' },
+        { name: 'logistics-loading-sheets', path: '/logistics/loading-sheets', label: 'Loading Sheets', icon: '📋' },
+        { name: 'logistics-maintenance', path: '/logistics/maintenance', label: 'Maintenance', icon: '🛠️' },
+        { name: 'logistics-expiries', path: '/logistics/expiries', label: 'Expiry Tracking', icon: '📅' }
+      )
+    }
+
     // Add finance routes for authorized users
     if (canAccessFinance(['Accounts', 'Costing'])) {
       routes.push(
@@ -328,42 +346,20 @@ export function useRouteGuard() {
     return routes
   }
 
+  /**
+   * Returns the appropriate panel title based on user's role and access
+   */
   const getPanelTitle = (): string => {
     if (!user.value) return 'ERP System'
 
-    const userRoles = user.value.roles || []
-
-    // Super Admin
-    if (userRoles.includes('Super Admin')) {
-      return 'Super Admin Panel'
-    }
-
-    // Admin
-    if (userRoles.includes('Admin')) {
-      return 'Admin Panel'
-    }
-
-    // HR
-    if (userRoles.includes('HR')) {
-      return 'HR Panel'
-    }
-
-    // Check feature access in priority order
-    if (canAccessProjects()) {
-      return 'Projects Panel'
-    }
-
-    if (canAccessClientService()) {
-      return 'Client Service Panel'
-    }
-
-    if (canAccessCreatives()) {
-      return 'Creatives Panel'
-    }
-
-    if (canAccessFinance(['Accounts', 'Costing'])) {
-      return 'Finance Panel'
-    }
+    // Check in order of priority
+    if (isSuperAdmin()) return 'Super Admin Panel'
+    if (isAdmin()) return 'Admin Panel'
+    if (hasAnyRole(['HR'])) return 'HR Panel'
+    if (canAccessProjects()) return 'Projects Panel'
+    if (canAccessClientService()) return 'Client Service Panel'
+    if (canAccessCreatives()) return 'Creatives Panel'
+    if (canAccessFinance(['Accounts', 'Costing'])) return 'Finance Panel'
 
     if (canAccessProduction(['Production Manager', 'Production Staff'])) {
       return 'Production Panel'
@@ -377,25 +373,16 @@ export function useRouteGuard() {
     return 'ERP System'
   }
 
+  /**
+   * Returns the panel subtitle based on user's role
+   */
   const getPanelSubtitle = (): string => {
     if (!user.value) return 'Management Dashboard'
 
-    const userRoles = user.value.roles || []
-
-    // Super Admin
-    if (userRoles.includes('Super Admin')) {
-      return 'Full System Access'
-    }
-
-    // Admin
-    if (userRoles.includes('Admin')) {
-      return 'System Administration'
-    }
-
-    // HR
-    if (userRoles.includes('HR')) {
-      return 'Human Resources'
-    }
+    // Check in order of priority
+    if (isSuperAdmin()) return 'Full System Access'
+    if (isAdmin()) return 'System Administration'
+    if (hasAnyRole(['HR'])) return 'Human Resources'
 
     // Check feature access in priority order
     if (canAccessProjects()) {
@@ -422,15 +409,25 @@ export function useRouteGuard() {
     return 'Management Dashboard'
   }
 
+  // Expose only necessary functions
   return {
+    // Access control
     canAccessRoute,
     canAccessDepartment,
+    
+    // Module access checks
     canAccessProjects,
     canAccessClientService,
     canAccessCreatives,
     canAccessFinance,
+    canAccessLogistics,
+    canAccessProduction,
+    
+    // Navigation
     redirectToAppropriateRoute,
     getAllowedRoutes,
+    
+    // UI helpers
     getPanelTitle,
     getPanelSubtitle
   }
