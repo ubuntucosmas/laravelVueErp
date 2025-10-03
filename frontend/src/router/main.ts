@@ -8,15 +8,7 @@ import AccessDenied from '../views/AccessDenied.vue'
 export const mainRoutes: RouteRecordRaw[] = [
   {
     path: '/',
-    component: MainLayout,
-    children: [
-      {
-        path: '',
-        name: 'home',
-        component: Dashboard,
-        meta: { title: 'Dashboard' }
-      },
-    ]
+    redirect: '/login'
   },
   {
     path: '/dashboard',

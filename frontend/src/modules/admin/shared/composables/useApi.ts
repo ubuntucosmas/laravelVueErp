@@ -30,3 +30,14 @@ export function useApi() {
     delete: deleteRequest
   }
 }
+
+// Standardized error handling utility
+export function handleApiError(err: unknown, defaultMessage: string): string {
+  if (err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'message' in err.response.data && typeof err.response.data.message === 'string') {
+    return err.response.data.message
+  }
+  if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
+    return err.message
+  }
+  return defaultMessage
+}

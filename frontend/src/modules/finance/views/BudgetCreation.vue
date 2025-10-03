@@ -103,17 +103,17 @@
       </div>
 
       <div class="flex justify-center">
-        <button
-          @click="openBudgetModal"
-          class="bg-primary hover:bg-primary-light text-white px-8 py-3 rounded-lg font-medium transition-colors text-lg"
-        >
-          Open Budget Preparation Tool
-        </button>
+        <!-- Budget functionality commented out due to deleted projects module -->
+        <div class="text-center p-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Budget Creation Tool</h3>
+          <p class="text-gray-600 dark:text-gray-400">Budget preparation functionality is currently unavailable.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-500 mt-2">The projects module has been removed.</p>
+        </div>
       </div>
     </div>
 
-    <!-- Budget Modal -->
-    <BudgetModal
+    <!-- Budget Modal - Commented out due to deleted projects module -->
+    <!-- <BudgetModal
       :is-visible="showBudgetModal"
       :enquiry="enquiry"
       :material-elements="materialElements"
@@ -121,16 +121,18 @@
       @save="handleBudgetSave"
       @generateQuote="handleGenerateQuote"
       @generateAdditionalsQuote="handleGenerateAdditionalsQuote"
-    />
+    /> -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import BudgetModal from '../../projects/components/BudgetModal.vue'
-import { useEnquiries } from '../../projects/composables/useEnquiries'
-import type { Enquiry } from '../../projects/types/enquiry'
+// BudgetModal removed - projects module deleted
+// import BudgetModal from '../../projects/components/BudgetModal.vue'
+// import { useEnquiries } from '../../projects/composables/useEnquiries'
+import { useEnquiries } from '../../clientService/composables/useEnquiries'
+import type { Enquiry } from '../../clientService/types/enquiry'
 import type { DetailedBudgetData } from '../types/budget'
 
 const route = useRoute()
@@ -139,30 +141,31 @@ const router = useRouter()
 const { getEnquiry, fetchEnquiries } = useEnquiries()
 
 const enquiry = ref<Enquiry | null>(null)
-const materialElements = ref<any[]>([])
-const showBudgetModal = ref(false)
+// const materialElements = ref<any[]>([])
+// const showBudgetModal = ref(false)
 const loading = ref(false)
 const error = ref('')
 
-const openBudgetModal = () => {
-  showBudgetModal.value = true
-}
+// Budget functionality commented out due to deleted projects module
+// const openBudgetModal = () => {
+//   showBudgetModal.value = true
+// }
 
-const handleBudgetSave = (budgetData: DetailedBudgetData) => {
-  console.log('Budget saved:', budgetData)
-  // Handle budget save logic
-  router.push('/finance/budgeting')
-}
+// const handleBudgetSave = (budgetData: DetailedBudgetData) => {
+//   console.log('Budget saved:', budgetData)
+//   // Handle budget save logic
+//   router.push('/finance/budgeting')
+// }
 
-const handleGenerateQuote = (materialElements: any[]) => {
-  console.log('Generate main quote:', materialElements)
-  // Handle quote generation logic
-}
+// const handleGenerateQuote = (materialElements: any[]) => {
+//   console.log('Generate main quote:', materialElements)
+//   // Handle quote generation logic
+// }
 
-const handleGenerateAdditionalsQuote = (additionals: any[]) => {
-  console.log('Generate additionals quote:', additionals)
-  // Handle additionals quote generation logic
-}
+// const handleGenerateAdditionalsQuote = (additionals: any[]) => {
+//   console.log('Generate additionals quote:', additionals)
+//   // Handle additionals quote generation logic
+// }
 
 const getPriorityClass = (priority: string) => {
   const classes = {
@@ -225,18 +228,18 @@ onMounted(async () => {
         enquiry.value = enquiryData
       }
 
-      // Mock material elements - in real app, fetch from API
-      materialElements.value = [
-        {
-          id: 1,
-          elementName: 'Main Signage',
-          category: 'production',
-          subItems: [
-            { id: 1, name: 'Aluminum Composite Panel', quantity: 10, unit: 'sqm', unitPrice: 2500 },
-            { id: 2, name: 'LED Lighting', quantity: 5, unit: 'pcs', unitPrice: 1500 }
-          ]
-        }
-      ]
+      // Mock material elements - commented out due to deleted projects module
+      // materialElements.value = [
+      //   {
+      //     id: 1,
+      //     elementName: 'Main Signage',
+      //     category: 'production',
+      //     subItems: [
+      //       { id: 1, name: 'Aluminum Composite Panel', quantity: 10, unit: 'sqm', unitPrice: 2500 },
+      //       { id: 2, name: 'LED Lighting', quantity: 5, unit: 'pcs', unitPrice: 1500 }
+      //     ]
+      //   }
+      // ]
     } catch (err) {
       error.value = 'Failed to load enquiry data'
       console.error('Error loading enquiry:', err)

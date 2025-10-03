@@ -116,20 +116,35 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 import { useAuth } from '@/composables/useAuth'
 
 const { theme } = useTheme()
-const { login: authLogin } = useAuth()
+const { login: authLogin, user } = useAuth()
+const router = useRouter()
 const email = ref('')
 const password = ref('')
 const remember = ref(false)
-const router = useRouter()
 const isLoading = ref(false)
 const errorMessage = ref('')
+
+// Department to route mapping
+const getDepartmentRoute = (departmentName: string): string => {
+  const departmentRoutes: Record<string, string> = {
+    'client-service': '/client-service',
+    'admin': '/admin',
+    'hr': '/hr',
+    'procurement': '/procurement',
+    'finance': '/finance',
+    'creatives': '/creatives',
+    // Add more mappings as needed
+  }
+
+  return departmentRoutes[departmentName.toLowerCase()] || '/dashboard'
+}
 
 const login = async () => {
   if (!email.value || !password.value) {
@@ -143,13 +158,22 @@ const login = async () => {
   try {
     const success = await authLogin(email.value, password.value)
     if (success) {
-      router.push('/dashboard')
+      // Wait a bit for user data to be fetched, then redirect to department
+      setTimeout(() => {
+        if (user.value?.department?.name) {
+          const departmentRoute = getDepartmentRoute(user.value.department.name)
+          router.push(departmentRoute)
+        } else {
+          // Fallback to dashboard if no department found
+          router.push('/dashboard')
+        }
+      }, 500)
     } else {
       errorMessage.value = 'Login failed: Invalid email or password'
     }
   } catch (error) {
     console.error('Login failed:', error)
-    errorMessage.value = error.response?.data?.message || 'Login failed. Please try again.'
+    errorMessage.value = (error as any).response?.data?.message || 'Login failed. Please try again.'
   } finally {
     isLoading.value = false
   }

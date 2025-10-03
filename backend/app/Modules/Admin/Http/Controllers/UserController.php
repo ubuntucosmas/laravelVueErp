@@ -6,8 +6,10 @@ use App\Models\User;
 use App\Modules\HR\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 
@@ -18,6 +20,8 @@ class UserController
      */
     public function index(Request $request): JsonResponse
     {
+        \Log::info('UserController::index called', ['user' => Auth::id(), 'request' => $request->all()]);
+
         $query = User::query();
 
         // Apply filters
@@ -57,6 +61,12 @@ class UserController
         $perPage = $request->get('per_page', 15);
         $users = $query->with(['employee', 'department', 'roles'])->paginate($perPage);
 
+        \Log::info('UserController::index returning users', [
+            'count' => $users->count(),
+            'total' => $users->total(),
+            'users' => $users->items()
+        ]);
+
         return response()->json([
             'data' => $users->items(),
             'meta' => [
@@ -73,6 +83,8 @@ class UserController
      */
     public function availableEmployees(Request $request): JsonResponse
     {
+        \Log::info('AvailableEmployees endpoint called', ['user' => Auth::id(), 'request' => $request->all()]);
+
         $query = Employee::active()->whereNotIn('id', function ($subQuery) {
             $subQuery->select('employee_id')->from('users')->whereNotNull('employee_id');
         });
@@ -87,6 +99,18 @@ class UserController
         }
 
         $employees = $query->with('department')->get();
+
+        \Log::info('Available employees query result', [
+            'count' => $employees->count(),
+            'employees' => $employees->map(function($emp) {
+                return [
+                    'id' => $emp->id,
+                    'name' => $emp->name,
+                    'email' => $emp->email,
+                    'department' => $emp->department ? $emp->department->name : null
+                ];
+            })
+        ]);
 
         return response()->json([
             'data' => $employees

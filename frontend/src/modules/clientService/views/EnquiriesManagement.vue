@@ -32,8 +32,8 @@
       </ol>
     </nav>
 
-    <!-- Task Dashboard View -->
-    <div v-if="showTaskDashboard && selectedEnquiryForTasks">
+    <!-- Task Dashboard View - Commented out due to deleted projects module -->
+    <!-- <div v-if="showTaskDashboard && selectedEnquiryForTasks">
       <div class="flex items-center justify-between mb-6">
         <div>
           <button
@@ -56,10 +56,10 @@
         :department="selectedEnquiryForTasks.assigned_department || selectedEnquiryForTasks.department?.name || 'client-service'"
         @taskAssigned="handleTaskAssigned"
       />
-    </div>
+    </div> -->
 
     <!-- Enquiries Table View -->
-    <div v-else>
+    <div>
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Enquiry Management</h1>
@@ -189,7 +189,8 @@
                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                  {{ enquiry.enquiry_number }}
                </td>
-               <td class="px-6 py-4 whitespace-nowrap">
+               <!-- Tasks button commented out due to deleted projects module -->
+               <!-- <td class="px-6 py-4 whitespace-nowrap">
                  <button
                    @click="openTaskDashboard(enquiry)"
                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
@@ -203,7 +204,7 @@
                      3
                    </span>
                  </button>
-               </td>
+               </td> -->
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button
                   @click="editEnquiry(enquiry)"
@@ -455,17 +456,18 @@ import { useRouter } from 'vue-router'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types/enquiry'
 import { useEnquiries } from '../composables/useEnquiries'
 import { useClients } from '../composables/useClients'
-import { useDepartmentWorkflow } from '../../projects/composables/useDepartmentWorkflow'
-import DepartmentalTaskDashboard from '../../projects/components/DepartmentalTaskDashboard.vue'
-import BudgetModal from '../../projects/components/BudgetModal.vue'
-import QuoteModal from '../../projects/components/QuoteModal.vue'
+// Commented out imports from deleted projects module
+// import { useDepartmentWorkflow } from '../../projects/composables/useDepartmentWorkflow'
+// import DepartmentalTaskDashboard from '../../projects/components/DepartmentalTaskDashboard.vue'
+// import BudgetModal from '../../projects/components/BudgetModal.vue'
+// import QuoteModal from '../../projects/components/QuoteModal.vue'
 import api from '@/plugins/axios'
 
 const router = useRouter()
 
 const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry, convertToProject, canConvertToProject, newEnquiries, inProgressEnquiries, convertedEnquiries } = useEnquiries()
 const { activeClients, fetchClients } = useClients()
-const { navigateToDepartmentWorkflow, getAvailablePhases, getNextAvailablePhase } = useDepartmentWorkflow()
+// const { navigateToDepartmentWorkflow, getAvailablePhases, getNextAvailablePhase } = useDepartmentWorkflow() // Commented out - projects module deleted
 
 // Task Dashboard
 const showTaskDashboard = ref(false)
@@ -581,24 +583,26 @@ const fetchProjectOfficers = async () => {
 
 const editEnquiry = (enquiry: Enquiry) => {
   editingEnquiry.value = enquiry
+
   enquiryFormData.value = {
-    date_received: enquiry.date_received,
+    date_received: enquiry.date_received || new Date().toISOString().split('T')[0],
     expected_delivery_date: enquiry.expected_delivery_date || '',
     client_id: enquiry.client_id,
-    title: enquiry.title,
+    title: enquiry.title || '',
     description: enquiry.description || '',
     project_scope: enquiry.project_scope || '',
-    priority: enquiry.priority,
-    status: enquiry.status,
-    contact_person: enquiry.contact_person,
+    priority: enquiry.priority || 'medium',
+    status: enquiry.status || 'enquiry_logged',
+    contact_person: enquiry.contact_person || '',
     assigned_po: enquiry.assigned_po,
     follow_up_notes: enquiry.follow_up_notes || '',
     venue: enquiry.venue || '',
-    site_survey_skipped: enquiry.site_survey_skipped,
+    site_survey_skipped: enquiry.site_survey_skipped ?? false,
     site_survey_skip_reason: enquiry.site_survey_skip_reason || ''
   }
   showCreateModal.value = true
 }
+
 
 const viewEnquiryDetails = (enquiry: Enquiry) => {
   router.push(`/client-service/enquiries/${enquiry.id}`)
@@ -628,48 +632,22 @@ const closeModal = () => {
 }
 
 const handleFormSubmit = async () => {
-  // Basic validation
-  if (!enquiryFormData.value.date_received || !enquiryFormData.value.client_id ||
-      !enquiryFormData.value.title || !enquiryFormData.value.description ||
-      !enquiryFormData.value.contact_person) {
-    formError.value = 'Please fill in all required fields'
-    return
-  }
-
-  saving.value = true
-  formError.value = ''
-  formSuccess.value = ''
-
   try {
     if (editingEnquiry.value) {
-      // Update existing enquiry
+      // Update mode
       await updateEnquiry(editingEnquiry.value.id, enquiryFormData.value as UpdateEnquiryData)
-      formSuccess.value = 'Enquiry updated successfully!'
     } else {
-      // Create new enquiry
-      await createEnquiry(enquiryFormData.value)
-      formSuccess.value = 'Enquiry logged successfully!'
+      // Create mode
+      await createEnquiry(enquiryFormData.value as CreateEnquiryData)
     }
 
-    // Refresh enquiry list
+    showCreateModal.value = false
+    editingEnquiry.value = null
+
+    // Refresh enquiries after save
     await fetchEnquiries()
-
-    // Close modal after a short delay
-    setTimeout(() => {
-      closeModal()
-    }, 1500)
-
-  } catch (err: unknown) {
-    if (err && typeof err === 'object' && 'response' in err) {
-      const axiosError = err as { response?: { data?: { message?: string } } }
-      formError.value = axiosError.response?.data?.message || 'An error occurred'
-    } else if (err instanceof Error) {
-      formError.value = err.message
-    } else {
-      formError.value = 'An error occurred'
-    }
-  } finally {
-    saving.value = false
+  } catch (err) {
+    console.error('Error saving enquiry:', err)
   }
 }
 

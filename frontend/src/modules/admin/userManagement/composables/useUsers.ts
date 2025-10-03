@@ -1,6 +1,6 @@
 import { ref, readonly } from 'vue'
 import type { User, UserFilters, CreateUserData, UpdateUserData } from '../types/user'
-import { useApi } from '../../shared/composables/useApi'
+import { useApi, handleApiError } from '../../shared/composables/useApi'
 
 // Employee interface for HR data
 export interface Employee {
@@ -59,11 +59,12 @@ export function useUsers() {
   const { get, post, put, delete: deleteApi } = useApi()
 
   const fetchUsers = async (filters?: UserFilters) => {
+    if (loading.value) return
     loading.value = true
     error.value = null
     try {
       // Build query parameters
-      const params: Record<string, any> = {}
+      const params: Record<string, string | number | boolean | undefined> = {}
       if (filters?.search) params.search = filters.search
       if (filters?.department_id) params.department_id = filters.department_id
       if (filters?.role_id) params.role_id = filters.role_id
@@ -73,8 +74,8 @@ export function useUsers() {
 
       const response = await get('/api/admin/users', params)
       users.value = (response.data as User[]) || []
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch users'
+    } catch (err: unknown) {
+      error.value = handleApiError(err, 'Failed to fetch users')
       console.error('Error fetching users:', err)
     } finally {
       loading.value = false
@@ -82,24 +83,37 @@ export function useUsers() {
   }
 
   const fetchEmployees = async () => {
+    if (loading.value) return
+    loading.value = true
+    error.value = null
     try {
       const response = await get('/api/hr/employees')
       employees.value = (response.data as Employee[]) || []
-    } catch (err: any) {
+    } catch (err: unknown) {
+      error.value = handleApiError(err, 'Failed to fetch employees')
       console.error('Error fetching employees:', err)
+    } finally {
+      loading.value = false
     }
   }
 
   const fetchAvailableEmployees = async () => {
+    if (loading.value) return
+    loading.value = true
+    error.value = null
     try {
       const response = await get('/api/admin/users/available-employees')
       availableEmployees.value = (response.data as Employee[]) || []
-    } catch (err: any) {
+    } catch (err: unknown) {
+      error.value = handleApiError(err, 'Failed to fetch available employees')
       console.error('Error fetching available employees:', err)
+    } finally {
+      loading.value = false
     }
   }
 
   const fetchAllPeople = async (filters?: UserFilters) => {
+    if (loading.value) return
     loading.value = true
     error.value = null
 
@@ -166,8 +180,8 @@ export function useUsers() {
         a.name.localeCompare(b.name)
       )
 
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch data'
+    } catch (err: unknown) {
+      error.value = handleApiError(err, 'Failed to fetch data')
       console.error('Error fetching people:', err)
     } finally {
       loading.value = false
@@ -182,8 +196,8 @@ export function useUsers() {
       const newUser = response.data as User
       users.value = [newUser, ...users.value]
       return newUser
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to create user'
+    } catch (err: unknown) {
+      error.value = handleApiError(err, 'Failed to create user')
       throw err
     } finally {
       loading.value = false
@@ -201,8 +215,8 @@ export function useUsers() {
         users.value[index] = updatedUser
       }
       return updatedUser
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to update user'
+    } catch (err: unknown) {
+      error.value = handleApiError(err, 'Failed to update user')
       throw err
     } finally {
       loading.value = false
@@ -215,8 +229,8 @@ export function useUsers() {
     try {
       await deleteApi(`/api/admin/users/${id}`)
       users.value = users.value.filter(u => u.id !== id)
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to delete user'
+    } catch (err: unknown) {
+      error.value = handleApiError(err, 'Failed to delete user')
       throw err
     } finally {
       loading.value = false

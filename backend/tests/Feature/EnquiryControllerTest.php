@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\Enquiry;
+use App\Models\ProjectEnquiry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,24 +15,28 @@ class EnquiryControllerTest extends TestCase
     {
         parent::setUp();
 
-        // Create and authenticate a user
+        // Create and authenticate a user with enquiry.create permission
         $user = User::factory()->create();
+        $permission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'enquiry.create']);
+        $user->givePermissionTo($permission);
         $this->actingAs($user);
     }
 
     /** @test */
     public function it_creates_enquiry_successfully()
     {
+        // Create a test client first
+        $client = \App\Modules\ClientService\Models\Client::factory()->create();
+
         $enquiryData = [
             'date_received' => '2024-01-15',
             'expected_delivery_date' => '2024-02-15',
-            'client_name' => 'ABC Corporation',
-            'project_name' => 'Website Development Project',
-            'project_deliverables' => 'Complete website development for client',
+            'client_id' => $client->id,
+            'title' => 'Website Development Project',
+            'description' => 'Complete website development for client',
+            'project_scope' => 'Full website development',
             'contact_person' => 'John Doe',
             'status' => 'enquiry_logged',
-            'assigned_po' => 'PO12345',
-            'follow_up_notes' => 'Client prefers email communication',
             'venue' => 'Online',
             'site_survey_skipped' => false,
         ];
@@ -43,14 +47,14 @@ class EnquiryControllerTest extends TestCase
                  ->assertJson([
                      'message' => 'Enquiry created successfully',
                      'data' => [
-                         'project_name' => 'Website Development Project',
+                         'title' => 'Website Development Project',
                          'status' => 'enquiry_logged',
                      ]
                  ]);
 
-        $this->assertDatabaseHas('enquiries', [
-            'project_name' => 'Website Development Project',
-            'client_name' => 'ABC Corporation',
+        $this->assertDatabaseHas('project_enquiries', [
+            'title' => 'Website Development Project',
+            'client_id' => $client->id,
             'status' => 'enquiry_logged',
         ]);
     }
@@ -130,7 +134,7 @@ class EnquiryControllerTest extends TestCase
     public function it_lists_enquiries()
     {
         // Create some test enquiries
-        Enquiry::create([
+        ProjectEnquiry::create([
             'date_received' => '2024-01-15',
             'client_name' => 'ABC Corporation',
             'project_name' => 'Project 1',
@@ -141,7 +145,7 @@ class EnquiryControllerTest extends TestCase
             'created_by' => auth()->id(),
         ]);
 
-        Enquiry::create([
+        ProjectEnquiry::create([
             'date_received' => '2024-01-16',
             'client_name' => 'XYZ Corp',
             'project_name' => 'Project 2',
@@ -164,7 +168,7 @@ class EnquiryControllerTest extends TestCase
     /** @test */
     public function it_shows_single_enquiry()
     {
-        $enquiry = Enquiry::create([
+        $enquiry = ProjectEnquiry::create([
             'date_received' => '2024-01-15',
             'client_name' => 'ABC Corporation',
             'project_name' => 'Test Project',
@@ -191,7 +195,7 @@ class EnquiryControllerTest extends TestCase
     /** @test */
     public function it_updates_enquiry()
     {
-        $enquiry = Enquiry::create([
+        $enquiry = ProjectEnquiry::create([
             'date_received' => '2024-01-15',
             'client_name' => 'ABC Corporation',
             'project_name' => 'Test Project',
@@ -228,7 +232,7 @@ class EnquiryControllerTest extends TestCase
     /** @test */
     public function it_deletes_enquiry()
     {
-        $enquiry = Enquiry::create([
+        $enquiry = ProjectEnquiry::create([
             'date_received' => '2024-01-15',
             'client_name' => 'ABC Corporation',
             'project_name' => 'Test Project',

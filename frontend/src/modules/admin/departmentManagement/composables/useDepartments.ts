@@ -1,8 +1,6 @@
 import { ref, readonly } from 'vue'
-import { AxiosError } from 'axios'
 import type { Department, DepartmentFilters, CreateDepartmentData, UpdateDepartmentData } from '../types/department'
-import { useApi } from '../../shared/composables/useApi'
-import type { ApiResponse } from '../../shared/types/common'
+import { useApi, handleApiError } from '../../shared/composables/useApi'
 
 export function useDepartments() {
   const departments = ref<Department[]>([])
@@ -11,6 +9,7 @@ export function useDepartments() {
   const { get, post, put, delete: deleteApi } = useApi()
 
   const fetchDepartments = async (filters?: DepartmentFilters) => {
+    if (loading.value) return
     loading.value = true
     error.value = null
     try {
@@ -26,24 +25,22 @@ export function useDepartments() {
         params.per_page = 1000 // Large number to get all departments
       }
 
-      const response = await get<ApiResponse<Department[]>>('/api/hr/departments', params)
-      departments.value = response.data?.data || []
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error && 'response' in err
-        ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message || err.message)
-        : 'Failed to fetch departments'
-      error.value = errorMessage
-      if (err instanceof AxiosError) {
-        console.error('Error fetching departments:', {
-          message: err.message,
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data,
-          stack: err.stack
-        })
+      const response = await get('/api/hr/departments', params)
+      const responseData = response.data
+
+      // Handle the response data
+      if (Array.isArray(responseData)) {
+        // Direct array response
+        departments.value = responseData as Department[]
+      } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray((responseData as {data: unknown[]}).data)) {
+        // Paginated response
+        departments.value = (responseData as {data: Department[]}).data || []
       } else {
-        console.error('Error fetching departments:', err)
+        departments.value = []
       }
+    } catch (err: unknown) {
+      error.value = handleApiError(err, 'Failed to fetch departments')
+      console.error('Error fetching departments:', err)
     } finally {
       loading.value = false
     }
@@ -58,21 +55,8 @@ export function useDepartments() {
       departments.value = [newDepartment, ...departments.value]
       return newDepartment
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error && 'response' in err
-        ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message || err.message)
-        : 'Failed to create department'
-      error.value = errorMessage
-      if (err instanceof AxiosError) {
-        console.error('Error creating department:', {
-          message: err.message,
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data,
-          stack: err.stack
-        })
-      } else {
-        console.error('Error creating department:', err)
-      }
+      error.value = handleApiError(err, 'Failed to create department')
+      console.error('Error creating department:', err)
       throw err
     } finally {
       loading.value = false
@@ -91,21 +75,8 @@ export function useDepartments() {
       }
       return updatedDepartment
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error && 'response' in err
-        ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message || err.message)
-        : 'Failed to update department'
-      error.value = errorMessage
-      if (err instanceof AxiosError) {
-        console.error('Error updating department:', {
-          message: err.message,
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data,
-          stack: err.stack
-        })
-      } else {
-        console.error('Error updating department:', err)
-      }
+      error.value = handleApiError(err, 'Failed to update department')
+      console.error('Error updating department:', err)
       throw err
     } finally {
       loading.value = false
@@ -119,21 +90,8 @@ export function useDepartments() {
       await deleteApi(`/api/hr/departments/${id}`)
       departments.value = departments.value.filter(d => d.id !== id)
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error && 'response' in err
-        ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message || err.message)
-        : 'Failed to delete department'
-      error.value = errorMessage
-      if (err instanceof AxiosError) {
-        console.error('Error deleting department:', {
-          message: err.message,
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data,
-          stack: err.stack
-        })
-      } else {
-        console.error('Error deleting department:', err)
-      }
+      error.value = handleApiError(err, 'Failed to delete department')
+      console.error('Error deleting department:', err)
       throw err
     } finally {
       loading.value = false

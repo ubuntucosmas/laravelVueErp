@@ -106,7 +106,7 @@ router.beforeEach(async (to, from, next) => {
     const { useRouteGuard } = await import('@/composables/useRouteGuard')
     const { canAccessFinance } = useRouteGuard()
 
-    if (!canAccessFinance(['Accounts', 'Costing'])) {
+    if (!canAccessFinance()) {
       console.log('Access denied to finance - redirecting to dashboard')
       next('/dashboard')
       return

@@ -35,7 +35,7 @@ class SiteSurveyController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'enquiry_id' => 'required|exists:enquiries,id',
+            'enquiry_id' => 'required|exists:project_enquiries,id',
             'project_id' => 'nullable|integer',
             'site_visit_date' => 'required|date',
             'status' => ['nullable', Rule::in(['pending', 'completed', 'approved', 'rejected'])],
@@ -105,7 +105,7 @@ class SiteSurveyController extends Controller
     public function update(Request $request, SiteSurvey $siteSurvey): JsonResponse
     {
         $validated = $request->validate([
-            'enquiry_id' => 'sometimes|exists:enquiries,id',
+            'enquiry_id' => 'sometimes|exists:project_enquiries,id',
             'project_id' => 'nullable|integer',
             'site_visit_date' => 'sometimes|date',
             'status' => ['nullable', Rule::in(['pending', 'completed', 'approved', 'rejected'])],

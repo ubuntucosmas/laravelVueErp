@@ -1,6 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
 import MainLayout from '../layouts/MainLayout.vue'
-import DesignDashboard from '../modules/creatives/views/DesignDashboard.vue'
+// import DesignDashboard from '../modules/creatives/views/DesignDashboard.vue' // Commented out - creatives module not implemented
 
 export const creativesRoutes: RouteRecordRaw[] = [
   {
@@ -16,16 +16,17 @@ export const creativesRoutes: RouteRecordRaw[] = [
         path: '',
         redirect: '/creatives/design'
       },
-      {
-        path: 'design',
-        name: 'design-dashboard',
-        component: DesignDashboard,
-        meta: {
-          title: 'Creatives and Design Dashboard',
-          requiresAuth: true,
-          requiresRole: true
-        }
-      },
+      // Commented out - creatives module not implemented
+      // {
+      //   path: 'design',
+      //   name: 'design-dashboard',
+      //   component: DesignDashboard,
+      //   meta: {
+      //     title: 'Creatives and Design Dashboard',
+      //     requiresAuth: true,
+      //     requiresRole: true
+      //   }
+      // },
       {
         path: 'enquiries',
         name: 'creatives-enquiries',
@@ -43,32 +44,33 @@ export const creativesRoutes: RouteRecordRaw[] = [
           requiresRole: true
         }
       },
-      {
-        path: 'tasks',
-        name: 'creatives-tasks',
-        component: () => import('../modules/creatives/views/TaskManagement.vue'),
-        meta: { title: 'Task Management' }
-      },
-      {
-        path: 'materials',
-        name: 'creatives-materials',
-        component: () => import('../modules/creatives/views/TaskManagement.vue'),
-        meta: { title: 'Material & Cost Listing' },
-        props: { taskType: 'materials' }
-      },
-      {
-        path: 'final-design',
-        name: 'creatives-final-design',
-        component: () => import('../modules/creatives/views/TaskManagement.vue'),
-        meta: { title: 'Final Design' },
-        props: { taskType: 'final-design' }
-      },
-      {
-        path: 'element-templates',
-        name: 'creatives-element-templates',
-        component: () => import('../modules/creatives/views/ElementTemplates.vue'),
-        meta: { title: 'Element Templates' }
-      },
+      // Commented out - creatives module not implemented
+      // {
+      //   path: 'tasks',
+      //   name: 'creatives-tasks',
+      //   component: () => import('../modules/creatives/views/TaskManagement.vue'),
+      //   meta: { title: 'Task Management' }
+      // },
+      // {
+      //   path: 'materials',
+      //   name: 'creatives-materials',
+      //   component: () => import('../modules/creatives/views/TaskManagement.vue'),
+      //   meta: { title: 'Material & Cost Listing' },
+      //   props: { taskType: 'materials' }
+      // },
+      // {
+      //   path: 'final-design',
+      //   name: 'creatives-final-design',
+      //   component: () => import('../modules/creatives/views/TaskManagement.vue'),
+      //   meta: { title: 'Final Design' },
+      //   props: { taskType: 'final-design' }
+      // },
+      // {
+      //   path: 'element-templates',
+      //   name: 'creatives-element-templates',
+      //   component: () => import('../modules/creatives/views/ElementTemplates.vue'),
+      //   meta: { title: 'Element Templates' }
+      // },
       // Management routes - only dashboard exists for now
       // TODO: Create individual management components
       // {

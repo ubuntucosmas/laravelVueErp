@@ -32,8 +32,8 @@
       </ol>
     </nav>
 
-    <!-- Task Dashboard View -->
-    <div v-if="showTaskDashboard && selectedEnquiryForTasks">
+    <!-- Task Dashboard View - Commented out due to deleted projects module -->
+    <!-- <div v-if="showTaskDashboard && selectedEnquiryForTasks">
       <div class="flex items-center justify-between mb-6">
         <div>
           <button
@@ -57,10 +57,10 @@
         @taskAssigned="handleTaskAssigned"
         @quoteApproved="handleQuoteApproved"
       />
-    </div>
+    </div> -->
 
     <!-- Enquiries Table View -->
-    <div v-else>
+    <div>
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ pageTitle }}</h1>
@@ -227,20 +227,22 @@
               >
                 View
               </button>
-              <button
+              <!-- Tasks button commented out due to deleted projects module -->
+              <!-- <button
                 v-if="canAccessTasks(enquiry)"
                 @click="navigateToDepartmentTasks(enquiry)"
                 class="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300 mr-3"
               >
                 Tasks
-              </button>
-              <button
+              </button> -->
+              <!-- Convert to Project button commented out due to deleted projects module -->
+              <!-- <button
                 v-if="canConvertToProject(enquiry)"
                 @click="convertToProject(enquiry.id)"
                 class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 mr-3"
               >
                 Convert to Project
-              </button>
+              </button> -->
               <button
                 @click="updateStatus(enquiry, 'site_survey_completed')"
                 v-if="enquiry.status === 'enquiry_logged'"
@@ -438,14 +440,60 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import type { Enquiry, CreateEnquiryData, UpdateEnquiryData, DepartmentalTask } from '../../projects/types'
-import type { CreateProjectData } from '../../projects/types/project'
-import { useEnquiries } from '../../projects/composables/useEnquiries'
+// Removed imports from deleted projects module
+// import type { Enquiry, CreateEnquiryData, UpdateEnquiryData, DepartmentalTask } from '../../projects/types'
+// import type { CreateProjectData } from '../../projects/types/project'
+import { useEnquiries } from '../../clientService/composables/useEnquiries'
 import { useClients } from '../../clientService/composables/useClients'
-import { useDepartmentWorkflow } from '../../projects/composables/useDepartmentWorkflow'
-import { useProjects } from '../../projects/composables/useProjects'
-import DepartmentalTaskDashboard from '../../projects/components/DepartmentalTaskDashboard.vue'
+// import { useDepartmentWorkflow } from '../../projects/composables/useDepartmentWorkflow'
+// import { useProjects } from '../../projects/composables/useProjects' // Removed - projects module deleted
+// import DepartmentalTaskDashboard from '../../projects/components/DepartmentalTaskDashboard.vue' // Removed - projects module deleted
 import Pagination from '../../../components/Pagination.vue'
+
+// Local type definitions
+interface Enquiry {
+  id: number
+  title: string
+  client_id: number
+  client?: { full_name: string }
+  contact_person: string
+  status: 'enquiry_logged' | 'converted_to_project' | 'site_survey_completed' | 'design_completed' | 'cancelled' | 'client_registered' | 'design_approved' | 'materials_specified' | 'budget_created' | 'quote_prepared' | 'quote_approved'
+  enquiry_number: string
+  date_received: string
+  description?: string
+  project_scope?: string
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  department_id?: number
+  assigned_department?: string
+  project_deliverables?: string
+  follow_up_notes?: string
+  venue?: string
+  site_survey_skipped: boolean
+  site_survey_skip_reason?: string
+  expected_delivery_date?: string
+}
+
+interface CreateEnquiryData {
+  date_received: string
+  client_id: number
+  title: string
+  contact_person: string
+  site_survey_skipped: boolean
+  status: 'enquiry_logged' | 'converted_to_project' | 'site_survey_completed' | 'design_completed' | 'cancelled' | 'client_registered' | 'design_approved' | 'materials_specified' | 'budget_created' | 'quote_prepared' | 'quote_approved'
+  expected_delivery_date?: string
+  description?: string
+  project_scope?: string
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  assigned_department?: string
+  project_deliverables?: string
+  follow_up_notes?: string
+  venue?: string
+  site_survey_skip_reason?: string
+}
+
+interface UpdateEnquiryData extends Partial<CreateEnquiryData> {
+  id?: number
+}
 
 console.log('🔍 DEBUG: ProjectEnquiries component module loaded successfully')
 
@@ -468,26 +516,33 @@ const props = withDefaults(defineProps<Props>(), {
   breadcrumbLink: '/projects'
 })
 
-// Emits
-const emit = defineEmits<{
-  taskAssigned: [data: {
-    userId: number
-    userName: string
-    userEmail: string
-    taskCount: number
-    taskNames: string
-    message: string
-    tasks: DepartmentalTask[]
-  }]
-}>()
+// Emits - commented out due to deleted projects module
+// const emit = defineEmits<{
+//   taskAssigned: [data: {
+//     userId: number
+//     userName: string
+//     userEmail: string
+//     taskCount: number
+//     taskNames: string
+//     message: string
+//     tasks: any[]
+//   }]
+// }>()
 
 const router = useRouter()
 const route = useRoute()
 
-const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry, convertToProject, canConvertToProject, newEnquiries, inProgressEnquiries, convertedEnquiries } = useEnquiries()
+const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry } = useEnquiries()
 const { activeClients, fetchClients } = useClients()
-const { navigateToDepartmentWorkflow, getAvailablePhases, getNextAvailablePhase } = useDepartmentWorkflow()
-const { createProject } = useProjects()
+// const { navigateToDepartmentWorkflow, getAvailablePhases, getNextAvailablePhase } = useDepartmentWorkflow()
+// const { createProject } = useProjects()
+
+// Placeholder for projects functionality - removed with projects module
+// const convertToProject = async () => {}
+// const canConvertToProject = () => false
+const newEnquiries = computed(() => enquiries.value.filter((enquiry: any) => enquiry.status === 'enquiry_logged'))
+const inProgressEnquiries = computed(() => enquiries.value.filter((enquiry: any) => enquiry.status === 'in_progress'))
+const convertedEnquiries = computed(() => enquiries.value.filter((enquiry: any) => enquiry.status === 'converted_to_project'))
 
 const filters = ref({ search: '', priority: '', client_id: '' })
 const activeTab = ref('all')
@@ -616,55 +671,56 @@ const viewEnquiryDetails = (enquiry: Enquiry) => {
   router.push(`/projects/enquiries/${enquiry.id}`)
 }
 
-const canAccessTasks = (enquiry: Enquiry) => {
-  // Check if user has permission to access tasks for this enquiry
-  // For now, allow access if enquiry has a department assigned
-  return enquiry.department_id || enquiry.assigned_department
-}
+// Commented out task-related functions due to deleted projects module
+// const canAccessTasks = (enquiry: Enquiry) => {
+//   // Check if user has permission to access tasks for this enquiry
+//   // For now, allow access if enquiry has a department assigned
+//   return enquiry.department_id || enquiry.assigned_department
+// }
 
-const navigateToDepartmentTasks = (enquiry: Enquiry) => {
-  // Use the department workflow composable for intelligent routing
-  const department = enquiry.department?.name || enquiry.assigned_department
+// const navigateToDepartmentTasks = (enquiry: Enquiry) => {
+//   // Use the department workflow composable for intelligent routing
+//   const department = enquiry.assigned_department
 
-  if (department) {
-    // Try to navigate using the department workflow system
-    const success = navigateToDepartmentWorkflow(enquiry, department.toLowerCase())
+//   if (department) {
+//     // Try to navigate using the department workflow system
+//     const success = navigateToDepartmentWorkflow(enquiry, department.toLowerCase())
 
-    if (success) {
-      return
-    }
-  }
+//     if (success) {
+//       return
+//     }
+//   }
 
-  // Fallback to manual routing if department workflow fails
-  const departmentLower = department?.toLowerCase() || ''
+//   // Fallback to manual routing if department workflow fails
+//   const departmentLower = department?.toLowerCase() || ''
 
-  if (departmentLower.includes('creative')) {
-    // Route to Design Concept phase for creatives
-    router.push(`/projects/enquiries/${enquiry.id}?phase=design_concept&department=creatives`)
-  } else if (departmentLower.includes('design')) {
-    // Route to Material Specification phase for design
-    router.push(`/projects/enquiries/${enquiry.id}?phase=material_specification&department=design`)
-  } else if (departmentLower.includes('survey') || departmentLower.includes('site')) {
-    // Route to Site Survey phase
-    router.push(`/projects/enquiries/${enquiry.id}?phase=survey&department=survey`)
-  } else if (departmentLower.includes('procurement')) {
-    // Route to Procurement phase
-    router.push(`/projects/enquiries/${enquiry.id}?phase=procurement&department=procurement`)
-  } else if (departmentLower.includes('project')) {
-    // Route to Project Management phase
-    router.push(`/projects/enquiries/${enquiry.id}?phase=project_management&department=projects`)
-  } else {
-    // Default to general workflow view with intelligent phase detection
-    const availablePhases = getAvailablePhases(enquiry)
-    const nextPhase = getNextAvailablePhase(enquiry)
+//   if (departmentLower.includes('creative')) {
+//     // Route to Design Concept phase for creatives
+//     router.push(`/projects/enquiries/${enquiry.id}?phase=design_concept&department=creatives`)
+//   } else if (departmentLower.includes('design')) {
+//     // Route to Material Specification phase for design
+//     router.push(`/projects/enquiries/${enquiry.id}?phase=material_specification&department=design`)
+//   } else if (departmentLower.includes('survey') || departmentLower.includes('site')) {
+//     // Route to Site Survey phase
+//     router.push(`/projects/enquiries/${enquiry.id}?phase=survey&department=survey`)
+//   } else if (departmentLower.includes('procurement')) {
+//     // Route to Procurement phase
+//     router.push(`/projects/enquiries/${enquiry.id}?phase=procurement&department=procurement`)
+//   } else if (departmentLower.includes('project')) {
+//     // Route to Project Management phase
+//     router.push(`/projects/enquiries/${enquiry.id}?phase=project_management&department=projects`)
+//   } else {
+//     // Default to general workflow view with intelligent phase detection
+//     const availablePhases = getAvailablePhases(enquiry)
+//     const nextPhase = getNextAvailablePhase(enquiry)
 
-    if (nextPhase) {
-      router.push(`/projects/enquiries/${enquiry.id}?phase=${nextPhase.phase}&department=${nextPhase.department}`)
-    } else {
-      router.push(`/projects/enquiries/${enquiry.id}`)
-    }
-  }
-}
+//     if (nextPhase) {
+//       router.push(`/projects/enquiries/${enquiry.id}?phase=${nextPhase.phase}&department=${nextPhase.department}`)
+//     } else {
+//       router.push(`/projects/enquiries/${enquiry.id}`)
+//     }
+//   }
+// }
 
 const updateStatus = async (enquiry: Enquiry, status: Enquiry['status']) => {
   await updateEnquiry(enquiry.id, { status })
@@ -681,55 +737,57 @@ const closeTaskDashboard = () => {
   selectedEnquiryForTasks.value = null
 }
 
-const handleTaskAssigned = (data: {
-  userId: number
-  userName: string
-  userEmail: string
-  taskCount: number
-  taskNames: string
-  message: string
-  tasks: DepartmentalTask[]
-}) => {
-  // Emit the event up to the parent (MainLayout)
-  emit('taskAssigned', data)
-}
+// Commented out due to deleted projects module
+// const handleTaskAssigned = (data: {
+//   userId: number
+//   userName: string
+//   userEmail: string
+//   taskCount: number
+//   taskNames: string
+//   message: string
+//   tasks: any[]
+// }) => {
+//   // Emit the event up to the parent (MainLayout)
+//   // emit('taskAssigned', data)
+// }
 
-const handleQuoteApproved = async (data: { enquiryId: number; quotationData: { summary: { totalQuoteAmount: number } } }) => {
-  try {
-    // Find the enquiry
-    const enquiry = enquiries.value.find(e => e.id === data.enquiryId)
-    if (!enquiry) {
-      console.error('Enquiry not found for quote approval')
-      return
-    }
+// Commented out due to deleted projects module
+// const handleQuoteApproved = async (data: { enquiryId: number; quotationData: { summary: { totalQuoteAmount: number } } }) => {
+//   try {
+//     // Find the enquiry
+//     const enquiry = enquiries.value.find((e: any) => e.id === data.enquiryId)
+//     if (!enquiry) {
+//       console.error('Enquiry not found for quote approval')
+//       return
+//     }
 
-    // Generate project ID
-    const projectId = await generateProjectId()
+//     // Generate project ID
+//     const projectId = await generateProjectId()
 
-    // Create project data
-    const projectData: CreateProjectData = {
-      enquiry_id: data.enquiryId,
-      name: enquiry.title,
-      description: enquiry.project_deliverables || enquiry.description || 'Project created from approved quote',
-      start_date: new Date().toISOString().split('T')[0],
-      budget: data.quotationData.summary.totalQuoteAmount,
-      assigned_users: []
-    }
+//     // Create project data - commented out
+//     // const projectData: any = {
+//     //   enquiry_id: data.enquiryId,
+//     //   name: enquiry.title,
+//     //   description: enquiry.project_deliverables || enquiry.description || 'Project created from approved quote',
+//     //   start_date: new Date().toISOString().split('T')[0],
+//     //   budget: data.quotationData.summary.totalQuoteAmount,
+//     //   assigned_users: []
+//     // }
 
-    // Create the project (this would need to be updated to include project_id in the backend)
-    await createProject(projectData)
+//     // Create the project (this would need to be updated to include project_id in the backend)
+//     // await createProject(projectData)
 
-    // Update enquiry status to converted
-    await updateEnquiry(data.enquiryId, { status: 'converted_to_project' })
+//     // Update enquiry status to converted
+//     await updateEnquiry(data.enquiryId, { status: 'converted_to_project' })
 
-    // Refresh enquiries
-    await fetchEnquiries()
+//     // Refresh enquiries
+//     await fetchEnquiries()
 
-    console.log('Project created successfully:', projectId)
-  } catch (error) {
-    console.error('Error creating project from approved quote:', error)
-  }
-}
+//     console.log('Project created successfully:', projectId)
+//   } catch (error) {
+//     console.error('Error creating project from approved quote:', error)
+//   }
+// }
 
 // Generate project ID in format WNG-YYYYMM-JOB_NUMBER(001)
 const generateProjectId = async (): Promise<string> => {
@@ -836,9 +894,9 @@ onMounted(async () => {
 
     if (openTasksEnquiryId) {
       // Find the enquiry and open its task dashboard
-      const enquiry = enquiries.value.find(e => e.id === parseInt(openTasksEnquiryId))
+      const enquiry = enquiries.value.find((e: any) => e.id === parseInt(openTasksEnquiryId))
       if (enquiry) {
-        openTaskDashboard(enquiry)
+        // openTaskDashboard(enquiry) // Commented out
 
         // If we have a task to highlight, we could scroll to it or highlight it
         if (highlightTaskId) {

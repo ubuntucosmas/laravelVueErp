@@ -8,7 +8,7 @@ use App\Modules\Projects\Models\PhaseDepartmentalTask;
 use App\Modules\Projects\Models\ProjectPhase;
 use App\Modules\HR\Models\Department;
 use App\Models\User;
-use App\Models\Enquiry;
+use App\Models\ProjectEnquiry;
 
 class DepartmentalTaskSeeder extends Seeder
 {
@@ -44,7 +44,7 @@ class DepartmentalTaskSeeder extends Seeder
             }
 
             // Create a basic enquiry
-            $enquiry = Enquiry::create([
+            $enquiry = ProjectEnquiry::create([
                 'client_id' => $client->id,
                 'title' => 'Test Project Enquiry',
                 'description' => 'Test project for departmental tasks',

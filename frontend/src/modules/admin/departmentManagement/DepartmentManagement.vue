@@ -118,7 +118,7 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                {{ department.manager?.name || 'No Manager' }}
+                {{ department.manager ? `${department.manager.first_name} ${department.manager.last_name}` : 'No Manager' }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                 {{ department.user_count || 0 }} employees

@@ -2,10 +2,8 @@ import { ref, computed } from 'vue'
 import type { Enquiry, CreateEnquiryData, UpdateEnquiryData } from '../types/enquiry'
 import api from '@/plugins/axios'
 
-// Import shared dummy data
-import { dummyEnquiries } from '../../shared/data/dummyData'
-
-const enquiries = ref<Enquiry[]>([...dummyEnquiries])
+// Dummy data removed - projects module deleted
+const enquiries = ref<Enquiry[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
@@ -27,16 +25,15 @@ export function useEnquiries() {
       error.value = 'Failed to fetch enquiries'
       console.error('Error fetching enquiries:', err)
       // Fallback to dummy data if API fails
-      enquiries.value = [...dummyEnquiries]
+      enquiries.value = []
     } finally {
       loading.value = false
     }
   }
 
   const getEnquiry = (id: number): Enquiry | undefined => {
-    // First check current enquiries ref, then fall back to dummy data
-    return enquiries.value.find(enquiry => enquiry.id === id) ||
-           dummyEnquiries.find(enquiry => enquiry.id === id)
+    // Only check current enquiries ref - dummy data removed
+    return enquiries.value.find((enquiry: any) => enquiry.id === id)
   }
 
   const createEnquiry = async (data: CreateEnquiryData): Promise<Enquiry> => {
@@ -50,6 +47,9 @@ export function useEnquiries() {
       const newEnquiry = apiEnquiry
 
       enquiries.value.push(newEnquiry)
+
+      // Departmental tasks are now created automatically by the backend
+
       return newEnquiry
     } catch (err) {
       error.value = 'Failed to create enquiry'

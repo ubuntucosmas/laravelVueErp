@@ -236,6 +236,11 @@
           Assign Roles to {{ selectedUser?.name || 'User' }}
         </h2>
 
+        <!-- Error Display -->
+        <div v-if="roleError" class="mb-4 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
+          <div class="text-red-800 dark:text-red-200 text-sm">{{ roleError }}</div>
+        </div>
+
         <div v-if="selectedUser" class="space-y-4">
           <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <h3 class="font-medium text-gray-900 dark:text-white mb-2">Current Roles</h3>
@@ -343,6 +348,7 @@ const showRoleModal = ref(false)
 const selectedUser = ref<User | null>(null)
 const selectedRoleIds = ref<number[]>([])
 const savingRoles = ref(false)
+const roleError = ref('')
 
 interface RoleOption {
   id: number
@@ -393,7 +399,8 @@ const editUser = (user: User) => {
 const toggleUserStatus = async (user: User) => {
   try {
     await updateUser(user.id, { is_active: !user.is_active })
-    user.is_active = !user.is_active
+    // Refresh data instead of direct mutation to avoid reactivity issues
+    await fetchUsers()
   } catch (err) {
     console.error('Error toggling user status:', err)
   }
@@ -505,9 +512,13 @@ const closeModal = () => {
 const assignRoles = async (user: User) => {
   selectedUser.value = user
   selectedRoleIds.value = user.roles.map(role => role.id)
+  roleError.value = ''
 
   try {
     const response = await fetch('/api/admin/roles')
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
     const data = await response.json()
     availableRoles.value = data.data.map((role: {
       id: number
@@ -522,8 +533,7 @@ const assignRoles = async (user: User) => {
     }))
   } catch (error) {
     console.error('Error fetching roles:', error)
-    // Show error to user if API fails
-    alert('Failed to load roles. Please try again.')
+    roleError.value = 'Failed to load roles. Please try again.'
     availableRoles.value = []
   }
 
@@ -535,12 +545,15 @@ const closeRoleModal = () => {
   selectedUser.value = null
   selectedRoleIds.value = []
   availableRoles.value = []
+  roleError.value = ''
 }
 
 const saveRoleAssignment = async () => {
   if (!selectedUser.value) return
 
   savingRoles.value = true
+  roleError.value = ''
+
   try {
     // Update user's roles via API
     await updateUser(selectedUser.value.id, { role_ids: selectedRoleIds.value })
@@ -559,8 +572,9 @@ const saveRoleAssignment = async () => {
       closeRoleModal()
     }, 1000)
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error saving role assignment:', err)
+    roleError.value = err.response?.data?.message || 'Failed to save role assignment. Please try again.'
   } finally {
     savingRoles.value = false
   }

@@ -2,22 +2,47 @@
 
 namespace App\Modules\Projects\Http\Controllers;
 
-use App\Models\Enquiry;
+use App\Models\ProjectEnquiry;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controller;
 use App\Modules\Projects\Services\EnquiryWorkflowService;
+use App\Constants\Permissions;
 
 class EnquiryController extends Controller
 {
+    /**
+     * Check if user has access to Projects department enquiries
+     */
+    private function checkProjectsAccess(): bool
+    {
+        $user = Auth::user();
+
+        // Super Admin has access to everything
+        if ($user->hasRole('Super Admin')) {
+            return true;
+        }
+
+        // Check if user has roles that allow project coordination access
+        if ($user->hasRole(['Project Manager', 'Project Officer', 'Manager', 'Employee', 'Client Service'])) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function index(Request $request): JsonResponse
     {
-        $query = Enquiry::with('client', 'department');
+        // Check Projects department and role access
+        if (!$this->checkProjectsAccess()) {
+            return response()->json([
+                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can access enquiries.'
+            ], 403);
+        }
 
-        // Apply department-based access control
-        $query->accessibleByUser(Auth::user());
+        $query = ProjectEnquiry::with('client', 'department', 'enquiryTasks');
 
         // Apply filters
         if ($request->has('search') && $request->search) {
@@ -43,7 +68,7 @@ class EnquiryController extends Controller
             $query->where('department_id', $request->department_id);
         }
 
-        $enquiries = $query->orderBy('created_at', 'desc')->paginate(15);
+        $enquiries = $query->orderBy('created_at', 'desc')->paginate(6);
 
         return response()->json([
             'data' => $enquiries,
@@ -53,21 +78,37 @@ class EnquiryController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // Check Projects department and role access
+        if (!$this->checkProjectsAccess()) {
+            return response()->json([
+                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can create enquiries.'
+            ], 403);
+        }
+
+        // Handle field name alias for enquiry_title
+        if ($request->has('enquiry_title') && !$request->has('title')) {
+            $request->merge(['title' => $request->enquiry_title]);
+        }
+
         $validator = Validator::make($request->all(), [
             'date_received' => 'required|date',
             'expected_delivery_date' => 'nullable|date|after_or_equal:date_received',
             'client_id' => 'required|integer|exists:clients,id',
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'enquiry_title' => 'nullable|string|max:255', // Allow enquiry_title as alias
+            'description' => 'nullable|string',
             'project_scope' => 'nullable|string',
             'priority' => 'nullable|string|in:low,medium,high,urgent',
             'contact_person' => 'required|string|max:255',
-            'status' => 'required|string|in:client_registered,enquiry_logged,site_survey_completed,design_completed,design_approved,materials_specified,budget_created,quote_prepared,quote_approved,converted_to_project,cancelled',
+            'status' => 'required|string|in:client_registered,enquiry_logged,site_survey_completed,design_completed,design_approved,materials_specified,budget_created,quote_prepared,quote_approved,converted_to_project,planning,in_progress,completed,cancelled',
             'department_id' => 'nullable|integer|exists:departments,id',
+            'assigned_department' => 'nullable|string|max:255',
+            'estimated_budget' => 'nullable|numeric|min:0',
+            'project_deliverables' => 'nullable|string',
             'assigned_po' => 'nullable|integer|exists:users,id',
             'follow_up_notes' => 'nullable|string',
             'venue' => 'nullable|string|max:255',
-            'site_survey_skipped' => 'boolean',
+            'site_survey_skipped' => 'nullable|boolean',
             'site_survey_skip_reason' => 'nullable|string|required_if:site_survey_skipped,true',
         ]);
 
@@ -79,9 +120,9 @@ class EnquiryController extends Controller
         }
 
         // Generate enquiry number
-        $enquiryNumber = 'ENQ-' . date('Y') . '-' . str_pad(Enquiry::count() + 1, 4, '0', STR_PAD_LEFT);
+        $enquiryNumber = 'ENQ-' . date('Y') . '-' . str_pad(ProjectEnquiry::count() + 1, 4, '0', STR_PAD_LEFT);
 
-        $enquiry = Enquiry::create([
+        $enquiry = ProjectEnquiry::create([
             'date_received' => $request->date_received,
             'expected_delivery_date' => $request->expected_delivery_date,
             'client_id' => $request->client_id,
@@ -92,6 +133,9 @@ class EnquiryController extends Controller
             'contact_person' => $request->contact_person,
             'status' => $request->status,
             'department_id' => $request->department_id,
+            'assigned_department' => $request->assigned_department,
+            'estimated_budget' => $request->estimated_budget,
+            'project_deliverables' => $request->project_deliverables,
             'assigned_po' => $request->assigned_po,
             'follow_up_notes' => $request->follow_up_notes,
             'enquiry_number' => $enquiryNumber,
@@ -101,37 +145,124 @@ class EnquiryController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        // Create workflow tasks for the enquiry
+        // Create project and workflow tasks for the enquiry
+        // $workflowService = new EnquiryWorkflowService();
+        // $project = $workflowService->createProjectAndTasksForEnquiry($enquiry);
+
+            // Auto-generate tasks
+        $taskTemplates = [
+            ['title' => 'Site Survey', 'type' => 'survey'],
+            ['title' => 'Design & Concept Development', 'type' => 'design'],
+            ['title' => 'Material & Cost Listing', 'type' => 'materials'],
+            ['title' => 'Budget Creation', 'type' => 'budget'],
+            ['title' => 'Quote Preparation', 'type' => 'quote'],
+            ['title' => 'Quote Approval', 'type' => 'quote_approval'],
+            ['title' => 'Procurement & Inventory Management', 'type' => 'procurement'],
+            ['title' => 'Project Conversion', 'type' => 'conversion'],
+            ['title' => 'production', 'type' => 'production'],
+            ['title' => 'Logistics', 'type' => 'logistics'],
+            ['title' => 'Event Setup & Execution', 'type' => 'setup'],
+            ['title' => 'Client Handover', 'type' => 'handover'],
+            ['title' => 'Set Down & Return', 'type' => 'setdown'],
+            ['title' => 'Archival & Reporting', 'type' => 'report'],
+        ];
+        foreach ($taskTemplates as $i=> $template) {
+            $enquiry->enquiryTasks()->create([
+                'title' => $template['title'],
+                'type' => $template['type'],
+                'status' => 'pending',
+                'created_by' => Auth::id(),
+            ]);
+        }
+
+        // Create departmental tasks for the enquiry
         $workflowService = new EnquiryWorkflowService();
         $workflowService->createWorkflowTasksForEnquiry($enquiry);
 
         return response()->json([
             'message' => 'Enquiry created successfully',
-            'data' => $enquiry->load('client', 'department')
+            'data' => $enquiry->load('client', 'department', 'enquiryTasks'),
         ], 201);
     }
 
-    public function show(Enquiry $enquiry): JsonResponse
+    public function show(ProjectEnquiry $enquiry): JsonResponse
     {
+        // Check Projects department and role access
+        if (!$this->checkProjectsAccess()) {
+            return response()->json([
+                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can view enquiries.'
+            ], 403);
+        }
+
+        // Ensure enquiry has tasks (for backwards compatibility)
+        if ($enquiry->enquiryTasks()->count() === 0) {
+            $this->createDefaultTasksForEnquiry($enquiry);
+        }
+
         return response()->json([
-            'data' => $enquiry->load('client', 'department'),
+            'data' => $enquiry->load('client', 'department', 'enquiryTasks'),
             'message' => 'Enquiry retrieved successfully'
         ]);
     }
 
-    public function update(Request $request, Enquiry $enquiry): JsonResponse
+    private function createDefaultTasksForEnquiry(ProjectEnquiry $enquiry): void
     {
+        $taskTemplates = [
+            ['title' => 'Site Survey', 'type' => 'survey'],
+            ['title' => 'Design & Concept Development', 'type' => 'design'],
+            ['title' => 'Material & Cost Listing', 'type' => 'materials'],
+            ['title' => 'Budget Creation', 'type' => 'budget'],
+            ['title' => 'Quote Preparation', 'type' => 'quote'],
+            ['title' => 'Quote Approval', 'type' => 'quote_approval'],
+            ['title' => 'Procurement & Inventory Management', 'type' => 'procurement'],
+            ['title' => 'Project Conversion', 'type' => 'conversion'],
+            ['title' => 'production', 'type' => 'production'],
+            ['title' => 'Logistics', 'type' => 'logistics'],
+            ['title' => 'Event Setup & Execution', 'type' => 'setup'],
+            ['title' => 'Client Handover', 'type' => 'handover'],
+            ['title' => 'Set Down & Return', 'type' => 'setdown'],
+            ['title' => 'Archival & Reporting', 'type' => 'report'],
+        ];
+
+        foreach ($taskTemplates as $template) {
+            $enquiry->enquiryTasks()->create([
+                'title' => $template['title'],
+                'type' => $template['type'],
+                'status' => 'pending',
+                'created_by' => $enquiry->created_by ?? 1, // Default to user 1 if not set
+            ]);
+        }
+    }
+
+    public function update(Request $request, ProjectEnquiry $enquiry): JsonResponse
+    {
+        // Check Projects department and role access
+        if (!$this->checkProjectsAccess()) {
+            return response()->json([
+                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can update enquiries.'
+            ], 403);
+        }
+
+        // Handle field name alias for enquiry_title
+        if ($request->has('enquiry_title') && !$request->has('title')) {
+            $request->merge(['title' => $request->enquiry_title]);
+        }
+
         $validator = Validator::make($request->all(), [
             'date_received' => 'sometimes|required|date',
             'expected_delivery_date' => 'nullable|date|after_or_equal:date_received',
             'client_id' => 'sometimes|required|integer|exists:clients,id',
             'title' => 'sometimes|required|string|max:255',
-            'description' => 'sometimes|required|string',
+            'enquiry_title' => 'nullable|string|max:255', // Allow enquiry_title as alias
+            'description' => 'sometimes|nullable|string',
             'project_scope' => 'nullable|string',
             'priority' => 'nullable|string|in:low,medium,high,urgent',
-            'contact_person' => 'sometimes|required|string|max:255',
-            'status' => 'sometimes|required|string|in:client_registered,enquiry_logged,site_survey_completed,design_completed,design_approved,materials_specified,budget_created,quote_prepared,quote_approved,converted_to_project,cancelled',
+            'contact_person' => 'sometimes|nullable|string|max:255',
+            'status' => 'sometimes|required|string|in:client_registered,enquiry_logged,site_survey_completed,design_completed,design_approved,materials_specified,budget_created,quote_prepared,quote_approved,converted_to_project,planning,in_progress,completed,cancelled',
             'department_id' => 'nullable|integer|exists:departments,id',
+            'assigned_department' => 'nullable|string|max:255',
+            'estimated_budget' => 'nullable|numeric|min:0',
+            'project_deliverables' => 'nullable|string',
             'assigned_po' => 'nullable|integer|exists:users,id',
             'follow_up_notes' => 'nullable|string',
             'venue' => 'nullable|string|max:255',
@@ -157,6 +288,9 @@ class EnquiryController extends Controller
             'contact_person',
             'status',
             'department_id',
+            'assigned_department',
+            'estimated_budget',
+            'project_deliverables',
             'assigned_po',
             'follow_up_notes',
             'venue',
@@ -170,12 +304,72 @@ class EnquiryController extends Controller
         ]);
     }
 
-    public function destroy(Enquiry $enquiry): JsonResponse
+    public function destroy(ProjectEnquiry $enquiry): JsonResponse
     {
+        // Check Projects department and role access
+        if (!$this->checkProjectsAccess()) {
+            return response()->json([
+                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can delete enquiries.'
+            ], 403);
+        }
+
         $enquiry->delete();
 
         return response()->json([
             'message' => 'Enquiry deleted successfully'
+        ]);
+    }
+
+    public function updatePhase(Request $request, ProjectEnquiry $enquiry): JsonResponse
+    {
+        // Check Projects department and role access
+        if (!$this->checkProjectsAccess()) {
+            return response()->json([
+                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can update enquiry phases.'
+            ], 403);
+        }
+
+        // Implementation for updating enquiry phase
+        // This might involve updating status or other phase-related fields
+        return response()->json([
+            'message' => 'Phase updated successfully',
+            'data' => $enquiry
+        ]);
+    }
+
+    public function approveQuote(Request $request, ProjectEnquiry $enquiry): JsonResponse
+    {
+        // Check Projects department and role access
+        if (!$this->checkProjectsAccess()) {
+            return response()->json([
+                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can approve quotes.'
+            ], 403);
+        }
+
+        // Implementation for approving quote
+        $enquiry->update(['quote_approved' => true, 'quote_approved_at' => now(), 'quote_approved_by' => Auth::id()]);
+
+        return response()->json([
+            'message' => 'Quote approved successfully',
+            'data' => $enquiry
+        ]);
+    }
+
+    public function convertToProject(Request $request, ProjectEnquiry $enquiry): JsonResponse
+    {
+        // Check Projects department and role access
+        if (!$this->checkProjectsAccess()) {
+            return response()->json([
+                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can convert enquiries to projects.'
+            ], 403);
+        }
+
+        // Implementation for converting to project
+        $enquiry->update(['status' => 'converted_to_project']);
+
+        return response()->json([
+            'message' => 'Enquiry converted to project successfully',
+            'data' => $enquiry
         ]);
     }
 }

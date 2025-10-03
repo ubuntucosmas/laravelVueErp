@@ -109,14 +109,14 @@ class RoleAndPermissionSeeder extends Seeder
             Permissions::PROJECT_CLOSE, Permissions::ENQUIRY_READ, Permissions::ENQUIRY_UPDATE,
             Permissions::DEPARTMENT_READ, Permissions::TASK_CREATE, Permissions::TASK_READ, Permissions::TASK_UPDATE,
             Permissions::TASK_ASSIGN, Permissions::TASK_COMPLETE, Permissions::USER_READ,
-            Permissions::DASHBOARD_PROJECTS
+            Permissions::CLIENT_READ, Permissions::DASHBOARD_PROJECTS
         ]);
 
         $projectOfficerRole = Role::firstOrCreate(['name' => 'Project Officer'], ['description' => 'Project coordination support']);
         $projectOfficerRole->givePermissionTo([
             Permissions::PROJECT_READ, Permissions::PROJECT_UPDATE, Permissions::PROJECT_ASSIGN_USERS,
             Permissions::ENQUIRY_READ, Permissions::DEPARTMENT_READ, Permissions::TASK_READ, Permissions::TASK_UPDATE,
-            Permissions::TASK_ASSIGN, Permissions::USER_READ, Permissions::DASHBOARD_PROJECTS
+            Permissions::TASK_ASSIGN, Permissions::USER_READ, Permissions::CLIENT_READ, Permissions::DASHBOARD_PROJECTS
         ]);
     }
 }

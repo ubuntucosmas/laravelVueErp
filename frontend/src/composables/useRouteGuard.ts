@@ -40,6 +40,11 @@ const PERMISSIONS = {
   ENQUIRY_CREATE: 'enquiry.create',
   ENQUIRY_UPDATE: 'enquiry.update',
 
+  // Task Management
+  TASK_READ: 'task.read',
+  TASK_UPDATE: 'task.update',
+  TASK_ASSIGN: 'task.assign',
+
   // Finance
   FINANCE_VIEW: 'finance.view',
   FINANCE_BUDGET_CREATE: 'finance.budget.create',
@@ -113,8 +118,13 @@ export function useRouteGuard() {
       [PERMISSIONS.ROLE_READ]: ['Admin', 'Super Admin'],
       [PERMISSIONS.DEPARTMENT_READ]: ['Admin', 'HR', 'Super Admin'],
       [PERMISSIONS.EMPLOYEE_READ]: ['Admin', 'HR', 'Super Admin'],
-      [PERMISSIONS.PROJECT_READ]: ['Project Manager', 'Project Officer', 'Super Admin'],
+      [PERMISSIONS.PROJECT_READ]: ['Project Manager', 'Project Officer', 'Manager', 'Employee', 'Client Service', 'HR', 'Accounts', 'Costing', 'Designer', 'Procurement Officer', 'Super Admin'],
       [PERMISSIONS.ENQUIRY_READ]: ['Client Service', 'Project Manager', 'Super Admin'],
+      [PERMISSIONS.ENQUIRY_CREATE]: ['Client Service', 'Project Manager', 'Super Admin'],
+      [PERMISSIONS.ENQUIRY_UPDATE]: ['Client Service', 'Project Manager', 'Super Admin'],
+      [PERMISSIONS.TASK_READ]: ['Project Manager', 'Project Officer', 'Super Admin'],
+      [PERMISSIONS.TASK_UPDATE]: ['Project Manager', 'Project Officer', 'Super Admin'],
+      [PERMISSIONS.TASK_ASSIGN]: ['Project Manager', 'Project Officer', 'Super Admin'],
       [PERMISSIONS.FINANCE_VIEW]: ['Accounts', 'Costing', 'Super Admin'],
       [PERMISSIONS.HR_VIEW_EMPLOYEES]: ['HR', 'Super Admin'],
       [PERMISSIONS.CREATIVES_VIEW]: ['Designer', 'Super Admin'],
@@ -211,7 +221,7 @@ export function useRouteGuard() {
     return hasPermission(PERMISSIONS.CREATIVES_VIEW)
   }
 
-  const canAccessFinance = (requiredRoles: string[]): boolean => {
+  const canAccessFinance = (): boolean => {
     if (!isLoggedIn.value || !user.value) {
       return false
     }
@@ -237,6 +247,23 @@ export function useRouteGuard() {
 
     // Check procurement view permission
     return hasPermission(PERMISSIONS.PROCUREMENT_VIEW)
+  }
+
+  const canAccessProjectsDashboard = (): boolean => {
+    if (!isLoggedIn.value || !user.value) {
+      return false
+    }
+
+    // Super Admin can access everything
+    if (user.value.roles?.includes('Super Admin')) {
+      return true
+    }
+
+    // Check if user is in Projects department and has Project Manager role
+    const userDepartment = permissions.value?.user_department?.name
+    const userRoles = user.value.roles || []
+
+    return userDepartment === 'Projects' && userRoles.includes('Project Manager')
   }
 
   const redirectToAppropriateRoute = () => {
@@ -334,10 +361,9 @@ export function useRouteGuard() {
     // Add projects routes for authorized users
     if (canAccessProjects()) {
       routes.push(
-        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' },
-        { name: 'projects-enquiries', path: '/projects/enquiries', label: 'Enquiries', icon: '📝' },
-        { name: 'projects-list', path: '/projects/projects', label: 'Approved Projects', icon: '✅' },
-        { name: 'projects-close-out-report', path: '/projects/close-out-report', label: 'Close-Out Report', icon: '📋' }
+        { name: 'projects-dashboard', path: '/projects/dashboard', label: 'Project Dashboard', icon: '📈' },
+        { name: 'projects-coordination', path: '/projects', label: 'Project Coordination', icon: '📊' },
+        { name: 'projects-enquiries', path: '/projects/enquiries', label: 'Project Enquiries', icon: '📝' },
       )
     }
 
@@ -364,7 +390,7 @@ export function useRouteGuard() {
     }
 
     // Add finance routes for authorized users
-    if (canAccessFinance(['Accounts', 'Costing'])) {
+    if (canAccessFinance()) {
       routes.push(
         { name: 'finance-dashboard', path: '/finance', label: 'Finance Dashboard', icon: '📊' },
         { name: 'finance-budgeting', path: '/finance/budgeting', label: 'Budget Management', icon: '💰' },
@@ -414,7 +440,7 @@ export function useRouteGuard() {
 
     // Check feature access in priority order
     if (canAccessProjects()) {
-      return 'Projects Panel'
+      return 'Projects Dashboard'
     }
 
     if (canAccessClientService()) {
@@ -425,7 +451,7 @@ export function useRouteGuard() {
       return 'Creatives Panel'
     }
 
-    if (canAccessFinance(['Accounts', 'Costing'])) {
+    if (canAccessFinance()) {
       return 'Finance Panel'
     }
 
@@ -463,7 +489,7 @@ export function useRouteGuard() {
 
     // Check feature access in priority order
     if (canAccessProjects()) {
-      return 'Project Management'
+      return 'Project Coordination'
     }
 
     if (canAccessClientService()) {
@@ -474,7 +500,7 @@ export function useRouteGuard() {
       return 'Creative Design & Production'
     }
 
-    if (canAccessFinance(['Accounts', 'Costing'])) {
+    if (canAccessFinance()) {
       return 'Financial Management'
     }
 
@@ -494,6 +520,7 @@ export function useRouteGuard() {
     canAccessRoute,
     canAccessDepartment,
     canAccessProjects,
+    canAccessProjectsDashboard,
     canAccessClientService,
     canAccessCreatives,
     canAccessFinance,

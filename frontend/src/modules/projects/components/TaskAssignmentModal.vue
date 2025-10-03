@@ -1,19 +1,13 @@
 <template>
-  <div v-if="isVisible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-7xl w-full max-h-[95vh] overflow-hidden">
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-        <div>
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-            Task Assignment & Prioritization
-          </h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Review recommendations and assign priorities to departmental tasks
-          </p>
-        </div>
+  <div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+          Assign Tasks - {{ enquiry?.title || 'Enquiry' }}
+        </h2>
         <button
-          @click="closeModal"
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          @click="$emit('close')"
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -21,163 +15,128 @@
         </button>
       </div>
 
-      <!-- Modal Content -->
-      <div class="p-6 overflow-y-auto max-h-[calc(95vh-180px)]">
-        <!-- Recommendations Section -->
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 mb-6 border border-blue-200 dark:border-blue-800">
-          <div class="flex items-center space-x-3 mb-3">
-            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-              <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">AI Recommendations</h3>
-              <p class="text-xs text-blue-600 dark:text-blue-400">Based on enquiry type and requirements</p>
-            </div>
-          </div>
+      <!-- Loading State -->
+      <div v-if="loading" class="text-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">Loading tasks...</p>
+      </div>
 
-          <div class="space-y-2 text-sm">
-            <div class="flex items-start space-x-2">
-              <span class="text-blue-500 mt-0.5">•</span>
-              <span class="text-blue-700 dark:text-blue-300">{{ getPriorityRecommendation() }}</span>
-            </div>
-            <div class="flex items-start space-x-2">
-              <span class="text-blue-500 mt-0.5">•</span>
-              <span class="text-blue-700 dark:text-blue-300">{{ getTimelineRecommendation() }}</span>
-            </div>
-            <div class="flex items-start space-x-2">
-              <span class="text-blue-500 mt-0.5">•</span>
-              <span class="text-blue-700 dark:text-blue-300">{{ getAssignmentRecommendation() }}</span>
-            </div>
-          </div>
+      <!-- Error State -->
+      <div v-else-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        {{ error }}
+      </div>
+
+      <!-- Tasks List -->
+      <div v-else>
+        <div v-if="enquiryTasks.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          No tasks available for assignment
         </div>
 
-        <!-- Task Assignment Form -->
-        <div class="space-y-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Task Priorities & Assignments</h3>
+        <div v-else class="space-y-3">
+          <div
+            v-for="task in enquiryTasks"
+            :key="task.id"
+            class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+          >
+            <div class="flex justify-between items-start mb-3">
+              <div>
+                <h3 class="font-medium text-gray-900 dark:text-white">{{ task.title }}</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">{{ task.type }}</p>
+              </div>
+              <span :class="getStatusColor(task.status)" class="px-2 py-1 text-xs rounded-full">
+                {{ getStatusLabel(task.status) }}
+              </span>
+            </div>
 
-          <div class="space-y-4">
-            <div v-for="task in tasks" :key="task.id" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex-1">
-                  <h4 class="font-medium text-gray-900 dark:text-white">{{ task.task_name }}</h4>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">{{ task.task_description }}</p>
+            <!-- Assignment Form -->
+            <form @submit.prevent="assignTask(task)" class="space-y-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Assign to User *
+                </label>
+                <select
+                  v-model="assignmentData[task.id].assigned_user_id"
+                  required
+                  :disabled="loadingUsers"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                >
+                  <option value="">{{ loadingUsers ? 'Loading users...' : 'Select user' }}</option>
+                  <option v-for="user in availableUsers" :key="user.id" :value="user.id">
+                    {{ user.name }}{{ user.department ? ` (${user.department})` : '' }}
+                  </option>
+                </select>
+                <div v-if="loadingUsers" class="text-xs text-gray-500 mt-1">
+                  🔍 Loading available users...
                 </div>
-                <div class="flex items-center space-x-2">
-                  <span :class="getPriorityBadgeClass(task.priority)" class="px-2 py-1 rounded-full text-xs font-medium">
-                    {{ task.priority }}
-                  </span>
-                  <span :class="getStatusBadgeClass(task.status)" class="px-2 py-1 rounded-full text-xs font-medium">
-                    {{ task.status.replace('_', ' ') }}
-                  </span>
+                <div v-else-if="availableUsers.length === 0" class="text-xs text-amber-600 mt-1">
+                  ⚠️ No users available for assignment
+                </div>
+                <div v-else class="text-xs text-gray-500 mt-1">
+                  👥 {{ availableUsers.length }} users available
                 </div>
               </div>
 
-              <!-- Priority, Due Date, and User Assignment -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Set Priority
-                  </label>
-                  <select
-                    v-model="task.priority"
-                    @change="updateTaskPriority(task)"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="low">Low Priority</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="high">High Priority</option>
-                    <option value="urgent">Urgent Priority</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Due Date
-                  </label>
-                  <input
-                    v-model="task.due_date"
-                    @change="updateTaskDueDate(task)"
-                    type="date"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Assign to User
-                  </label>
-                  <select
-                    v-model="task.assigned_user_id"
-                    @change="updateTaskAssignment(task)"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="">Select User</option>
-                    <option
-                      v-for="user in getDepartmentalUsers(task)"
-                      :key="user.id"
-                      :value="user.id"
-                    >
-                      {{ user.name }} ({{ user.role }})
-                    </option>
-                  </select>
-                </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Priority
+                </label>
+                <select
+                  v-model="assignmentData[task.id].priority"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
               </div>
 
-              <!-- Assignment Recommendation -->
-              <div class="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-                <div class="flex items-start space-x-2">
-                  <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  <div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-white">Recommended Assignment</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ getTaskAssignmentRecommendation(task) }}</p>
-                  </div>
-                </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Due Date
+                </label>
+                <input
+                  v-model="assignmentData[task.id].due_date"
+                  type="date"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
               </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Summary Section -->
-        <div class="mt-6 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-          <h4 class="font-medium text-gray-900 dark:text-white mb-3">Assignment Summary</h4>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div class="text-center">
-              <div class="text-lg font-semibold text-red-600 dark:text-red-400">{{ getPriorityCount('urgent') }}</div>
-              <div class="text-gray-600 dark:text-gray-400">Urgent</div>
-            </div>
-            <div class="text-center">
-              <div class="text-lg font-semibold text-orange-600 dark:text-orange-400">{{ getPriorityCount('high') }}</div>
-              <div class="text-gray-600 dark:text-gray-400">High</div>
-            </div>
-            <div class="text-center">
-              <div class="text-lg font-semibold text-yellow-600 dark:text-yellow-400">{{ getPriorityCount('medium') }}</div>
-              <div class="text-gray-600 dark:text-gray-400">Medium</div>
-            </div>
-            <div class="text-center">
-              <div class="text-lg font-semibold text-green-600 dark:text-green-400">{{ getPriorityCount('low') }}</div>
-              <div class="text-gray-600 dark:text-gray-400">Low</div>
-            </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  v-model="assignmentData[task.id].notes"
+                  rows="2"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Optional notes for the assignment"
+                ></textarea>
+              </div>
+
+              <div class="md:col-span-2 flex justify-end">
+                <button
+                  type="submit"
+                  :disabled="!assignmentData[task.id].assigned_user_id || assigningTask === task.id"
+                  class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span v-if="assigningTask === task.id" class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                  {{ assigningTask === task.id ? 'Assigning...' : 'Assign Task' }}
+                </button>
+              </div>
+            </form>
+
           </div>
         </div>
       </div>
 
-      <!-- Modal Footer -->
-      <div class="flex justify-end space-x-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+      <!-- Modal Actions -->
+      <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
         <button
-          @click="closeModal"
+          @click="$emit('close')"
           class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
         >
-          Cancel
-        </button>
-        <button
-          @click="saveAssignments"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Save Assignments
+          Close
         </button>
       </div>
     </div>
@@ -185,165 +144,183 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import type { DepartmentalTask } from '../types'
+import { ref, reactive, onMounted, watch } from 'vue'
+import type { EnquiryTask } from '../types/enquiry'
+import { useTaskAssignment } from '../composables/useTaskAssignment'
+import api from '@/plugins/axios'
 
-// Props
 interface Props {
-  isVisible: boolean
-  tasks: DepartmentalTask[]
-  enquiry?: Record<string, unknown>
+  show: boolean
+  enquiryId: number
+  enquiry?: {
+    id: number
+    title: string
+  }
+}
+
+interface AssignmentFormData {
+  assigned_user_id: number
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  due_date: string
+  notes: string
+}
+
+interface User {
+  id: number
+  name: string
+  department?: string
 }
 
 const props = defineProps<Props>()
 
-// Emits
 const emit = defineEmits<{
   close: []
-  save: [tasks: DepartmentalTask[]]
+  taskAssigned: [task: EnquiryTask]
 }>()
 
-// Local state
-const localTasks = ref<DepartmentalTask[]>([])
+const { enquiryTasks, loading, error, fetchEnquiryTasks, assignTask: assignTaskApi } = useTaskAssignment()
 
-// Watch for prop changes
-watch(() => props.isVisible, (newValue) => {
-  if (newValue) {
-    // Create a deep copy of tasks for local editing
-    localTasks.value = JSON.parse(JSON.stringify(props.tasks))
+const availableUsers = ref<User[]>([])
+const assignmentData = reactive<Record<number, AssignmentFormData>>({})
+const assigningTask = ref<number | null>(null)
+const loadingUsers = ref(false)
+
+const initializeAssignmentData = () => {
+  enquiryTasks.value.forEach(task => {
+    if (!assignmentData[task.id]) {
+      assignmentData[task.id] = {
+        assigned_user_id: 0,
+        priority: task.priority || 'medium',
+        due_date: task.due_date || '',
+        notes: task.notes || '',
+      }
+    }
+  })
+}
+
+const fetchAvailableUsers = async () => {
+  loadingUsers.value = true
+  try {
+    console.log('🔍 [TaskAssignmentModal] Starting fetchAvailableUsers')
+    console.log('🔍 [TaskAssignmentModal] Current auth token:', api.defaults.headers.common['Authorization'])
+    console.log('🔍 [TaskAssignmentModal] API base URL:', api.defaults.baseURL)
+    console.log('🔍 [TaskAssignmentModal] Fetching users from /api/users')
+
+    const response = await api.get('/api/users')
+    console.log('✅ [TaskAssignmentModal] Users response status:', response.status)
+    console.log('✅ [TaskAssignmentModal] Users response headers:', response.headers)
+    console.log('✅ [TaskAssignmentModal] Users response data:', JSON.stringify(response.data, null, 2))
+
+    const users = response.data.data || []
+    console.log('✅ [TaskAssignmentModal] Extracted users array:', users)
+    console.log('✅ [TaskAssignmentModal] Users count:', users.length)
+
+    // Validate user data structure
+    if (users.length > 0) {
+      console.log('✅ [TaskAssignmentModal] First user structure:', JSON.stringify(users[0], null, 2))
+      const hasRequiredFields = users.every((user: User) => user.id && user.name)
+      console.log('✅ [TaskAssignmentModal] All users have required fields (id, name):', hasRequiredFields)
+    }
+
+    availableUsers.value = users
+    console.log('✅ [TaskAssignmentModal] Available users loaded:', availableUsers.value.length, 'users')
+  } catch (err: unknown) {
+    const error = err as { name?: string; message?: string; response?: { status?: number; data?: unknown }; config?: unknown }
+    console.error('❌ [TaskAssignmentModal] Error fetching available users:', error)
+    console.error('❌ [TaskAssignmentModal] Error name:', error.name)
+    console.error('❌ [TaskAssignmentModal] Error message:', error.message)
+    console.error('❌ [TaskAssignmentModal] Error response status:', error.response?.status)
+    console.error('❌ [TaskAssignmentModal] Error response data:', JSON.stringify(error.response?.data, null, 2))
+    console.error('❌ [TaskAssignmentModal] Error config:', JSON.stringify(error.config, null, 2))
+
+    // Check for specific error types
+    const status = error.response?.status
+    if (status === 401) {
+      console.error('❌ [TaskAssignmentModal] Authentication failed - user not logged in or token expired')
+    } else if (status === 403) {
+      console.error('❌ [TaskAssignmentModal] Permission denied - user lacks USER_READ or TASK_ASSIGN permissions')
+    } else if (status && status >= 500) {
+      console.error('❌ [TaskAssignmentModal] Server error - check backend logs')
+    }
+
+    availableUsers.value = []
+  } finally {
+    loadingUsers.value = false
+    console.log('🔍 [TaskAssignmentModal] fetchAvailableUsers completed, loadingUsers:', loadingUsers.value)
+  }
+}
+
+const assignTask = async (task: EnquiryTask) => {
+  try {
+    console.log('[DEBUG] TaskAssignmentModal assignTask called for task:', task.id, task.title)
+    assigningTask.value = task.id
+    const data = assignmentData[task.id]
+    console.log('[DEBUG] TaskAssignmentModal assignment data:', data)
+
+    const updatedTask = await assignTaskApi(task.id, {
+      assigned_user_id: data.assigned_user_id,
+      priority: data.priority,
+      due_date: data.due_date,
+      notes: data.notes,
+    })
+
+    console.log('[DEBUG] TaskAssignmentModal assignTaskApi returned:', updatedTask)
+    console.log('[DEBUG] TaskAssignmentModal updatedTask assignmentHistory:', updatedTask.assignmentHistory)
+
+    emit('taskAssigned', updatedTask)
+
+    // Reset form
+    assignmentData[task.id] = {
+      assigned_user_id: 0,
+      priority: 'medium',
+      due_date: '',
+      notes: '',
+    }
+    console.log('[DEBUG] TaskAssignmentModal form reset for task:', task.id)
+  } catch (err) {
+    console.error('[DEBUG] TaskAssignmentModal assignTask error:', err)
+  } finally {
+    assigningTask.value = null
+    console.log('[DEBUG] TaskAssignmentModal assignTask completed for task:', task.id)
+  }
+}
+
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString()
+}
+
+const getStatusColor = (status: string) => {
+  const colors: Record<string, string> = {
+    'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+    'in_progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+    'completed': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+    'cancelled': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+  }
+  return colors[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+}
+
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    'pending': 'Pending',
+    'in_progress': 'In Progress',
+    'completed': 'Completed',
+    'cancelled': 'Cancelled',
+  }
+  return labels[status] || status
+}
+
+watch(() => props.show, async (newShow) => {
+  console.log('🔍 [TaskAssignmentModal] Modal visibility changed:', newShow)
+  if (newShow && props.enquiryId) {
+    console.log('🔍 [TaskAssignmentModal] Fetching enquiry tasks for ID:', props.enquiryId)
+    await fetchEnquiryTasks(props.enquiryId)
+    initializeAssignmentData()
   }
 })
 
-watch(() => props.tasks, (newTasks) => {
-  if (props.isVisible) {
-    localTasks.value = JSON.parse(JSON.stringify(newTasks))
-  }
-}, { deep: true })
-
-// Methods
-const closeModal = () => {
-  emit('close')
-}
-
-const updateTaskPriority = (task: DepartmentalTask) => {
-  // Update local task priority
-  const index = localTasks.value.findIndex(t => t.id === task.id)
-  if (index !== -1) {
-    localTasks.value[index].priority = task.priority
-  }
-}
-
-const updateTaskDueDate = (task: DepartmentalTask) => {
-  // Update local task due date
-  const index = localTasks.value.findIndex(t => t.id === task.id)
-  if (index !== -1) {
-    localTasks.value[index].due_date = task.due_date
-  }
-}
-
-const updateTaskAssignment = (task: DepartmentalTask) => {
-  // Update local task assignment
-  const index = localTasks.value.findIndex(t => t.id === task.id)
-  if (index !== -1) {
-    localTasks.value[index].assigned_user_id = task.assigned_user_id
-    // Also update the assigned_user object for display
-    const user = getDepartmentalUsers(task).find(u => u.id === task.assigned_user_id)
-    localTasks.value[index].assigned_user = user || undefined
-  }
-}
-
-const saveAssignments = () => {
-  emit('save', localTasks.value)
-  closeModal()
-}
-
-// Recommendation methods
-const getPriorityRecommendation = (): string => {
-  const enquiry = props.enquiry
-  if (!enquiry) return "Set priorities based on project timeline and complexity"
-
-  // Logic based on enquiry type and status
-  if (enquiry.status === 'new') {
-    return "Start with site survey (high priority) to gather essential information"
-  } else if (enquiry.status === 'site_survey_completed') {
-    return "Prioritize material specifications next, followed by budget preparation"
-  } else {
-    return "Focus on completing remaining tasks in logical sequence"
-  }
-}
-
-const getTimelineRecommendation = (): string => {
-  return "Site survey: 3-5 days, Material specs: 5-7 days, Budget: 2-3 days from completion"
-}
-
-const getAssignmentRecommendation = (): string => {
-  return "Assign survey to project officers, materials to creatives/design, budget to finance"
-}
-
-const getTaskAssignmentRecommendation = (task: DepartmentalTask): string => {
-  switch (task.task_name) {
-    case 'Conduct Site Survey':
-      return "Best assigned to: Project Officer or Survey Coordinator"
-    case 'Design Assets and Material Specification':
-      return "Best assigned to: Creative Designer or Design Officer"
-    case 'Prepare Budget & Costing':
-      return "Best assigned to: Finance Officer or Project Lead"
-    default:
-      return "Assign based on department expertise"
-  }
-}
-
-// Computed helpers
-const getPriorityCount = (priority: string) => {
-  return localTasks.value.filter(task => task.priority === priority).length
-}
-
-const getPriorityBadgeClass = (priority: string) => {
-  const classes: Record<string, string> = {
-    low: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-    medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    high: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-    urgent: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-  }
-  return classes[priority] || classes.medium
-}
-
-const getStatusBadgeClass = (status: string) => {
-  const classes: Record<string, string> = {
-    pending: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-    in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-  }
-  return classes[status] || classes.pending
-}
-
-const getDepartmentalUsers = (task: DepartmentalTask) => {
-  // Mock departmental users - in a real app, this would fetch from API
-  const departmentUsers: Record<string, Array<{id: number, name: string, email: string, role: string}>> = {
-    'projects': [
-      { id: 1, name: 'John Smith', email: 'john.smith@company.com', role: 'Project Officer' },
-      { id: 2, name: 'Sarah Johnson', email: 'sarah.johnson@company.com', role: 'Survey Coordinator' },
-      { id: 3, name: 'Mike Davis', email: 'mike.davis@company.com', role: 'Project Lead' }
-    ],
-    'creatives': [
-      { id: 4, name: 'Emily Chen', email: 'emily.chen@company.com', role: 'Creative Designer' },
-      { id: 5, name: 'David Wilson', email: 'david.wilson@company.com', role: 'Design Officer' },
-      { id: 6, name: 'Lisa Brown', email: 'lisa.brown@company.com', role: 'Art Director' }
-    ],
-    'finance': [
-      { id: 7, name: 'Robert Taylor', email: 'robert.taylor@company.com', role: 'Finance Officer' },
-      { id: 8, name: 'Anna Martinez', email: 'anna.martinez@company.com', role: 'Cost Analyst' }
-    ]
-  }
-
-  // Determine department based on task
-  let department = 'projects' // default
-  if (task.task_name === 'Design Assets and Material Specification') {
-    department = 'creatives'
-  } else if (task.task_name === 'Prepare Budget & Costing') {
-    department = 'finance'
-  }
-
-  return departmentUsers[department] || departmentUsers.projects
-}
+onMounted(async () => {
+  console.log('🔍 [TaskAssignmentModal] Component mounted, fetching available users')
+  await fetchAvailableUsers()
+})
 </script>

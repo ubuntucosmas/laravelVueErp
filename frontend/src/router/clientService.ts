@@ -35,12 +35,13 @@ export const clientServiceRoutes: RouteRecordRaw[] = [
         },
         meta: { title: 'Enquiry Management' }
       },
-      {
-        path: 'enquiries/:id',
-        name: 'client-service-enquiry-detail',
-        component: () => import('../modules/projects/views/EnquiryDetailWorkflow.vue'),
-        meta: { title: 'Enquiry Details' }
-      }
+      // Commented out - projects module deleted
+      // {
+      //   path: 'enquiries/:id',
+      //   name: 'client-service-enquiry-detail',
+      //   component: () => import('../modules/projects/views/EnquiryDetailWorkflow.vue'),
+      //   meta: { title: 'Enquiry Details' }
+      // }
     ],
   },
 ]

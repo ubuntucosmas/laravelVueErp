@@ -38,7 +38,7 @@
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage company employees and their information</p>
       </div>
       <button
-        @click="showCreateModal = true"
+        @click="resetForm(); showCreateModal = true"
         class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-lg font-medium transition-colors"
       >
         Add Employee
@@ -170,29 +170,120 @@
       </div>
     </div>
 
-    <!-- Create/Edit Modal Placeholder -->
+    <!-- Create/Edit Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-lg w-full">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
           {{ editingEmployee ? 'Edit Employee' : 'Create New Employee' }}
         </h2>
-        <p class="text-gray-600 dark:text-gray-400 mb-4">
-          Employee form implementation coming soon...
-        </p>
-        <div class="flex justify-end space-x-3">
-          <button
-            @click="showCreateModal = false; editingEmployee = null"
-            class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-          >
-            Cancel
-          </button>
-          <button
-            @click="showCreateModal = false; editingEmployee = null"
-            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light"
-          >
-            Save
-          </button>
-        </div>
+        <form @submit.prevent="saveEmployee" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name *</label>
+              <input
+                v-model="formData.first_name"
+                type="text"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                :class="{ 'border-red-500': formErrors.first_name }"
+              />
+              <p v-if="formErrors.first_name" class="text-red-500 text-xs mt-1">{{ formErrors.first_name }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name *</label>
+              <input
+                v-model="formData.last_name"
+                type="text"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                :class="{ 'border-red-500': formErrors.last_name }"
+              />
+              <p v-if="formErrors.last_name" class="text-red-500 text-xs mt-1">{{ formErrors.last_name }}</p>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
+            <input
+              v-model="formData.email"
+              type="email"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              :class="{ 'border-red-500': formErrors.email }"
+            />
+            <p v-if="formErrors.email" class="text-red-500 text-xs mt-1">{{ formErrors.email }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
+            <input
+              v-model="formData.phone"
+              type="tel"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Position *</label>
+              <input
+                v-model="formData.position"
+                type="text"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                :class="{ 'border-red-500': formErrors.position }"
+              />
+              <p v-if="formErrors.position" class="text-red-500 text-xs mt-1">{{ formErrors.position }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Department *</label>
+              <select
+                v-model="formData.department_id"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                :class="{ 'border-red-500': formErrors.department_id }"
+              >
+                <option value="">Select Department</option>
+                <option v-for="dept in departments" :key="dept.id" :value="dept.id">
+                  {{ dept.name }}
+                </option>
+              </select>
+              <p v-if="formErrors.department_id" class="text-red-500 text-xs mt-1">{{ formErrors.department_id }}</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Hire Date *</label>
+              <input
+                v-model="formData.hire_date"
+                type="date"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                :class="{ 'border-red-500': formErrors.hire_date }"
+              />
+              <p v-if="formErrors.hire_date" class="text-red-500 text-xs mt-1">{{ formErrors.hire_date }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Salary *</label>
+              <input
+                v-model.number="formData.salary"
+                type="number"
+                min="0"
+                step="0.01"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                :class="{ 'border-red-500': formErrors.salary }"
+              />
+              <p v-if="formErrors.salary" class="text-red-500 text-xs mt-1">{{ formErrors.salary }}</p>
+            </div>
+          </div>
+          <div class="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              @click="showCreateModal = false; editingEmployee = null; resetForm()"
+              class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50"
+              :disabled="loading"
+            >
+              {{ loading ? 'Saving...' : 'Save' }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -200,14 +291,25 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import type { Employee } from '../../shared/types/employee'
-import { useEmployees } from '../../shared/composables/useEmployees'
+import type { Employee, CreateEmployeeData, UpdateEmployeeData } from '../../shared/types/employee'
+import { useEmployees } from './composables/useEmployees'
 
-const { employees, loading, error, fetchEmployees } = useEmployees()
+const { employees, loading, error, fetchEmployees, createEmployee, updateEmployee, toggleEmployeeStatus: toggleStatus } = useEmployees()
 const filters = ref({ search: '', department_id: undefined as number | undefined, is_active: undefined as boolean | undefined })
 const showCreateModal = ref(false)
 const editingEmployee = ref<Employee | null>(null)
 const departments = ref<Array<{id: number, name: string}>>([])
+const formData = ref({
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone: '',
+  position: '',
+  department_id: 0,
+  hire_date: '',
+  salary: 0
+})
+const formErrors = ref<Record<string, string>>({})
 
 const applyFilters = () => {
   fetchEmployees(filters.value)
@@ -215,13 +317,67 @@ const applyFilters = () => {
 
 const editEmployee = (employee: Employee) => {
   editingEmployee.value = employee
+  formData.value = {
+    first_name: employee.first_name,
+    last_name: employee.last_name,
+    email: employee.email,
+    phone: employee.phone || '',
+    position: employee.position,
+    department_id: employee.department_id,
+    hire_date: employee.hire_date,
+    salary: employee.salary
+  }
   showCreateModal.value = true
 }
 
+const resetForm = () => {
+  formData.value = {
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    position: '',
+    department_id: 0,
+    hire_date: '',
+    salary: 0
+  }
+  formErrors.value = {}
+}
+
+const validateForm = () => {
+  formErrors.value = {}
+  if (!formData.value.first_name) formErrors.value.first_name = 'First name is required'
+  if (!formData.value.last_name) formErrors.value.last_name = 'Last name is required'
+  if (!formData.value.email) formErrors.value.email = 'Email is required'
+  if (!formData.value.position) formErrors.value.position = 'Position is required'
+  if (!formData.value.department_id) formErrors.value.department_id = 'Department is required'
+  if (!formData.value.hire_date) formErrors.value.hire_date = 'Hire date is required'
+  if (!formData.value.salary || formData.value.salary <= 0) formErrors.value.salary = 'Valid salary is required'
+  return Object.keys(formErrors.value).length === 0
+}
+
+const saveEmployee = async () => {
+  if (!validateForm()) return
+  try {
+    if (editingEmployee.value) {
+      await updateEmployee(editingEmployee.value.id, formData.value as UpdateEmployeeData)
+    } else {
+      await createEmployee(formData.value as CreateEmployeeData)
+    }
+    showCreateModal.value = false
+    editingEmployee.value = null
+    resetForm()
+  } catch (err) {
+    console.error('Failed to save employee:', err)
+  }
+}
+
 const toggleEmployeeStatus = async (employee: Employee) => {
-  // Mock toggle - in real implementation, call updateEmployee
-  employee.status = employee.status === 'active' ? 'inactive' : 'active'
-  console.log(`Toggled employee ${employee.id} status to ${employee.status}`)
+  try {
+    await toggleStatus(employee.id)
+  } catch (err) {
+    console.error('Failed to toggle employee status:', err)
+  }
 }
 
 onMounted(() => {

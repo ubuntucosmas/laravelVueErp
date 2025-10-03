@@ -11,7 +11,8 @@ use App\Modules\Admin\Http\Controllers\PermissionController;
 use App\Modules\ClientService\Http\Controllers\ClientController;
 use App\Modules\ClientService\Http\Controllers\EnquiryController as ClientServiceEnquiryController;
 use App\Modules\Projects\Http\Controllers\EnquiryController;
-use App\Modules\Projects\Http\Controllers\ProjectController;
+use App\Modules\Projects\Http\Controllers\DashboardController;
+use App\Modules\Projects\Http\Controllers\TaskController;
 use App\Modules\Projects\Http\Controllers\PhaseDepartmentalTaskController;
 use App\Http\Controllers\SiteSurveyController;
 use App\Constants\Permissions;
@@ -66,7 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('admin')->middleware(['permission:' . Permissions::ADMIN_ACCESS])->group(function () {
         // User management
         Route::get('users/available-employees', [UserController::class, 'availableEmployees'])
-            ->middleware('permission:' . Permissions::USER_READ);
+            ->middleware('permission:' . Permissions::USER_READ . ',' . Permissions::TASK_ASSIGN);
         Route::apiResource('users', UserController::class)->parameters([
             'users' => 'user'
         ])->middleware([
@@ -93,6 +94,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Project Officers endpoint (accessible by Client Service for enquiry assignment)
     Route::get('project-officers', [UserController::class, 'getProjectOfficers'])
         ->middleware('permission:' . Permissions::ENQUIRY_UPDATE);
+
+    // Users endpoint for task assignment (accessible by Project Managers)
+    Route::get('users', [UserController::class, 'index'])
+        ->middleware('permission:' . Permissions::USER_READ . ',' . Permissions::TASK_ASSIGN);
 
     // ClientService Module Routes
     Route::prefix('clientservice')->group(function () {
@@ -123,6 +128,42 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Projects Module Routes
     Route::prefix('projects')->group(function () {
+        // Dashboard routes
+        Route::get('dashboard', [DashboardController::class, 'dashboard']);
+        Route::get('dashboard/enquiry-metrics', [DashboardController::class, 'enquiryMetrics']);
+        Route::get('dashboard/task-metrics', [DashboardController::class, 'taskMetrics']);
+        Route::get('dashboard/project-metrics', [DashboardController::class, 'projectMetrics']);
+        Route::get('dashboard/recent-activities', [DashboardController::class, 'recentActivities']);
+        Route::get('dashboard/alerts', [DashboardController::class, 'alerts']);
+
+        // Task management routes
+        Route::get('tasks', [TaskController::class, 'getDepartmentalTasks']);
+        Route::get('tasks/{task}', [TaskController::class, 'show']);
+        Route::put('tasks/{task}/status', [TaskController::class, 'updateTaskStatus']);
+        Route::put('tasks/{task}/assign', [TaskController::class, 'assignTask']);
+        Route::put('tasks/{task}', [TaskController::class, 'update']);
+        Route::get('enquiries/{enquiryId}/tasks', [TaskController::class, 'getEnquiryTasks']);
+
+        // Enquiry task assignment routes
+        Route::put('enquiry-tasks/{task}/assign', [TaskController::class, 'assignEnquiryTask']);
+        Route::put('enquiry-tasks/{task}/reassign', [TaskController::class, 'reassignEnquiryTask']);
+        Route::get('enquiry-tasks/{task}/assignment-history', [TaskController::class, 'getTaskAssignmentHistory']);
+        Route::put('enquiry-tasks/{task}', [TaskController::class, 'updateEnquiryTask']);
+
+        // Project management
+        Route::get('projects', function () {
+            $query = \App\Modules\Projects\Models\Project::with('enquiry.client');
+
+            if (request()->has('enquiry_id')) {
+                $query->where('enquiry_id', request()->enquiry_id);
+            }
+
+            return response()->json([
+                'data' => $query->get(),
+                'message' => 'Projects retrieved successfully'
+            ]);
+        }); // No permission for debugging
+
         // Enquiry management
         Route::get('enquiries', [EnquiryController::class, 'index'])
             ->middleware('permission:' . Permissions::ENQUIRY_READ);
@@ -138,39 +179,27 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('permission:' . Permissions::ENQUIRY_UPDATE);
         Route::post('enquiries/{enquiry}/convert', [EnquiryController::class, 'convertToProject'])
             ->middleware('permission:' . Permissions::ENQUIRY_CONVERT);
+        // Manual project creation for existing enquiries (debugging)
+        Route::post('enquiries/{enquiry}/create-project', function (\App\Models\ProjectEnquiry $enquiry) {
+            $workflowService = new \App\Modules\Projects\Services\EnquiryWorkflowService();
+            $project = $workflowService->createProjectAndTasksForEnquiry($enquiry);
 
-        // Departmental tasks management - temporarily outside auth for debugging
-    });
+            return response()->json([
+                'message' => 'Project and tasks created successfully',
+                'data' => $project->load('tasks.taskDefinition')
+            ]);
+        });
 
-    // Temporarily outside auth for debugging departmental tasks
-    Route::get('projects/departmental-tasks', [PhaseDepartmentalTaskController::class, 'index']);
-    Route::prefix('projects')->middleware('auth:sanctum')->group(function () {
+        // Departmental tasks management
+        Route::get('departmental-tasks', [PhaseDepartmentalTaskController::class, 'index']); // No permission for debugging
         Route::post('departmental-tasks', [PhaseDepartmentalTaskController::class, 'store']); // No permission for debugging
         Route::get('departmental-tasks/{task}', [PhaseDepartmentalTaskController::class, 'show']); // No permission for debugging
         Route::put('departmental-tasks/{task}', [PhaseDepartmentalTaskController::class, 'update']); // No permission for debugging
         Route::delete('departmental-tasks/{task}', [PhaseDepartmentalTaskController::class, 'destroy']); // No permission for debugging
         Route::post('departmental-tasks/{task}/action', [PhaseDepartmentalTaskController::class, 'performAction']); // No permission for debugging
         Route::get('departmental-tasks-stats', [PhaseDepartmentalTaskController::class, 'getStats']); // No permission for debugging
-        Route::post('departmental-tasks/{task}/action', [PhaseDepartmentalTaskController::class, 'performAction'])
-            ->middleware('permission:' . Permissions::TASK_UPDATE);
-        Route::get('departmental-tasks-stats', [PhaseDepartmentalTaskController::class, 'getStats'])
-            ->middleware('permission:' . Permissions::TASK_READ);
 
         // Site survey management
         Route::apiResource('site-surveys', SiteSurveyController::class); // Temporarily remove permissions for debugging
-
-        // Project workflow management
-        Route::get('{project}/workflow-status', [ProjectController::class, 'getWorkflowStatus'])
-            ->middleware('permission:' . Permissions::PROJECT_READ);
-        Route::post('{project}/phases/{phaseId}/tasks/{taskId}/claim', [ProjectController::class, 'claimTask'])
-            ->middleware('permission:' . Permissions::TASK_UPDATE);
-        Route::post('{project}/phases/{phaseId}/tasks/{taskId}/start', [ProjectController::class, 'startTask'])
-            ->middleware('permission:' . Permissions::TASK_UPDATE);
-        Route::post('{project}/phases/{phaseId}/tasks/{taskId}/complete', [ProjectController::class, 'completeTask'])
-            ->middleware('permission:' . Permissions::TASK_COMPLETE);
-        Route::post('{project}/phases/{phaseId}/tasks/{taskId}/submit', [ProjectController::class, 'submitTask'])
-            ->middleware('permission:' . Permissions::TASK_UPDATE);
-        Route::put('{project}/phases/{phaseId}/tasks/{taskId}/status', [ProjectController::class, 'updateTaskStatus'])
-            ->middleware('permission:' . Permissions::TASK_UPDATE);
     });
 });

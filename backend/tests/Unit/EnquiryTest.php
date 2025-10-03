@@ -10,6 +10,7 @@ use App\Modules\Projects\Models\Phase;
 use App\Modules\Projects\Models\Project;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class EnquiryTest extends TestCase
@@ -46,7 +47,7 @@ class EnquiryTest extends TestCase
         \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'finance.approve']);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_phases_automatically_when_enquiry_is_created()
     {
         $client = Client::factory()->create();
@@ -65,7 +66,7 @@ class EnquiryTest extends TestCase
         $this->assertEquals(['pending', 'pending', 'pending'], $enquiry->phases->pluck('status')->toArray());
     }
 
-    /** @test */
+    #[Test]
     public function it_generates_enquiry_number_automatically()
     {
         $client = Client::factory()->create();
@@ -94,7 +95,7 @@ class EnquiryTest extends TestCase
         $this->assertEquals(2, $enquiry2->enquiry_number);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_formatted_id_correctly()
     {
         $client = Client::factory()->create();
@@ -116,7 +117,7 @@ class EnquiryTest extends TestCase
         $this->assertEquals('WNG/IQ/24/05/042', $enquiry->formatted_id);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_start_phase_only_if_previous_phases_are_completed()
     {
         $client = Client::factory()->create();
@@ -146,7 +147,7 @@ class EnquiryTest extends TestCase
         $this->assertFalse($enquiry->canStartPhase($phases[2]));
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_false_for_invalid_phase_in_can_start_phase()
     {
         $client = Client::factory()->create();
@@ -175,7 +176,7 @@ class EnquiryTest extends TestCase
         $this->assertFalse($enquiry->canStartPhase($phaseFromAnotherEnquiry));
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_if_all_phases_are_completed()
     {
         $client = Client::factory()->create();
@@ -198,7 +199,7 @@ class EnquiryTest extends TestCase
         $this->assertTrue($enquiry->areAllPhasesCompleted());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_convert_to_project_only_if_quote_approved_and_phases_completed()
     {
         $client = Client::factory()->create();
@@ -230,7 +231,7 @@ class EnquiryTest extends TestCase
         $this->assertTrue($enquiry->canConvertToProject());
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_when_converting_without_required_fields()
     {
         $client = Client::factory()->create();
@@ -254,7 +255,7 @@ class EnquiryTest extends TestCase
         $enquiry->convertToProject();
     }
 
-    /** @test */
+    #[Test]
     public function it_converts_to_project_successfully()
     {
         $client = Client::factory()->create();
@@ -293,7 +294,7 @@ class EnquiryTest extends TestCase
         $this->assertEquals('initiated', $project->status);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_conversion_errors_gracefully()
     {
         $client = Client::factory()->create();
@@ -321,7 +322,7 @@ class EnquiryTest extends TestCase
         $enquiry->convertToProject();
     }
 
-    /** @test */
+    #[Test]
     public function it_approves_quote_successfully()
     {
         $user = User::factory()->create();
@@ -348,7 +349,7 @@ class EnquiryTest extends TestCase
         $this->assertEquals($user->id, $enquiry->fresh()->quote_approved_by);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_when_approving_quote_without_permission()
     {
         $user = User::factory()->create();
@@ -369,7 +370,7 @@ class EnquiryTest extends TestCase
         $enquiry->approveQuote($user->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_automatically_converts_to_project_when_quote_approved_and_phases_completed()
     {
         $user = User::factory()->create();
@@ -398,7 +399,7 @@ class EnquiryTest extends TestCase
         $this->assertNotNull($enquiry->fresh()->converted_to_project_id);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_thread_safety_in_conversion_with_database_transactions()
     {
         $client = Client::factory()->create();
@@ -423,7 +424,7 @@ class EnquiryTest extends TestCase
         $enquiry->convertToProject();
     }
 
-    /** @test */
+    #[Test]
     public function it_prevents_double_conversion_with_transaction_rollback()
     {
         $client = Client::factory()->create();
@@ -454,7 +455,7 @@ class EnquiryTest extends TestCase
         $enquiry->convertToProject();
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_concurrent_enquiry_number_generation()
     {
         // Test that enquiry numbers are generated sequentially even with rapid creation
