@@ -32,32 +32,6 @@
       </ol>
     </nav>
 
-    <!-- Task Dashboard View - Commented out due to deleted projects module -->
-    <!-- <div v-if="showTaskDashboard && selectedEnquiryForTasks">
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <button
-            @click="closeTaskDashboard"
-            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
-          >
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-            Back to Enquiries
-          </button>
-        </div>
-      </div>
-
-      <DepartmentalTaskDashboard
-        :context="'enquiry'"
-        :context-id="selectedEnquiryForTasks.id"
-        :title="`Tasks for ${selectedEnquiryForTasks.title}`"
-        :enquiry="selectedEnquiryForTasks"
-        :department="selectedEnquiryForTasks.assigned_department || selectedEnquiryForTasks.department?.name || 'client-service'"
-        @taskAssigned="handleTaskAssigned"
-      />
-    </div> -->
-
     <!-- Enquiries Table View -->
     <div>
       <div class="flex items-center justify-between">
@@ -234,7 +208,7 @@
 
     <!-- Create/Edit Enquiry Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-7xl w-full max-h-[90vh] overflow-y-auto">
         <h2 class="text-xl font-bold mb-6 text-gray-900 dark:text-white">
           {{ editingEnquiry ? 'Edit Enquiry' : 'Log New Enquiry' }}
         </h2>

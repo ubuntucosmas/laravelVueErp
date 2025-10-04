@@ -2,104 +2,133 @@
   <div class="materials-task bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
     <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{{ task.title }}</h3>
 
+    <!-- Tab Navigation -->
+    <div class="mb-6">
+      <nav class="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          @click="activeTab = tab.id"
+          :class="[
+            'flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
+            activeTab === tab.id
+              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+          ]"
+        >
+          <span class="mr-2">{{ tab.icon }}</span>
+          {{ tab.label }}
+        </button>
+      </nav>
+    </div>
+
     <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Details Tab -->
+      <div v-if="activeTab === 'details'">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Material Name *</label>
+            <input
+              v-model="formData.material_name"
+              type="text"
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="e.g., Steel beams, Concrete"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+            <select
+              v-model="formData.category"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">Select category</option>
+              <option value="structural">Structural</option>
+              <option value="finishing">Finishing</option>
+              <option value="electrical">Electrical</option>
+              <option value="plumbing">Plumbing</option>
+              <option value="mechanical">Mechanical</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Quantity *</label>
+            <input
+              v-model="formData.quantity"
+              type="number"
+              step="0.01"
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="0.00"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unit *</label>
+            <select
+              v-model="formData.unit"
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">Select unit</option>
+              <option value="pieces">Pieces</option>
+              <option value="kg">Kilograms</option>
+              <option value="m">Meters</option>
+              <option value="m2">Square Meters</option>
+              <option value="m3">Cubic Meters</option>
+              <option value="liters">Liters</option>
+              <option value="tons">Tons</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estimated Cost</label>
+            <input
+              v-model="formData.estimated_cost"
+              type="number"
+              step="0.01"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Supplier & Specs Tab -->
+      <div v-if="activeTab === 'supplier'">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Material Name *</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Supplier</label>
           <input
-            v-model="formData.material_name"
+            v-model="formData.supplier"
             type="text"
-            required
             class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="e.g., Steel beams, Concrete"
+            placeholder="Supplier name or contact"
           />
         </div>
+
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-          <select
-            v-model="formData.category"
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Specifications</label>
+          <textarea
+            v-model="formData.specifications"
+            rows="3"
             class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            <option value="">Select category</option>
-            <option value="structural">Structural</option>
-            <option value="finishing">Finishing</option>
-            <option value="electrical">Electrical</option>
-            <option value="plumbing">Plumbing</option>
-            <option value="mechanical">Mechanical</option>
-            <option value="other">Other</option>
-          </select>
+            placeholder="Material specifications, quality requirements, etc."
+          ></textarea>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Notes Tab -->
+      <div v-if="activeTab === 'notes'">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Quantity *</label>
-          <input
-            v-model="formData.quantity"
-            type="number"
-            step="0.01"
-            required
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+          <textarea
+            v-model="formData.notes"
+            rows="2"
             class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="0.00"
-          />
+            placeholder="Additional notes about the material"
+          ></textarea>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unit *</label>
-          <select
-            v-model="formData.unit"
-            required
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            <option value="">Select unit</option>
-            <option value="pieces">Pieces</option>
-            <option value="kg">Kilograms</option>
-            <option value="m">Meters</option>
-            <option value="m2">Square Meters</option>
-            <option value="m3">Cubic Meters</option>
-            <option value="liters">Liters</option>
-            <option value="tons">Tons</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estimated Cost</label>
-          <input
-            v-model="formData.estimated_cost"
-            type="number"
-            step="0.01"
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="0.00"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Supplier</label>
-        <input
-          v-model="formData.supplier"
-          type="text"
-          class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          placeholder="Supplier name or contact"
-        />
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Specifications</label>
-        <textarea
-          v-model="formData.specifications"
-          rows="3"
-          class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          placeholder="Material specifications, quality requirements, etc."
-        ></textarea>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
-        <textarea
-          v-model="formData.notes"
-          rows="2"
-          class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          placeholder="Additional notes about the material"
-        ></textarea>
       </div>
 
       <div class="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -144,6 +173,14 @@ const emit = defineEmits<{
   'update-status': [status: EnquiryTask['status']]
   'complete': []
 }>()
+
+const activeTab = ref('details')
+
+const tabs = [
+  { id: 'details', label: 'Material Details', icon: '📦' },
+  { id: 'supplier', label: 'Supplier & Specs', icon: '🏢' },
+  { id: 'notes', label: 'Notes', icon: '📝' }
+]
 
 const formData = ref({
   material_name: '',

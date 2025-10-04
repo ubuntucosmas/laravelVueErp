@@ -7,7 +7,7 @@ export const clientServiceRoutes: RouteRecordRaw[] = [
     component: MainLayout,
     meta: {
       requiresAuth: true,
-      // requiresClientServiceAccess: true // Temporarily disabled for debugging
+      requiresClientServiceAccess: true
     },
     children: [
       {
@@ -35,13 +35,6 @@ export const clientServiceRoutes: RouteRecordRaw[] = [
         },
         meta: { title: 'Enquiry Management' }
       },
-      // Commented out - projects module deleted
-      // {
-      //   path: 'enquiries/:id',
-      //   name: 'client-service-enquiry-detail',
-      //   component: () => import('../modules/projects/views/EnquiryDetailWorkflow.vue'),
-      //   meta: { title: 'Enquiry Details' }
-      // }
     ],
   },
 ]

@@ -3,10 +3,8 @@
 namespace App\Modules\Projects\Services;
 
 use App\Models\ProjectEnquiry;
-use App\Models\EnquiryDepartmentalTask;
 use App\Models\TaskAssignmentHistory;
 use App\Models\User;
-use App\Modules\HR\Models\Department;
 use App\Modules\Projects\Models\EnquiryTask;
 use Illuminate\Support\Facades\Log;
 
@@ -19,33 +17,43 @@ class EnquiryWorkflowService
     {
         Log::info("Creating unassigned workflow tasks for enquiry ID: {$enquiry->id}");
 
+        // Check if tasks already exist for this enquiry to prevent duplication
+        $existingTasksCount = EnquiryTask::where('project_enquiry_id', $enquiry->id)->count();
+        if ($existingTasksCount > 0) {
+            Log::info("Tasks already exist for enquiry {$enquiry->id} ({$existingTasksCount} tasks found). Skipping task creation.");
+            return;
+        }
+
         try {
-            // Create Site Survey task if not skipped
-            if (!$enquiry->site_survey_skipped) {
+            $taskTemplates = [
+                ['title' => 'Site Survey', 'type' => 'survey'],
+                ['title' => 'Design & Concept Development', 'type' => 'design'],
+                ['title' => 'Material & Cost Listing', 'type' => 'materials'],
+                ['title' => 'Budget Creation', 'type' => 'budget'],
+                ['title' => 'Quote Preparation', 'type' => 'quote'],
+                ['title' => 'Quote Approval', 'type' => 'quote_approval'],
+                ['title' => 'Procurement & Inventory Management', 'type' => 'procurement'],
+                ['title' => 'Project Conversion', 'type' => 'conversion'],
+                ['title' => 'production', 'type' => 'production'],
+                ['title' => 'Logistics', 'type' => 'logistics'],
+                ['title' => 'Event Setup & Execution', 'type' => 'setup'],
+                ['title' => 'Client Handover', 'type' => 'handover'],
+                ['title' => 'Set Down & Return', 'type' => 'setdown'],
+                ['title' => 'Archival & Reporting', 'type' => 'report'],
+            ];
+
+            foreach ($taskTemplates as $template) {
                 EnquiryTask::create([
                     'project_enquiry_id' => $enquiry->id,
-                    'title' => 'Site Survey',
-                    'type' => 'survey',
+                    'title' => $template['title'],
+                    'type' => $template['type'],
                     'status' => 'pending',
                     'priority' => 'medium',
-                    'notes' => 'Conduct site survey for the enquiry',
+                    'notes' => $this->getDefaultNotesForTask($template['type']),
                     'created_by' => $enquiry->created_by,
                 ]);
 
-                Log::info("Created unassigned site survey task for enquiry {$enquiry->id}");
-            } else {
-                // If site survey is skipped, create design task immediately
-                EnquiryTask::create([
-                    'project_enquiry_id' => $enquiry->id,
-                    'title' => 'Design',
-                    'type' => 'design',
-                    'status' => 'pending',
-                    'priority' => 'medium',
-                    'notes' => 'Create design concepts and mockups',
-                    'created_by' => $enquiry->created_by,
-                ]);
-
-                Log::info("Created unassigned design task for enquiry {$enquiry->id} (site survey skipped)");
+                Log::info("Created unassigned {$template['type']} task for enquiry {$enquiry->id}");
             }
 
             Log::info("Successfully created unassigned workflow tasks for enquiry {$enquiry->id}");
@@ -68,16 +76,6 @@ class EnquiryWorkflowService
         return $enquiry;
     }
 
-    /**
-     * Get tasks for an enquiry
-     */
-    public function getTasksForEnquiry(int $enquiryId)
-    {
-        return EnquiryDepartmentalTask::where('project_enquiry_id', $enquiryId)
-            ->with('department', 'assignedUser')
-            ->orderBy('created_at')
-            ->get();
-    }
 
     /**
      * Update task status and handle workflow progression
@@ -98,150 +96,7 @@ class EnquiryWorkflowService
         return $task;
     }
 
-    /**
-     * Handle workflow progression based on task completion (manual assignment required)
-     */
-    private function handleWorkflowProgression(EnquiryDepartmentalTask $task): void
-    {
-        $enquiry = ProjectEnquiry::find($task->project_enquiry_id);
-        if (!$enquiry) return;
 
-        // Update enquiry status based on completed task
-        $this->updateEnquiryStatusBasedOnTask($enquiry, $task);
-
-        // Note: Automatic task creation is disabled. Project managers must manually assign next tasks.
-        Log::info("Task {$task->task_name} completed for enquiry {$enquiry->id}. Manual assignment required for next steps.");
-    }
-
-    /**
-     * Create materials task
-     */
-    private function createMaterialsTask(int $enquiryId): void
-    {
-        $enquiry = ProjectEnquiry::find($enquiryId);
-        if (!$enquiry) return;
-
-        $procurementDept = Department::where('name', 'procurement')->first();
-        if ($procurementDept) {
-            EnquiryDepartmentalTask::create([
-                'project_enquiry_id' => $enquiryId,
-                'department_id' => $procurementDept->id,
-                'task_name' => 'Materials',
-                'task_description' => 'Specify and source materials for the project',
-                'priority' => 'medium',
-                'status' => 'pending',
-                'created_by' => $enquiry->created_by,
-            ]);
-
-            Log::info("Created materials task for enquiry {$enquiryId}");
-        }
-    }
-
-    /**
-     * Create budget task
-     */
-    private function createBudgetTask(int $enquiryId): void
-    {
-        $enquiry = ProjectEnquiry::find($enquiryId);
-        if (!$enquiry) return;
-
-        $financeDept = Department::where('name', 'finance')->first();
-        if ($financeDept) {
-            EnquiryDepartmentalTask::create([
-                'project_enquiry_id' => $enquiryId,
-                'department_id' => $financeDept->id,
-                'task_name' => 'Budget',
-                'task_description' => 'Create budget for the project',
-                'priority' => 'high',
-                'status' => 'pending',
-                'created_by' => $enquiry->created_by,
-            ]);
-
-            Log::info("Created budget task for enquiry {$enquiryId}");
-        }
-    }
-
-    /**
-     * Create design task (for after site survey)
-     */
-    private function createDesignTask(int $enquiryId): void
-    {
-        $enquiry = ProjectEnquiry::find($enquiryId);
-        if (!$enquiry) return;
-
-        $creativesDept = Department::where('name', 'creatives')->first();
-        if ($creativesDept) {
-            EnquiryDepartmentalTask::create([
-                'project_enquiry_id' => $enquiryId,
-                'department_id' => $creativesDept->id,
-                'task_name' => 'Design',
-                'task_description' => 'Create design concepts and mockups',
-                'priority' => 'medium',
-                'status' => 'pending',
-                'created_by' => $enquiry->created_by,
-            ]);
-
-            Log::info("Created design task for enquiry {$enquiryId}");
-        }
-    }
-
-    /**
-     * Create quote task
-     */
-    private function createQuoteTask(int $enquiryId): void
-    {
-        $enquiry = ProjectEnquiry::find($enquiryId);
-        if (!$enquiry) return;
-
-        $projectsDept = Department::where('name', 'projects')->first();
-        if ($projectsDept) {
-            EnquiryDepartmentalTask::create([
-                'project_enquiry_id' => $enquiryId,
-                'department_id' => $projectsDept->id,
-                'task_name' => 'Quote',
-                'task_description' => 'Prepare final quote for the project',
-                'priority' => 'high',
-                'status' => 'pending',
-                'created_by' => $enquiry->created_by,
-            ]);
-
-            Log::info("Created quote task for enquiry {$enquiryId}");
-        }
-    }
-
-    /**
-     * Update enquiry status based on completed task
-     */
-    private function updateEnquiryStatusBasedOnTask(ProjectEnquiry $enquiry, EnquiryDepartmentalTask $task): void
-    {
-        if ($task->status !== 'completed') return;
-
-        $newStatus = null;
-
-        switch ($task->task_name) {
-            case 'Site Survey':
-                $newStatus = 'site_survey_completed';
-                break;
-            case 'Design':
-                $newStatus = 'design_completed';
-                break;
-            case 'Materials':
-                $newStatus = 'materials_specified';
-                break;
-            case 'Budget':
-                $newStatus = 'budget_created';
-                break;
-            case 'Quote':
-                $newStatus = 'quote_prepared';
-                break;
-        }
-
-        if ($newStatus && $enquiry->status !== $newStatus) {
-            $enquiry->status = $newStatus;
-            $enquiry->save();
-            Log::info("Updated enquiry {$enquiry->id} status to {$newStatus} after completing {$task->task_name} task");
-        }
-    }
 
     /**
      * Manually assign an enquiry task to a department and user
@@ -494,5 +349,30 @@ class EnquiryWorkflowService
         ->with('enquiry', 'department')
         ->orderBy('due_date')
         ->get();
+    }
+
+    /**
+     * Get default notes for a task type
+     */
+    private function getDefaultNotesForTask(string $type): string
+    {
+        $notes = [
+            'survey' => 'Conduct site survey for the enquiry',
+            'design' => 'Create design concepts and mockups',
+            'materials' => 'Specify and source materials for the project',
+            'budget' => 'Create budget for the project',
+            'quote' => 'Prepare final quote for the project',
+            'quote_approval' => 'Approve the prepared quote',
+            'procurement' => 'Manage procurement and inventory',
+            'conversion' => 'Convert enquiry to project',
+            'production' => 'Handle production activities',
+            'logistics' => 'Manage logistics and transportation',
+            'setup' => 'Set up event and execute',
+            'handover' => 'Hand over to client',
+            'setdown' => 'Set down and return equipment',
+            'report' => 'Archive and generate reports',
+        ];
+
+        return $notes[$type] ?? 'Complete this task';
     }
 }

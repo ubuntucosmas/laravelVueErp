@@ -2,105 +2,134 @@
   <div class="budget-task bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
     <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{{ task.title }}</h3>
 
+    <!-- Tab Navigation -->
+    <div class="mb-6">
+      <nav class="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          @click="activeTab = tab.id"
+          :class="[
+            'flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
+            activeTab === tab.id
+              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+          ]"
+        >
+          <span class="mr-2">{{ tab.icon }}</span>
+          {{ tab.label }}
+        </button>
+      </nav>
+    </div>
+
     <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Material Costs</label>
-          <input
-            v-model="formData.material_costs"
-            type="number"
-            step="0.01"
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="0.00"
-          />
+      <!-- Costs Tab -->
+      <div v-if="activeTab === 'costs'">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Material Costs</label>
+            <input
+              v-model="formData.material_costs"
+              type="number"
+              step="0.01"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="0.00"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Labor Costs</label>
+            <input
+              v-model="formData.labor_costs"
+              type="number"
+              step="0.01"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="0.00"
+            />
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Labor Costs</label>
-          <input
-            v-model="formData.labor_costs"
-            type="number"
-            step="0.01"
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="0.00"
-          />
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Equipment Costs</label>
+            <input
+              v-model="formData.equipment_costs"
+              type="number"
+              step="0.01"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="0.00"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Overhead Costs</label>
+            <input
+              v-model="formData.overhead_costs"
+              type="number"
+              step="0.01"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contingency (%)</label>
+            <input
+              v-model="formData.contingency_percentage"
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="10.00"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Profit Margin (%)</label>
+            <input
+              v-model="formData.profit_margin"
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="15.00"
+            />
+          </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Equipment Costs</label>
-          <input
-            v-model="formData.equipment_costs"
-            type="number"
-            step="0.01"
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="0.00"
-          />
+      <!-- Summary Tab -->
+      <div v-if="activeTab === 'summary'">
+        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Total Budget:</span>
+            <span class="text-lg font-bold text-gray-900 dark:text-white">{{ formatCurrency(totalBudget) }}</span>
+          </div>
         </div>
+
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Overhead Costs</label>
-          <input
-            v-model="formData.overhead_costs"
-            type="number"
-            step="0.01"
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Budget Breakdown</label>
+          <textarea
+            v-model="formData.breakdown"
+            rows="4"
             class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="0.00"
-          />
+            placeholder="Detailed breakdown of costs..."
+          ></textarea>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Notes Tab -->
+      <div v-if="activeTab === 'notes'">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contingency (%)</label>
-          <input
-            v-model="formData.contingency_percentage"
-            type="number"
-            step="0.01"
-            min="0"
-            max="100"
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Budget Notes</label>
+          <textarea
+            v-model="formData.notes"
+            rows="2"
             class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="10.00"
-          />
+            placeholder="Additional budget notes or assumptions"
+          ></textarea>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Profit Margin (%)</label>
-          <input
-            v-model="formData.profit_margin"
-            type="number"
-            step="0.01"
-            min="0"
-            max="100"
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="15.00"
-          />
-        </div>
-      </div>
-
-      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-        <div class="flex justify-between items-center">
-          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Total Budget:</span>
-          <span class="text-lg font-bold text-gray-900 dark:text-white">{{ formatCurrency(totalBudget) }}</span>
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Budget Breakdown</label>
-        <textarea
-          v-model="formData.breakdown"
-          rows="4"
-          class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          placeholder="Detailed breakdown of costs..."
-        ></textarea>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Budget Notes</label>
-        <textarea
-          v-model="formData.notes"
-          rows="2"
-          class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          placeholder="Additional budget notes or assumptions"
-        ></textarea>
       </div>
 
       <div class="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -145,6 +174,14 @@ const emit = defineEmits<{
   'update-status': [status: EnquiryTask['status']]
   'complete': []
 }>()
+
+const activeTab = ref('costs')
+
+const tabs = [
+  { id: 'costs', label: 'Cost Inputs', icon: '💰' },
+  { id: 'summary', label: 'Summary', icon: '📊' },
+  { id: 'notes', label: 'Notes', icon: '📝' }
+]
 
 const formData = ref({
   material_costs: null as number | null,

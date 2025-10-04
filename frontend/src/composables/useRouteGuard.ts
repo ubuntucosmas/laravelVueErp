@@ -118,7 +118,7 @@ export function useRouteGuard() {
       [PERMISSIONS.ROLE_READ]: ['Admin', 'Super Admin'],
       [PERMISSIONS.DEPARTMENT_READ]: ['Admin', 'HR', 'Super Admin'],
       [PERMISSIONS.EMPLOYEE_READ]: ['Admin', 'HR', 'Super Admin'],
-      [PERMISSIONS.PROJECT_READ]: ['Project Manager', 'Project Officer', 'Manager', 'Employee', 'Client Service', 'HR', 'Accounts', 'Costing', 'Designer', 'Procurement Officer', 'Super Admin'],
+      [PERMISSIONS.PROJECT_READ]: ['Project Manager', 'Project Officer', 'Manager', 'Employee', 'Client Service', 'HR', 'Accounts', 'Costing', 'Designer', 'Procurement Officer', 'Super Admin', 'Admin'],
       [PERMISSIONS.ENQUIRY_READ]: ['Client Service', 'Project Manager', 'Super Admin'],
       [PERMISSIONS.ENQUIRY_CREATE]: ['Client Service', 'Project Manager', 'Super Admin'],
       [PERMISSIONS.ENQUIRY_UPDATE]: ['Client Service', 'Project Manager', 'Super Admin'],
@@ -323,8 +323,7 @@ export function useRouteGuard() {
         { name: 'admin-roles', path: '/admin/roles', label: 'Role Management', icon: '🔐' },
         { name: 'admin-departments', path: '/admin/departments', label: 'Department Management', icon: '🏢' },
         { name: 'hr-dashboard', path: '/hr', label: 'HR Dashboard', icon: '👥' },
-        { name: 'hr-employees', path: '/hr/employees', label: 'HR Employees', icon: '👷' },
-        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
+        { name: 'hr-employees', path: '/hr/employees', label: 'HR Employees', icon: '👷' }
       )
     }
     // Admin gets admin routes
@@ -334,16 +333,14 @@ export function useRouteGuard() {
         { name: 'admin-users', path: '/admin/users', label: 'User Management', icon: '👥' },
         { name: 'admin-employees', path: '/admin/employees', label: 'Employee Management', icon: '👷' },
         { name: 'admin-roles', path: '/admin/roles', label: 'Role Management', icon: '🔐' },
-        { name: 'admin-departments', path: '/admin/departments', label: 'Department Management', icon: '🏢' },
-        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
+        { name: 'admin-departments', path: '/admin/departments', label: 'Department Management', icon: '🏢' }
       )
     }
     // HR gets HR routes
     else if (userRoles.includes('HR')) {
       routes.push(
         { name: 'hr-dashboard', path: '/hr', label: 'HR Dashboard', icon: '👥' },
-        { name: 'hr-employees', path: '/hr/employees', label: 'Employee Management', icon: '👷' },
-        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
+        { name: 'hr-employees', path: '/hr/employees', label: 'Employee Management', icon: '👷' }
       )
     }
     // Department users get department routes
@@ -372,8 +369,7 @@ export function useRouteGuard() {
       routes.push(
         { name: 'client-service-dashboard', path: '/client-service', label: 'Client Service Dashboard', icon: '📊' },
         { name: 'client-service-clients', path: '/client-service/clients', label: 'Client Management', icon: '👥' },
-        { name: 'client-service-enquiries', path: '/client-service/enquiries', label: 'Enquiry Management', icon: '📝' },
-        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
+        { name: 'client-service-enquiries', path: '/client-service/enquiries', label: 'Enquiry Management', icon: '📝' }
       )
     }
 
@@ -384,8 +380,7 @@ export function useRouteGuard() {
         { name: 'creatives-materials', path: '/creatives/materials', label: 'Material & Cost Listing', icon: '📦' },
         { name: 'creatives-final-design', path: '/creatives/final-design', label: 'Final Design', icon: '✨' },
         { name: 'creatives-enquiries', path: '/creatives/enquiries', label: 'Enquiries', icon: '📝' },
-        { name: 'creatives-element-templates', path: '/creatives/element-templates', label: 'Element Templates', icon: '📋' },
-        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
+        { name: 'creatives-element-templates', path: '/creatives/element-templates', label: 'Element Templates', icon: '📋' }
       )
     }
 
@@ -398,8 +393,7 @@ export function useRouteGuard() {
         { name: 'finance-invoicing', path: '/finance/invoicing', label: 'Invoice Management', icon: '📄' },
         { name: 'finance-reporting', path: '/finance/reporting', label: 'Financial Reports', icon: '📈' },
         { name: 'finance-enquiries', path: '/finance/enquiries', label: 'Project Enquiries', icon: '📋' },
-        { name: 'finance-analytics', path: '/finance/analytics', label: 'Financial Analytics', icon: '📉' },
-        { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
+        { name: 'finance-analytics', path: '/finance/analytics', label: 'Financial Analytics', icon: '📉' }
       )
     }
 
@@ -410,7 +404,13 @@ export function useRouteGuard() {
         { name: 'procurement-materials', path: '/procurement/materials', label: 'Material Requests', icon: '📋' },
         { name: 'procurement-vendors', path: '/procurement/vendors', label: 'Vendor Management', icon: '🏪' },
         { name: 'procurement-orders', path: '/procurement/orders', label: 'Purchase Orders', icon: '📄' },
-        { name: 'procurement-quotations', path: '/procurement/quotations', label: 'Supplier Quotations', icon: '💰' },
+        { name: 'procurement-quotations', path: '/procurement/quotations', label: 'Supplier Quotations', icon: '💰' }
+      )
+    }
+
+    // Add Projects department dashboard for users who work in Projects department
+    if (canAccessProjectsDashboard()) {
+      routes.push(
         { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
       )
     }

@@ -33,6 +33,40 @@ export function useTaskAssignment() {
     }
   }
 
+  const fetchAllTasks = async (filters?: {
+    search?: string
+    status?: string
+    priority?: string
+    assigned_user_id?: number
+    enquiry_id?: number
+  }) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const params = new URLSearchParams()
+      if (filters?.search) params.append('search', filters.search)
+      if (filters?.status) params.append('status', filters.status)
+      if (filters?.priority) params.append('priority', filters.priority)
+      if (filters?.assigned_user_id) params.append('assigned_user_id', filters.assigned_user_id.toString())
+      if (filters?.enquiry_id) params.append('enquiry_id', filters.enquiry_id.toString())
+
+      const queryString = params.toString()
+      const url = `/api/projects/all-enquiry-tasks${queryString ? '?' + queryString : ''}`
+
+      const response = await api.get(url)
+      enquiryTasks.value = response.data.data || []
+      return enquiryTasks.value
+    } catch (err) {
+      error.value = 'Failed to fetch all tasks'
+      console.error('Error fetching all tasks:', err)
+      enquiryTasks.value = []
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const assignTask = async (taskId: number, assignmentData: TaskAssignmentData) => {
     loading.value = true
     error.value = null
@@ -126,6 +160,7 @@ export function useTaskAssignment() {
     loading,
     error,
     fetchEnquiryTasks,
+    fetchAllTasks,
     assignTask,
     updateTask,
     fetchAssignmentHistory,

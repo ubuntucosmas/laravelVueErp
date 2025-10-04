@@ -133,4 +133,35 @@ class NotificationService
                 'read_at' => now(),
             ]);
     }
+
+    /**
+     * Send notification to all users when a task is completed
+     */
+    public function sendTaskCompletedNotification(EnquiryTask $task, User $completedBy): void
+    {
+        try {
+            // Get all users except the one who completed the task
+            $users = User::where('id', '!=', $completedBy->id)->get();
+
+            foreach ($users as $user) {
+                Notification::create([
+                    'user_id' => $user->id,
+                    'type' => 'task_completed',
+                    'title' => 'Task Completed',
+                    'message' => "Task '{$task->title}' has been completed by {$completedBy->name}",
+                    'data' => [
+                        'task_id' => $task->id,
+                        'enquiry_id' => $task->project_enquiry_id,
+                        'completed_by' => $completedBy->name,
+                        'completed_at' => now()->toISOString(),
+                        'task_type' => $task->taskDefinition?->name ?? 'Unknown',
+                    ],
+                ]);
+            }
+
+            Log::info("Task completion notification sent to all users for task {$task->id} completed by {$completedBy->name}");
+        } catch (\Exception $e) {
+            Log::error("Failed to send task completion notification: " . $e->getMessage());
+        }
+    }
 }

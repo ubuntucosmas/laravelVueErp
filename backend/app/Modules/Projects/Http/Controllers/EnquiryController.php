@@ -145,37 +145,7 @@ class EnquiryController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        // Create project and workflow tasks for the enquiry
-        // $workflowService = new EnquiryWorkflowService();
-        // $project = $workflowService->createProjectAndTasksForEnquiry($enquiry);
-
-            // Auto-generate tasks
-        $taskTemplates = [
-            ['title' => 'Site Survey', 'type' => 'survey'],
-            ['title' => 'Design & Concept Development', 'type' => 'design'],
-            ['title' => 'Material & Cost Listing', 'type' => 'materials'],
-            ['title' => 'Budget Creation', 'type' => 'budget'],
-            ['title' => 'Quote Preparation', 'type' => 'quote'],
-            ['title' => 'Quote Approval', 'type' => 'quote_approval'],
-            ['title' => 'Procurement & Inventory Management', 'type' => 'procurement'],
-            ['title' => 'Project Conversion', 'type' => 'conversion'],
-            ['title' => 'production', 'type' => 'production'],
-            ['title' => 'Logistics', 'type' => 'logistics'],
-            ['title' => 'Event Setup & Execution', 'type' => 'setup'],
-            ['title' => 'Client Handover', 'type' => 'handover'],
-            ['title' => 'Set Down & Return', 'type' => 'setdown'],
-            ['title' => 'Archival & Reporting', 'type' => 'report'],
-        ];
-        foreach ($taskTemplates as $i=> $template) {
-            $enquiry->enquiryTasks()->create([
-                'title' => $template['title'],
-                'type' => $template['type'],
-                'status' => 'pending',
-                'created_by' => Auth::id(),
-            ]);
-        }
-
-        // Create departmental tasks for the enquiry
+        // Create workflow tasks for the enquiry
         $workflowService = new EnquiryWorkflowService();
         $workflowService->createWorkflowTasksForEnquiry($enquiry);
 
@@ -194,44 +164,10 @@ class EnquiryController extends Controller
             ], 403);
         }
 
-        // Ensure enquiry has tasks (for backwards compatibility)
-        if ($enquiry->enquiryTasks()->count() === 0) {
-            $this->createDefaultTasksForEnquiry($enquiry);
-        }
-
         return response()->json([
             'data' => $enquiry->load('client', 'department', 'enquiryTasks'),
             'message' => 'Enquiry retrieved successfully'
         ]);
-    }
-
-    private function createDefaultTasksForEnquiry(ProjectEnquiry $enquiry): void
-    {
-        $taskTemplates = [
-            ['title' => 'Site Survey', 'type' => 'survey'],
-            ['title' => 'Design & Concept Development', 'type' => 'design'],
-            ['title' => 'Material & Cost Listing', 'type' => 'materials'],
-            ['title' => 'Budget Creation', 'type' => 'budget'],
-            ['title' => 'Quote Preparation', 'type' => 'quote'],
-            ['title' => 'Quote Approval', 'type' => 'quote_approval'],
-            ['title' => 'Procurement & Inventory Management', 'type' => 'procurement'],
-            ['title' => 'Project Conversion', 'type' => 'conversion'],
-            ['title' => 'production', 'type' => 'production'],
-            ['title' => 'Logistics', 'type' => 'logistics'],
-            ['title' => 'Event Setup & Execution', 'type' => 'setup'],
-            ['title' => 'Client Handover', 'type' => 'handover'],
-            ['title' => 'Set Down & Return', 'type' => 'setdown'],
-            ['title' => 'Archival & Reporting', 'type' => 'report'],
-        ];
-
-        foreach ($taskTemplates as $template) {
-            $enquiry->enquiryTasks()->create([
-                'title' => $template['title'],
-                'type' => $template['type'],
-                'status' => 'pending',
-                'created_by' => $enquiry->created_by ?? 1, // Default to user 1 if not set
-            ]);
-        }
     }
 
     public function update(Request $request, ProjectEnquiry $enquiry): JsonResponse

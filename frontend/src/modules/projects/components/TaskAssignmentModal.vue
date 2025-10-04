@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-7xl w-full max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-xl font-bold text-gray-900 dark:text-white">
           Assign Tasks - {{ enquiry?.title || 'Enquiry' }}
@@ -32,11 +32,11 @@
           No tasks available for assignment
         </div>
 
-        <div v-else class="space-y-3">
+        <div v-else class="space-y-4">
           <div
             v-for="task in enquiryTasks"
             :key="task.id"
-            class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+            class="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
           >
             <div class="flex justify-between items-start mb-3">
               <div>
@@ -49,7 +49,7 @@
             </div>
 
             <!-- Assignment Form -->
-            <form @submit.prevent="assignTask(task)" class="space-y-3">
+            <form @submit.prevent="assignTask(task)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Assign to User *
@@ -126,6 +126,26 @@
               </div>
             </form>
 
+            <!-- Assignment History -->
+            <div v-if="task.assignmentHistory && task.assignmentHistory.length > 0" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assignment History</h4>
+              <div class="space-y-2">
+                <div
+                  v-for="history in task.assignmentHistory.slice(0, 2)"
+                  :key="history.id"
+                  class="text-xs text-gray-600 dark:text-gray-400"
+                >
+                  Assigned to {{ history.assignedTo?.name }} on {{ formatDate(history.assigned_at) }}
+                  <span v-if="history.notes"> - {{ history.notes }}</span>
+                </div>
+                <div
+                  v-if="task.assignmentHistory && task.assignmentHistory.length > 2"
+                  class="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  +{{ task.assignmentHistory.length - 2 }} more assignments
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -183,12 +183,12 @@
                  >
                    Assign Tasks
                  </button>
-                 <button
-                   @click="toggleTaskView(enquiry.id)"
+                 <router-link
+                   :to="`/projects/tasks?enquiry_id=${enquiry.id}`"
                    class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 mr-3"
                  >
-                   {{ expandedEnquiries.includes(enquiry.id) ? 'Hide Tasks' : 'View Tasks' }}
-                 </button>
+                   View All Tasks
+                 </router-link>
                  <button
                    v-if="canConvertToProject(enquiry)"
                    @click="convertToProject(enquiry.id)"
@@ -199,99 +199,6 @@
                </td>
              </tr>
 
-             <!-- Expandable Task Section -->
-             <tr v-if="expandedEnquiries.includes(enquiry.id)" :key="`tasks-${enquiry.id}`">
-              <td colspan="7" class="px-6 py-4 bg-gray-50 dark:bg-gray-800">
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between mb-3">
-                    <h4 class="text-sm font-medium text-gray-900 dark:text-white">Tasks for this enquiry</h4>
-                    <button
-                      @click="openTaskAssignment(enquiry)"
-                      class="px-3 py-1 text-xs bg-primary hover:bg-primary-light text-white rounded transition-colors"
-                    >
-                      Assign Tasks
-                    </button>
-                  </div>
-
-                  <div v-if="!enquiryTasks[enquiry.id] || enquiryTasks[enquiry.id].length === 0" class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                    No tasks available for this enquiry
-                  </div>
-
-                  <div v-else class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                      <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Task Details</h4>
-                      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Complete overview of all tasks for this enquiry</p>
-                    </div>
-
-                    <div class="divide-y divide-gray-200 dark:divide-gray-700">
-                      <div
-                        v-for="task in (enquiryTasks[enquiry.id] || []).filter((t: any) => t)"
-                        :key="task.id"
-                        class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        <div class="flex items-start justify-between">
-                          <div class="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <!-- Task Title & Description -->
-                            <div class="lg:col-span-2">
-                              <div class="flex items-center space-x-3 mb-2">
-                                <span :class="getStatusColor(task.status)" class="px-3 py-1 text-xs rounded-full font-medium">
-                                  {{ getStatusLabel(task.status) }}
-                                </span>
-                                <span v-if="task.priority && task.priority !== 'medium'" :class="getPriorityColor(task.priority)" class="px-2 py-1 text-xs rounded-full font-medium">
-                                  {{ task.priority.toUpperCase() }}
-                                </span>
-                              </div>
-                              <h5 class="text-base font-semibold text-gray-900 dark:text-white mb-1">{{ task.title }}</h5>
-                              <p class="text-sm text-gray-600 dark:text-gray-400" v-if="task.description">{{ task.description }}</p>
-                            </div>
-
-                            <!-- Assignment Info -->
-                            <div>
-                              <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Assigned To</div>
-                              <div class="flex items-center">
-                                <div class="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mr-2">
-                                  <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                    {{ task.assignedBy?.name?.charAt(0)?.toUpperCase() || '?' }}
-                                  </span>
-                                </div>
-                                <span class="text-sm text-gray-900 dark:text-white">{{ task.assignedBy?.name || 'Unassigned' }}</span>
-                              </div>
-                            </div>
-
-                            <!-- Due Date -->
-                            <div>
-                              <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Due Date</div>
-                              <div class="text-sm" :class="task.due_date && isOverdue(task.due_date) ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-900 dark:text-white'">
-                                {{ task.due_date ? formatDate(task.due_date) : 'No due date' }}
-                                <span v-if="task.due_date && isOverdue(task.due_date)" class="block text-xs">(Overdue)</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <!-- Actions -->
-                          <div class="flex flex-col space-y-2 ml-6">
-                            <button
-                              v-if="task.status === 'pending'"
-                              @click="updateTaskStatus(task, 'in_progress')"
-                              class="px-4 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
-                            >
-                              Start Task
-                            </button>
-                            <button
-                              v-if="task.status === 'in_progress'"
-                              @click="updateTaskStatus(task, 'completed')"
-                              class="px-4 py-2 text-sm bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
-                            >
-                              Mark Complete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </td>
-            </tr>
            </template>
           </tbody>
         </table>
@@ -310,7 +217,7 @@
 
     <!-- Create/Edit Enquiry Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-7xl w-full max-h-[90vh] overflow-y-auto">
         <h2 class="text-xl font-bold mb-6 text-gray-900 dark:text-white">
           {{ editingEnquiry ? 'Edit Enquiry' : 'Log New Enquiry' }}
         </h2>
@@ -511,7 +418,7 @@
     <TaskAssignmentModal
       :show="showTaskAssignmentModal"
       :enquiry-id="selectedEnquiry?.id || 0"
-      :enquiry="selectedEnquiry"
+      :enquiry="selectedEnquiry || undefined"
       @close="closeTaskAssignmentModal"
       @task-assigned="handleTaskAssigned"
     />
@@ -523,8 +430,6 @@
       :enquiry="selectedEnquiryForTasks || undefined"
       :is-open="taskSidebarOpen"
       @assign-tasks="selectedEnquiryForTasks && openTaskAssignment(selectedEnquiryForTasks)"
-      @task-updated="handleTaskUpdated"
-      @close="taskSidebarOpen = false"
     />
 
   </div>
@@ -533,10 +438,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import type { ProjectEnquiry, CreateProjectEnquiryData, UpdateProjectEnquiryData, EnquiryTask } from '../types/enquiry'
+import type { ProjectEnquiry, CreateProjectEnquiryData, UpdateProjectEnquiryData } from '../types/enquiry'
 import { useProjectsEnquiries } from '../composables/useProjectsEnquiries'
 import { useClients } from '../../clientService/composables/useClients'
-import { useTaskAssignment } from '../composables/useTaskAssignment'
 import TaskAssignmentModal from '../components/TaskAssignmentModal.vue'
 import SlidingTaskDashboard from '../components/SlidingTaskDashboard.vue'
 import Pagination from '@/components/Pagination.vue'
@@ -545,7 +449,6 @@ const router = useRouter()
 
 const { enquiries, pagination, loading, error, fetchEnquiries, goToPage, createEnquiry, updateEnquiry, convertToProject, canConvertToProject, newEnquiries, inProgressEnquiries, convertedEnquiries } = useProjectsEnquiries()
 const { activeClients, fetchClients } = useClients()
-const { updateTask } = useTaskAssignment()
 
 // Status Tabs
 const activeTab = ref('all')
@@ -566,9 +469,6 @@ const taskSidebarOpen = ref(false)
 const selectedEnquiryForTasks = ref<ProjectEnquiry | null>(null)
 
 
-// Expanded enquiries for inline task view
-const expandedEnquiries = ref<number[]>([])
-const enquiryTasks = ref<Record<number, EnquiryTask[]>>({})
 
 const enquiryFormData = ref<CreateProjectEnquiryData>({
   date_received: new Date().toISOString().split('T')[0],
@@ -662,45 +562,13 @@ const closeTaskAssignmentModal = () => {
   selectedEnquiry.value = null
 }
 
-const toggleTaskView = async (enquiryId: number) => {
-  const enquiry = enquiries.value.find(e => e.id === enquiryId)
-  if (enquiry) {
-    selectedEnquiryForTasks.value = enquiry
-    taskSidebarOpen.value = true
-  }
-}
 
-const updateTaskStatus = async (task: EnquiryTask, status: EnquiryTask['status']) => {
-  try {
-    await updateTask(task.id, { status })
-    // Update local state
-    const enquiryTasksForId = enquiryTasks.value[task.project_enquiry_id || task.enquiry_id]
-    if (enquiryTasksForId) {
-      const taskIndex = enquiryTasksForId.findIndex(t => t.id === task.id)
-      if (taskIndex > -1) {
-        enquiryTasksForId[taskIndex] = { ...enquiryTasksForId[taskIndex], status }
-      }
-    }
-  } catch (error) {
-    console.error('Error updating task status:', error)
-  }
-}
 
 const handleTaskAssigned = () => {
   // Refresh enquiries to show updated task information
   fetchEnquiries()
 }
 
-const handleTaskUpdated = (task: EnquiryTask) => {
-  // Update local task state if needed
-  if (selectedEnquiryForTasks.value && enquiryTasks.value[selectedEnquiryForTasks.value.id]) {
-    const tasks = enquiryTasks.value[selectedEnquiryForTasks.value.id]
-    const index = tasks.findIndex(t => t.id === task.id)
-    if (index > -1) {
-      tasks[index] = task
-    }
-  }
-}
 
 const closeModal = () => {
   showCreateModal.value = false
@@ -769,16 +637,6 @@ const getStatusColor = (status: string) => {
   return colors[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
 }
 
-const getPriorityColor = (priority: string) => {
-  const colors: Record<string, string> = {
-    'low': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
-    'medium': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-    'high': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-    'urgent': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-  }
-  return colors[priority] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-}
-
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
     'client_registered': 'Client Registered',
@@ -800,13 +658,6 @@ const getStatusLabel = (status: string) => {
   return labels[status] || status
 }
 
-const isOverdue = (dueDate: string) => {
-  return new Date(dueDate) < new Date()
-}
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString()
-}
 
 
 watch(showCreateModal, (newVal) => {

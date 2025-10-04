@@ -143,6 +143,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('tasks/{task}/assign', [TaskController::class, 'assignTask']);
         Route::put('tasks/{task}', [TaskController::class, 'update']);
         Route::get('enquiries/{enquiryId}/tasks', [TaskController::class, 'getEnquiryTasks']);
+        Route::get('all-enquiry-tasks', [TaskController::class, 'getAllEnquiryTasks']);
 
         // Enquiry task assignment routes
         Route::put('enquiry-tasks/{task}/assign', [TaskController::class, 'assignEnquiryTask']);
@@ -201,5 +202,42 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Site survey management
         Route::apiResource('site-surveys', SiteSurveyController::class); // Temporarily remove permissions for debugging
+
+        // Notification management
+        Route::get('notifications', function () {
+            $user = auth()->user();
+            $notificationService = app(\App\Modules\Projects\Services\NotificationService::class);
+            $notifications = $notificationService->getUserNotifications($user->id);
+            return response()->json([
+                'data' => $notifications,
+                'message' => 'Notifications retrieved successfully'
+            ]);
+        });
+        Route::put('notifications/{notification}/read', function (\App\Models\Notification $notification) {
+            $user = auth()->user();
+            $notificationService = app(\App\Modules\Projects\Services\NotificationService::class);
+            $success = $notificationService->markAsRead($notification->id, $user->id);
+            return response()->json([
+                'success' => $success,
+                'message' => $success ? 'Notification marked as read' : 'Notification not found'
+            ]);
+        });
+        Route::put('notifications/mark-all-read', function () {
+            $user = auth()->user();
+            $notificationService = app(\App\Modules\Projects\Services\NotificationService::class);
+            $count = $notificationService->markAllAsRead($user->id);
+            return response()->json([
+                'count' => $count,
+                'message' => "{$count} notifications marked as read"
+            ]);
+        });
+        Route::delete('notifications/{notification}', function (\App\Models\Notification $notification) {
+            $user = auth()->user();
+            if ($notification->user_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+            $notification->delete();
+            return response()->json(['message' => 'Notification deleted successfully']);
+        });
     });
 });

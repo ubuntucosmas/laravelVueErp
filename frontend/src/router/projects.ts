@@ -7,7 +7,7 @@ export const projectsRoutes: RouteRecordRaw[] = [
     component: MainLayout,
     meta: {
       requiresAuth: true,
-      // requiresProjectsAccess: true // Temporarily disabled for debugging
+      requiresProjectsAccess: true // Temporarily disabled for debugging
     },
     children: [
       {
@@ -28,13 +28,12 @@ export const projectsRoutes: RouteRecordRaw[] = [
         component: () => import('../modules/projects/views/ProjectsEnquiries.vue'),
         meta: { title: 'Project Enquiries' }
       },
-      // Future routes can be added here
-      // {
-      //   path: 'enquiries/:id',
-      //   name: 'projects-enquiry-detail',
-      //   component: () => import('../modules/projects/views/EnquiryDetailWorkflow.vue'),
-      //   meta: { title: 'Enquiry Details' }
-      // }
+      {
+        path: 'tasks',
+        name: 'projects-tasks',
+        component: () => import('../modules/projects/views/ProjectTasks.vue'),
+        meta: { title: 'Project Tasks' }
+      },
     ],
   },
 ]

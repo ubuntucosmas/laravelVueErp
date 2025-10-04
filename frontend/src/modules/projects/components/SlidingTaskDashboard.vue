@@ -1,129 +1,75 @@
 <template>
   <div class="sliding-task-dashboard">
 
+    <!-- Sidebar Overlay -->
+    <div
+      v-if="sidebarOpen"
+      @click="closeSidebar"
+      class="fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity duration-300"
+    ></div>
 
     <!-- Sliding Sidebar -->
     <div
-      v-if="isOpen"
-      class="fixed top-50 right-0 h-full w-full max-w-xl bg-white dark:bg-gray-800 shadow-4xl z-1000 overflow-y-auto"
-      tabindex="0"
-      @keydown.escape="closeSidebar"
+      class="fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl z-40 transform transition-transform duration-300 ease-in-out overflow-y-auto translate-x-0"
+      :class="sidebarOpen ? '' : 'translate-x-full'"
     >
       <div class="p-6">
-        <!-- Genius Header Design -->
-        <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 mb-6 -mx-6 px-6 py-4">
-          <!-- Background Gradient -->
-          <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-xl opacity-10"></div>
-
-          <!-- Header Content -->
-          <div class="relative bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <!-- Top Row -->
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex items-center space-x-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                  </svg>
-                </div>
-                <div>
-                  <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ enquiry?.title || 'Project Enquiry' }}</h2>
-                  <div class="flex items-center space-x-4 mt-1">
-                    <span v-if="enquiry?.enquiry_number" class="text-sm text-gray-600 dark:text-gray-400">
-                      #{{ enquiry.enquiry_number }}
-                    </span>
-                    <span v-if="enquiry?.status" :class="getStatusColor(enquiry.status)" class="px-2 py-1 text-xs rounded-full font-medium">
-                      {{ getStatusLabel(enquiry.status) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <button
-                @click="closeSidebar"
-                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                title="Close sidebar"
-              >
-                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-              </button>
-            </div>
-
-            <!-- Project Info -->
-            <div class="grid grid-cols-2 gap-4 mb-4">
-              <div v-if="enquiry?.client" class="flex items-center space-x-2">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-                <span class="text-sm text-gray-600 dark:text-gray-400">{{ enquiry.client.full_name || enquiry.client.FullName }}</span>
-              </div>
-              <div class="flex items-center space-x-2">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                </svg>
-                <span class="text-sm text-gray-600 dark:text-gray-400">{{ enquiryTasks.length }} tasks</span>
-              </div>
-            </div>
-
-            <!-- Progress Overview -->
-            <div class="mb-4">
-              <div class="flex items-center justify-between text-sm mb-2">
-                <span class="text-gray-600 dark:text-gray-400">Overall Progress</span>
-                <span class="font-medium text-gray-900 dark:text-white">{{ Math.round((enquiryTasks.filter(t => t.status === 'completed').length / Math.max(enquiryTasks.length, 1)) * 100) }}%</span>
-              </div>
-              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div
-                  class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full transition-all duration-500"
-                  :style="{ width: Math.round((enquiryTasks.filter(t => t.status === 'completed').length / Math.max(enquiryTasks.length, 1)) * 100) + '%' }"
-                ></div>
-              </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex items-center space-x-3">
-              <button
-                @click="$emit('assign-tasks')"
-                class="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
-              >
-                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                Add Task
-              </button>
-              <button
-                @click="viewMode = viewMode === 'cards' ? 'list' : 'cards'"
-                class="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                :title="viewMode === 'cards' ? 'Switch to list view' : 'Switch to card view'"
-              >
-                <svg v-if="viewMode === 'cards'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-                </svg>
-                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                </svg>
-              </button>
-            </div>
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Tasks for {{ enquiry?.title || 'Enquiry' }}
+            </h3>
+            <p v-if="enquiry?.enquiry_number" class="text-sm text-gray-600 dark:text-gray-400">
+              Enquiry #{{ enquiry.enquiry_number }}
+            </p>
           </div>
+          <button
+            @click="closeSidebar"
+            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+          >
+            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
         </div>
 
-        <!-- Toolbar -->
-        <div class="flex items-center space-x-3 mb-6">
-          <div class="flex-1">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search tasks..."
-              class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        <!-- Project Folder Structure -->
+        <!-- Folder Header -->
+        <div class="folder-header bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-4 mb-6 border border-blue-200 dark:border-blue-800">
+          <div class="flex items-center space-x-3">
+            <div class="folder-icon">
+              <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h4 class="text-lg font-semibold text-gray-900 dark:text-white">{{ enquiry?.title || 'Project Enquiry' }}</h4>
+              <p v-if="enquiry?.enquiry_number" class="text-sm text-gray-600 dark:text-gray-400">Enquiry #{{ enquiry.enquiry_number }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ enquiryTasks.length }} tasks</p>
+            </div>
+            <button
+              @click="$emit('assign-tasks')"
+              class="px-3 py-2 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white text-sm rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-md"
             >
+              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              Add Task
+            </button>
+            <button
+              @click="viewMode = viewMode === 'cards' ? 'list' : 'cards'"
+              class="p-2 ml-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors"
+              :title="viewMode === 'cards' ? 'Switch to list view' : 'Switch to card view'"
+            >
+              <svg v-if="viewMode === 'cards'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+              </svg>
+              <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+              </svg>
+            </button>
           </div>
-          <select
-            v-model="statusFilter"
-            class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
-          </select>
         </div>
 
         <!-- Folder Contents -->
@@ -140,7 +86,7 @@
         <!-- Cards View -->
         <div v-if="viewMode === 'cards'" class="space-y-3">
           <div
-            v-for="task in filteredTasks"
+            v-for="task in enquiryTasks"
             :key="task.id"
             class="task-file bg-white dark:bg-gray-700 rounded-lg p-4 shadow-md border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
           >
@@ -233,7 +179,7 @@
         <!-- List View -->
         <div v-else class="space-y-2">
           <div
-            v-for="task in filteredTasks"
+            v-for="task in enquiryTasks"
             :key="task.id"
             class="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
           >
@@ -280,7 +226,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import type { EnquiryTask, ProjectEnquiry } from '../types/enquiry'
 import { useTaskAssignment } from '../composables/useTaskAssignment'
 
@@ -300,19 +246,13 @@ const emit = defineEmits<{
 
 const { enquiryTasks, fetchEnquiryTasks, updateTask } = useTaskAssignment()
 const updatingTask = ref<number | null>(null)
+const sidebarOpen = ref(false)
 const viewMode = ref<'cards' | 'list'>('cards')
-const searchQuery = ref('')
-const statusFilter = ref('')
 
-const filteredTasks = computed(() => {
-  let tasks = enquiryTasks.value
-  if (searchQuery.value) {
-    tasks = tasks.filter(t => t.title.toLowerCase().includes(searchQuery.value.toLowerCase()))
+watch(() => props.isOpen, (newVal) => {
+  if (newVal !== undefined) {
+    sidebarOpen.value = newVal
   }
-  if (statusFilter.value) {
-    tasks = tasks.filter(t => t.status === statusFilter.value)
-  }
-  return tasks
 })
 
 watch(() => props.enquiryId, async (newId) => {
@@ -321,7 +261,12 @@ watch(() => props.enquiryId, async (newId) => {
   }
 })
 
+const toggleSidebar = () => {
+  sidebarOpen.value = !sidebarOpen.value
+}
+
 const closeSidebar = () => {
+  sidebarOpen.value = false
   emit('close')
 }
 
@@ -417,6 +362,9 @@ const getTaskIconEmoji = (task: EnquiryTask) => {
 onMounted(async () => {
   if (props.enquiryId) {
     await fetchEnquiryTasks(props.enquiryId)
+  }
+  if (props.isOpen !== undefined) {
+    sidebarOpen.value = props.isOpen
   }
 })
 </script>

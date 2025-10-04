@@ -26,6 +26,70 @@ class TaskController extends Controller
     }
 
     /**
+     * Get all enquiry tasks across all enquiries
+     */
+    public function getAllEnquiryTasks(Request $request): JsonResponse
+    {
+        \Log::info("[DEBUG] getAllEnquiryTasks called, user: " . Auth::id());
+
+        // Check permissions
+        if (!Auth::user()->hasPermissionTo(Permissions::TASK_READ) &&
+            !Auth::user()->hasRole(['Super Admin', 'Project Manager', 'Project Officer'])) {
+            \Log::warning("[DEBUG] getAllEnquiryTasks permission denied for user " . Auth::id());
+            return response()->json([
+                'message' => 'Unauthorized access to tasks'
+            ], 403);
+        }
+
+        try {
+            $query = EnquiryTask::with('enquiry', 'creator', 'assignmentHistory.assignedTo', 'assignmentHistory.assignedBy');
+
+            // Apply filters if provided
+            if ($request->has('status') && $request->status) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->has('priority') && $request->priority) {
+                $query->where('priority', $request->priority);
+            }
+
+            if ($request->has('assigned_user_id') && $request->assigned_user_id) {
+                $query->where('assigned_user_id', $request->assigned_user_id);
+            }
+
+            if ($request->has('enquiry_id') && $request->enquiry_id) {
+                $query->where('project_enquiry_id', $request->enquiry_id);
+            }
+
+            // Search functionality
+            if ($request->has('search') && $request->search) {
+                $searchTerm = $request->search;
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('title', 'like', "%{$searchTerm}%")
+                      ->orWhereHas('enquiry', function ($enquiryQuery) use ($searchTerm) {
+                          $enquiryQuery->where('title', 'like', "%{$searchTerm}%");
+                      });
+                });
+            }
+
+            $tasks = $query->orderBy('id')->get(); // Order by ID for consistent ordering
+
+            \Log::info("[DEBUG] getAllEnquiryTasks retrieved " . $tasks->count() . " tasks");
+
+            return response()->json([
+                'data' => $tasks,
+                'message' => 'All enquiry tasks retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error("[DEBUG] getAllEnquiryTasks failed: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to retrieve all enquiry tasks',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get enquiry tasks for a specific enquiry
      */
     public function getEnquiryTasks(int $enquiryId): JsonResponse
@@ -44,7 +108,7 @@ class TaskController extends Controller
         try {
             $tasks = EnquiryTask::where('project_enquiry_id', $enquiryId)
                 ->with('enquiry', 'creator', 'assignmentHistory.assignedTo', 'assignmentHistory.assignedBy')
-                ->orderBy('created_at')
+                ->orderBy('id') // Order by ID for consistent ordering
                 ->get();
 
             \Log::info("[DEBUG] getEnquiryTasks retrieved " . $tasks->count() . " tasks for enquiry {$enquiryId}");
@@ -519,6 +583,7 @@ class TaskController extends Controller
         try {
             $task = EnquiryTask::findOrFail($taskId);
 
+            $oldStatus = $task->status;
             $task->update($request->only([
                 'title',
                 'priority',
@@ -526,6 +591,11 @@ class TaskController extends Controller
                 'notes',
                 'status',
             ]));
+
+            // Send notification if task was marked as completed
+            if ($oldStatus !== 'completed' && $request->status === 'completed') {
+                $this->notificationService->sendTaskCompletedNotification($task, $user);
+            }
 
             return response()->json([
                 'data' => $task->load('assignedBy', 'assignmentHistory'),
