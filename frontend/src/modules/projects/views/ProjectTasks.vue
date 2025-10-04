@@ -45,12 +45,30 @@
           Showing tasks filtered by enquiry. <router-link to="/projects/tasks" class="underline hover:text-blue-800">View all tasks</router-link>
         </p>
       </div>
-      <button
-        @click="openTaskAssignment()"
-        class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-lg font-medium transition-colors"
-      >
-        Assign New Task
-      </button>
+      <div class="flex items-center space-x-2">
+        <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <button
+            @click="viewMode = 'grid'"
+            :class="viewMode === 'grid' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'"
+            class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+          >
+            Grid
+          </button>
+          <button
+            @click="viewMode = 'table'"
+            :class="viewMode === 'table' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'"
+            class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+          >
+            Table
+          </button>
+        </div>
+        <button
+          @click="openTaskAssignment()"
+          class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-lg font-medium transition-colors"
+        >
+          Assign New Task
+        </button>
+      </div>
     </div>
 
     <!-- Filters -->
@@ -103,7 +121,8 @@
       </div>
 
       <div v-else class="p-6">
-        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <!-- Grid View -->
+        <div v-if="viewMode === 'grid'" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           <div
             v-for="task in filteredTasks"
             :key="task.id"
@@ -173,6 +192,70 @@
             </div>
           </div>
         </div>
+
+        <!-- Table View -->
+        <div v-else class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-800">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Title</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Priority</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Assigned By</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Due Date</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+              <tr
+                v-for="task in filteredTasks"
+                :key="task.id"
+                class="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                @click="openTaskModal(task)"
+              >
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900 dark:text-white">{{ task.title }}</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">{{ task.enquiry?.title || 'Unknown Enquiry' }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div :class="getTaskTypeIcon(task.type)" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold mr-2">
+                      {{ getTaskTypeInitial(task.type) }}
+                    </div>
+                    <span class="text-sm text-gray-900 dark:text-white capitalize">{{ task.type }}</span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span :class="getStatusColor(task.status)" class="px-2 py-1 text-xs rounded-full font-medium">
+                    {{ getStatusLabel(task.status) }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span v-if="task.priority && task.priority !== 'medium'" :class="getPriorityColor(task.priority)" class="px-2 py-1 text-xs rounded-full font-medium">
+                    {{ task.priority.toUpperCase() }}
+                  </span>
+                  <span v-else class="text-sm text-gray-500 dark:text-gray-400">Medium</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  {{ task.assignedBy?.name || 'Unassigned' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  <div v-if="task.due_date" :class="isOverdue(task.due_date) ? 'text-red-600 dark:text-red-400' : ''">
+                    {{ formatDate(task.due_date) }}
+                    <span v-if="isOverdue(task.due_date)" class="font-medium">(Overdue)</span>
+                  </div>
+                  <div v-else class="text-gray-500 dark:text-gray-400">No due date</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
+                    View Details
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -219,6 +302,7 @@ const filters = ref({
 const showTaskAssignmentModal = ref(false)
 const showTaskModal = ref(false)
 const selectedTask = ref<EnquiryTask | null>(null)
+const viewMode = ref<'grid' | 'table'>('grid')
 
 const filteredTasks = computed(() => {
   let tasks = enquiryTasks.value
