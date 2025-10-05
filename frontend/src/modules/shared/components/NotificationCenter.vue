@@ -30,7 +30,7 @@
         <div class="flex items-center space-x-2">
           <button
             v-if="unreadCount > 0"
-            @click="markAllAsRead"
+            @click="handleMarkAllAsRead"
             class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
           >
             Mark all read
@@ -62,7 +62,7 @@
             :key="notification.id"
             @click="handleNotificationClick(notification)"
             class="p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-            :class="{ 'bg-blue-50 dark:bg-blue-900/20': !notification.read }"
+            :class="{ 'bg-blue-50 dark:bg-blue-900/20': !notification.is_read }"
           >
             <div class="flex items-start space-x-3">
               <div class="flex-shrink-0">
@@ -97,7 +97,7 @@
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                   {{ notification.message }}
                 </p>
-                <div v-if="notification.metadata" class="mt-2 flex flex-wrap gap-1">
+                <div v-if="notification.data" class="mt-2 flex flex-wrap gap-1">
                   <span
                     v-for="tag in getNotificationTags(notification)"
                     :key="tag"
@@ -109,7 +109,7 @@
                 </div>
               </div>
 
-              <div v-if="!notification.read" class="flex-shrink-0">
+              <div v-if="!notification.is_read" class="flex-shrink-0">
                 <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
               </div>
             </div>
@@ -131,61 +131,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useNotifications } from '../../projects/composables/useNotifications'
 
-// Types
-interface Notification {
-  id: string
-  type: 'task_assigned' | 'task_completed' | 'deadline_approaching' | 'system' | 'info'
-  title: string
-  message: string
-  read: boolean
-  created_at: string
-  metadata?: Record<string, unknown>
-  action_url?: string
-}
+// Use the notifications composable
+const {
+  notifications,
+  loading,
+  error,
+  fetchNotifications,
+  markAsRead,
+  markAllAsRead,
+  unreadCount
+} = useNotifications()
 
 // Reactive data
 const showPanel = ref(false)
-const notifications = ref<Notification[]>([])
-
-// Mock notifications data - in a real app, this would come from an API
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'task_assigned',
-    title: 'New Task Assigned',
-    message: 'You have been assigned the task "Conduct Site Survey" for enquiry "Corporate Event Booth Setup"',
-    read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-    metadata: { task_id: 1, enquiry_id: 1, priority: 'high' }
-  },
-  {
-    id: '2',
-    type: 'deadline_approaching',
-    title: 'Deadline Approaching',
-    message: 'Task "Design Assets and Material Specification" is due in 2 days',
-    read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-    metadata: { task_id: 2, enquiry_id: 1, days_remaining: 2, priority: 'urgent' }
-  },
-  {
-    id: '3',
-    type: 'task_completed',
-    title: 'Task Completed',
-    message: 'Sarah Johnson completed "Prepare Budget & Costing"',
-    read: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    metadata: { task_id: 3, enquiry_id: 1, completed_by: 'Sarah Johnson' }
-  }
-]
+const pollingInterval = ref<number | null>(null)
 
 // Computed properties
-const unreadCount = computed(() => {
-  return notifications.value.filter(n => !n.read).length
-})
-
 const hasUnreadNotifications = computed(() => {
   return unreadCount.value > 0
 })
@@ -193,49 +158,68 @@ const hasUnreadNotifications = computed(() => {
 // Methods
 const toggleNotificationPanel = () => {
   showPanel.value = !showPanel.value
+  if (showPanel.value) {
+    // Refresh notifications when opening panel
+    fetchNotifications()
+  }
 }
 
 const closePanel = () => {
   showPanel.value = false
 }
 
-const markAllAsRead = () => {
-  notifications.value.forEach(notification => {
-    notification.read = true
-  })
-  // In a real app, this would make an API call to mark notifications as read
+const handleMarkAllAsRead = async () => {
+  try {
+    await markAllAsRead()
+  } catch (err) {
+    console.error('Failed to mark all notifications as read:', err)
+  }
 }
 
-const handleNotificationClick = (notification: Notification) => {
-  // Mark as read
-  notification.read = true
+const handleNotificationClick = async (notification: any) => {
+  try {
+    // Mark as read
+    await markAsRead(notification.id)
 
-  // Handle task notifications specially - check for enquiry_id in metadata first
-  if (notification.type === 'task_assigned' && notification.metadata?.enquiry_id) {
-    // Navigate to the enquiry page and open the task dashboard
-    const enquiryId = notification.metadata.enquiry_id
-    const taskId = notification.metadata.task_id
+    // Handle task notifications specially - check for enquiry_id in data first
+    if (notification.type === 'task_assigned' && notification.data?.enquiry_id) {
+      // Navigate to the enquiry page and open the task dashboard
+      const enquiryId = notification.data.enquiry_id
+      const taskId = notification.data.task_id
 
-    // Navigate to enquiries management page with task dashboard open
-    router.push({
-      path: '/projects/enquiries',
-      query: {
-        open_tasks: String(enquiryId),
-        highlight_task: String(taskId)
-      }
-    })
-    closePanel()
-  } else if (notification.action_url && notification.action_url !== '/projects/tasks') {
-    // Navigate to action URL for other types of notifications (but not the old /projects/tasks route)
-    router.push(notification.action_url)
-    closePanel()
-  } else if (notification.type === 'task_assigned') {
-    // Fallback for old task notifications without proper metadata - navigate to enquiries page
-    router.push('/projects/enquiries')
-    closePanel()
+      // Navigate to enquiries management page with task dashboard open
+      router.push({
+        path: '/projects/enquiries',
+        query: {
+          open_tasks: String(enquiryId),
+          highlight_task: String(taskId)
+        }
+      })
+      closePanel()
+    } else if (notification.type === 'task_assigned') {
+      // Fallback for task notifications without proper data - navigate to enquiries page
+      router.push('/projects/enquiries')
+      closePanel()
+    }
+  } catch (err) {
+    console.error('Failed to mark notification as read:', err)
+  }
+}
+
+const getNotificationTags = (notification: any): string[] => {
+  const tags: string[] = []
+
+  if (notification.data?.priority) {
+    tags.push(notification.data.priority as string)
   }
 
-  // In a real app, this would make an API call to mark the notification as read
+  if (notification.type === 'task_due_soon' && notification.data?.days_remaining) {
+    const days = notification.data.days_remaining as number
+    if (days <= 1) tags.push('urgent')
+    else if (days <= 3) tags.push('soon')
+  }
+
+  return tags
 }
 
 const viewAllNotifications = () => {
@@ -271,22 +255,6 @@ const getNotificationIconClass = (type: string): string => {
   return classes[type] || classes.info
 }
 
-const getNotificationTags = (notification: Notification): string[] => {
-  const tags: string[] = []
-
-  if (notification.metadata?.priority) {
-    tags.push(notification.metadata.priority as string)
-  }
-
-  if (notification.type === 'deadline_approaching' && notification.metadata?.days_remaining) {
-    const days = notification.metadata.days_remaining as number
-    if (days <= 1) tags.push('urgent')
-    else if (days <= 3) tags.push('soon')
-  }
-
-  return tags
-}
-
 const getTagClass = (tag: string): string => {
   const classes: Record<string, string> = {
     urgent: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
@@ -298,48 +266,26 @@ const getTagClass = (tag: string): string => {
   return classes[tag] || classes.low
 }
 
-// Add notification method (can be called from other components)
-const addNotification = (notification: Omit<Notification, 'id' | 'read' | 'created_at'>) => {
-  const newNotification: Notification = {
-    ...notification,
-    id: Date.now().toString(),
-    read: false,
-    created_at: new Date().toISOString()
-  }
-
-  notifications.value.unshift(newNotification)
-
-  // Limit to 50 notifications
-  if (notifications.value.length > 50) {
-    notifications.value = notifications.value.slice(0, 50)
-  }
-}
-
-// Expose addNotification method for other components to use
-defineExpose({
-  addNotification
-})
-
 // Router
 const router = useRouter()
 
 // Lifecycle
-onMounted(() => {
-  // Clear old localStorage data to ensure fresh start with updated notifications
-  localStorage.removeItem('user_notifications')
-
-  // Load notifications from localStorage or API
-  const savedNotifications = localStorage.getItem('user_notifications')
-  if (savedNotifications) {
-    try {
-      notifications.value = JSON.parse(savedNotifications)
-    } catch (error) {
-      console.error('Failed to parse saved notifications:', error)
-      notifications.value = mockNotifications
-    }
-  } else {
-    notifications.value = mockNotifications
+onMounted(async () => {
+  // Fetch notifications on mount
+  try {
+    await fetchNotifications()
+  } catch (err) {
+    console.error('Failed to fetch notifications on mount:', err)
   }
+
+  // Start polling for new notifications every 30 seconds
+  pollingInterval.value = setInterval(async () => {
+    try {
+      await fetchNotifications()
+    } catch (err) {
+      console.error('Failed to poll notifications:', err)
+    }
+  }, 30000)
 
   // Listen for clicks outside to close panel
   const handleClickOutside = (event: Event) => {
@@ -353,13 +299,12 @@ onMounted(() => {
 
   onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside)
+    // Clear polling interval
+    if (pollingInterval.value) {
+      clearInterval(pollingInterval.value)
+    }
   })
 })
-
-// Watch for notifications changes and save to localStorage
-watch(notifications, (newNotifications) => {
-  localStorage.setItem('user_notifications', JSON.stringify(newNotifications))
-}, { deep: true })
 </script>
 
 <style scoped>

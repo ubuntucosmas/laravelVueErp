@@ -24,7 +24,7 @@ export function useNotifications() {
     error.value = null
 
     try {
-      const response = await api.get('/api/notifications')
+      const response = await api.get('/api/projects/notifications')
       notifications.value = response.data.data || []
       return notifications.value
     } catch (err) {

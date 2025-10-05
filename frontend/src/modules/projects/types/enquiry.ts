@@ -69,7 +69,6 @@ export interface EnquiryTask {
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   due_date?: string;
   assigned_at?: string;
-  assigned_by?: number;
   notes?: string;
   created_by: number;
   created_at: string;
@@ -86,7 +85,12 @@ export interface EnquiryTask {
     id: number;
     name: string;
   };
-  assignedBy?: {
+  // Note: API returns relationship objects under snake_case keys
+  assigned_by?: {
+    id: number;
+    name: string;
+  };
+  assigned_to?: {
     id: number;
     name: string;
   };

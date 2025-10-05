@@ -124,6 +124,9 @@
                 Enquiry Number
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                My Tasks
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -154,6 +157,11 @@
                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                  {{ enquiry.enquiry_number }}
                </td>
+               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                   {{ getUserTaskCount(enquiry) }}
+                 </span>
+               </td>
                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                  <button
                    @click="editEnquiry(enquiry)"
@@ -171,13 +179,13 @@
                    @click="openTaskAssignment(enquiry)"
                    class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3"
                  >
-                   Assign Tasks
+                    <span>&rarrpl;</span>Assign Tasks
                  </button>
                  <router-link
                    :to="`/projects/tasks?enquiry_id=${enquiry.id}`"
                    class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 mr-3"
                  >
-                   View All Tasks
+                   Tasks&rarr;
                  </router-link>
                  <button
                    v-if="canConvertToProject(enquiry)"
@@ -464,15 +472,6 @@
       @task-assigned="handleTaskAssigned"
     />
 
-    <!-- Sliding Task Dashboard -->
-    <SlidingTaskDashboard
-      :key="selectedEnquiryForTasks?.id"
-      :enquiry-id="selectedEnquiryForTasks?.id"
-      :enquiry="selectedEnquiryForTasks || undefined"
-      :is-open="taskSidebarOpen"
-      @assign-tasks="selectedEnquiryForTasks && openTaskAssignment(selectedEnquiryForTasks)"
-    />
-
   </div>
 </template>
 
@@ -482,15 +481,27 @@ import { useRouter } from 'vue-router'
 import type { ProjectEnquiry, CreateProjectEnquiryData, UpdateProjectEnquiryData } from '../types/enquiry'
 import { useProjectsEnquiries } from '../composables/useProjectsEnquiries'
 import { useClients } from '../../clientService/composables/useClients'
+import { useAuth } from '@/composables/useAuth'
 import TaskAssignmentModal from '../components/TaskAssignmentModal.vue'
-import SlidingTaskDashboard from '../components/SlidingTaskDashboard.vue'
 import Pagination from '@/components/Pagination.vue'
 import { ENQUIRY_STATUS_LABELS, ENQUIRY_STATUS_COLORS, PAGINATION_PER_PAGE } from '../constants/enquiryConstants'
 
 const router = useRouter()
+const emit = defineEmits<{
+  taskAssigned: [data: {
+    userId: number
+    userName: string
+    userEmail: string
+    taskCount: number
+    taskNames: string
+    message: string
+    tasks: any[]
+  }]
+}>()
 
 const { enquiries, pagination, loading, error, fetchEnquiries, goToPage, createEnquiry, updateEnquiry, convertToProject, canConvertToProject, newEnquiries, inProgressEnquiries, convertedEnquiries } = useProjectsEnquiries()
 const { activeClients, fetchClients } = useClients()
+const { user } = useAuth()
 
 // Status Tabs
 const activeTab = ref('all')
@@ -506,9 +517,6 @@ const formSuccess = ref('')
 const showTaskAssignmentModal = ref(false)
 const selectedEnquiry = ref<ProjectEnquiry | null>(null)
 
-// Sliding Task Dashboard
-const taskSidebarOpen = ref(false)
-const selectedEnquiryForTasks = ref<ProjectEnquiry | null>(null)
 
 // Modal Tabs
 const activeModalTab = ref('basic')
@@ -621,9 +629,23 @@ const closeTaskAssignmentModal = () => {
 
 
 
-const handleTaskAssigned = () => {
+const handleTaskAssigned = (updatedTask: any) => {
   // Refresh enquiries to show updated task information
   fetchEnquiries()
+
+  // Emit event to parent for notifications
+  // The parent expects a specific data structure
+  const data = {
+    userId: updatedTask.assigned_by,
+    userName: 'User', // We don't have user name here, but parent will get it
+    userEmail: '',
+    taskCount: 1,
+    taskNames: updatedTask.title,
+    message: `Task "${updatedTask.title}" has been assigned`,
+    tasks: [updatedTask]
+  }
+
+  emit('taskAssigned', data)
 }
 
 
@@ -681,6 +703,11 @@ const getStatusColor = (status: string) => {
 
 const getStatusLabel = (status: string) => {
   return ENQUIRY_STATUS_LABELS[status] || status
+}
+
+const getUserTaskCount = (enquiry: ProjectEnquiry) => {
+  if (!user.value || !enquiry.enquiryTasks) return 0
+  return enquiry.enquiryTasks.filter(task => task.assigned_to?.id === user.value!.id).length
 }
 
 

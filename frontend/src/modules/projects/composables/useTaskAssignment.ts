@@ -72,14 +72,21 @@ export function useTaskAssignment() {
     error.value = null
 
     try {
-      const response = await api.put(`/api/projects/enquiry-tasks/${taskId}/assign`, assignmentData)
+      // Convert to FormData to match backend expectations
+      const formData = new FormData()
+      formData.append('assigned_user_id', assignmentData.assigned_user_id.toString())
+      if (assignmentData.priority) formData.append('priority', assignmentData.priority)
+      if (assignmentData.due_date) formData.append('due_date', assignmentData.due_date)
+      if (assignmentData.notes) formData.append('notes', assignmentData.notes)
+
+      const response = await api.post(`/api/projects/enquiry-tasks/${taskId}/assign`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
       const updatedTask = response.data.data
 
-      // Update the task in the local array
-      const index = enquiryTasks.value.findIndex(task => task.id === taskId)
-      if (index !== -1) {
-        enquiryTasks.value[index] = { ...enquiryTasks.value[index], ...updatedTask }
-      }
+      // Note: Local array update removed - parent components handle their own state
 
       return updatedTask
     } catch (err) {

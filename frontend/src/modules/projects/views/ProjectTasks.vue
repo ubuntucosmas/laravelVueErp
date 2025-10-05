@@ -11,6 +11,14 @@
             Projects
           </router-link>
         </li>
+        <li v-if="enquiryId" class="inline-flex items-center">
+          <svg class="w-3 h-3 text-gray-400 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/>
+          </svg>
+          <router-link to="/projects/enquiries" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+            Enquiries
+          </router-link>
+        </li>
         <li aria-current="page">
           <div class="flex items-center">
             <svg class="w-3 h-3 text-gray-400 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,8 +34,8 @@
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-          {{ enquiryId ? `Tasks for "${enquiryTitle}"` : 'Project Tasks' }}
-        </h1>
+           {{ enquiryId ? `Tasks for "${enquiryTitle}"` : (showAllTasks ? 'All Project Tasks' : 'My Tasks') }}
+         </h1>
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
           {{ enquiryId ? 'Manage tasks for this specific enquiry' : 'Manage and track all project tasks' }}
         </p>
@@ -53,11 +61,18 @@
           </button>
         </div>
         <button
-          @click="openTaskAssignment()"
-          class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          @click="toggleTaskView"
+          :class="showAllTasks ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-500 hover:bg-gray-600'"
+          class="text-white px-4 py-2 rounded-lg font-medium transition-colors"
         >
-          Assign New Task
+          {{ showAllTasks ? 'Show My Tasks' : 'See All Tasks' }}
         </button>
+        <router-link
+          to="/projects/enquiries"
+          class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors mr-2"
+        >
+          &#x2190;Project Enquiries
+        </router-link>
       </div>
     </div>
 
@@ -143,7 +158,15 @@
 
               <!-- Enquiry Info -->
               <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                <span class="font-medium">Enquiry:</span> {{ task.enquiry?.title || 'Unknown Enquiry' }}
+                <span class="font-medium">Enquiry:</span>
+                <router-link
+                  v-if="task.enquiry"
+                  :to="`/projects/enquiries`"
+                  class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+                >
+                  {{ task.enquiry.title }}
+                </router-link>
+                <span v-else>Unknown Enquiry</span>
               </div>
 
               <!-- Task Meta Info -->
@@ -153,7 +176,7 @@
                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                     </svg>
-                    <span>{{ task.assignedBy?.name || 'Unassigned' }}</span>
+                    <span>{{ task.assigned_to?.name || 'Unassigned' }}</span>
                   </div>
                   <div v-if="task.due_date" class="flex items-center space-x-1" :class="isOverdue(task.due_date) ? 'text-red-600 dark:text-red-400' : ''">
                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -192,6 +215,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Priority</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Assigned To</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Assigned By</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Due Date</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
@@ -206,7 +230,16 @@
               >
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900 dark:text-white">{{ task.title }}</div>
-                  <div class="text-sm text-gray-500 dark:text-gray-400">{{ task.enquiry?.title || 'Unknown Enquiry' }}</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">
+                    <router-link
+                      v-if="task.enquiry"
+                      :to="`/projects/enquiries`"
+                      class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+                    >
+                      {{ task.enquiry.title }}
+                    </router-link>
+                    <span v-else>Unknown Enquiry</span>
+                  </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
@@ -228,7 +261,10 @@
                   <span v-else class="text-sm text-gray-500 dark:text-gray-400">Medium</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                  {{ task.assignedBy?.name || 'Unassigned' }}
+                  {{ task.assigned_to?.name || 'Unassigned' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  {{ task.assigned_by?.name || 'Unassigned' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                   <div v-if="task.due_date" :class="isOverdue(task.due_date) ? 'text-red-600 dark:text-red-400' : ''">
@@ -274,10 +310,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import type { EnquiryTask } from '../types/enquiry'
 import { useTaskAssignment } from '../composables/useTaskAssignment'
+import { useAuth } from '@/composables/useAuth'
 import TaskAssignmentModal from '../components/TaskAssignmentModal.vue'
 import TaskModal from '../components/TaskModal.vue'
 
 const route = useRoute()
+const { user } = useAuth()
 const { enquiryTasks, fetchAllTasks, updateTask, loading } = useTaskAssignment()
 
 const enquiryId = ref<number | null>(null)
@@ -293,6 +331,7 @@ const showTaskAssignmentModal = ref(false)
 const showTaskModal = ref(false)
 const selectedTask = ref<EnquiryTask | null>(null)
 const viewMode = ref<'grid' | 'table'>('grid')
+const showAllTasks = ref(false)
 
 const filteredTasks = computed(() => {
   let tasks = enquiryTasks.value
@@ -302,7 +341,7 @@ const filteredTasks = computed(() => {
     tasks = tasks.filter(task =>
       task.title.toLowerCase().includes(searchTerm) ||
       task.enquiry?.title?.toLowerCase().includes(searchTerm) ||
-      task.assignedBy?.name?.toLowerCase().includes(searchTerm)
+      task.assigned_by?.name?.toLowerCase().includes(searchTerm)
     )
   }
 
@@ -323,16 +362,14 @@ const applyFilters = () => {
     search: filters.value.search,
     status: filters.value.status,
     priority: filters.value.priority,
-    enquiry_id: enquiryId.value || undefined
+    enquiry_id: enquiryId.value || undefined,
+    assigned_user_id: showAllTasks.value ? undefined : user.value?.id
   })
 }
 
-const openTaskAssignment = () => {
-  showTaskAssignmentModal.value = true
-}
-
-const closeTaskAssignmentModal = () => {
-  showTaskAssignmentModal.value = false
+const toggleTaskView = () => {
+  showAllTasks.value = !showAllTasks.value
+  applyFilters()
 }
 
 const updateTaskStatus = async (task: EnquiryTask, status: EnquiryTask['status']) => {
@@ -348,9 +385,34 @@ const updateTaskStatus = async (task: EnquiryTask, status: EnquiryTask['status']
   }
 }
 
-const handleTaskAssigned = () => {
-  // Refresh tasks
-  fetchAllTasks()
+const handleTaskAssigned = (updatedTask: EnquiryTask) => {
+  console.log('[DEBUG] ProjectTasks handleTaskAssigned called with:', {
+    updatedTaskId: updatedTask.id,
+    assigned_to: updatedTask.assigned_to,
+    assigned_by: updatedTask.assigned_by,
+    selectedTaskId: selectedTask.value?.id
+  })
+
+  // Update the specific task in the local array
+  const taskIndex = enquiryTasks.value.findIndex(t => t.id === updatedTask.id)
+  if (taskIndex > -1) {
+    enquiryTasks.value[taskIndex] = { ...enquiryTasks.value[taskIndex], ...updatedTask }
+
+    // Also update selectedTask if this task is currently open in modal
+    if (selectedTask.value && selectedTask.value.id === updatedTask.id) {
+      selectedTask.value = { ...enquiryTasks.value[taskIndex] }
+      console.log('[DEBUG] ProjectTasks updated selectedTask:', {
+        id: selectedTask.value.id,
+        assigned_to: selectedTask.value.assigned_to,
+        assigned_by: selectedTask.value.assigned_by
+      })
+    }
+  } else {
+    // If task not found, refresh all tasks
+    fetchAllTasks({
+      enquiry_id: enquiryId.value || undefined
+    })
+  }
 }
 
 const openTaskModal = (task: EnquiryTask) => {
@@ -444,7 +506,8 @@ onMounted(async () => {
   }
 
   await fetchAllTasks({
-    enquiry_id: enquiryId.value || undefined
+    enquiry_id: enquiryId.value || undefined,
+    assigned_user_id: showAllTasks.value ? undefined : user.value?.id
   })
 
   // Set enquiry title from the first task if available

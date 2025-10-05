@@ -42,7 +42,7 @@ class TaskController extends Controller
         }
 
         try {
-            $query = EnquiryTask::with('enquiry', 'creator', 'assignmentHistory.assignedTo', 'assignmentHistory.assignedBy');
+            $query = EnquiryTask::with('enquiry', 'creator', 'assignedTo', 'assignedBy', 'assignmentHistory.assignedTo', 'assignmentHistory.assignedBy');
 
             // Apply filters if provided
             if ($request->has('status') && $request->status) {
@@ -54,7 +54,7 @@ class TaskController extends Controller
             }
 
             if ($request->has('assigned_user_id') && $request->assigned_user_id) {
-                $query->where('assigned_user_id', $request->assigned_user_id);
+                $query->where('assigned_to', $request->assigned_user_id);
             }
 
             if ($request->has('enquiry_id') && $request->enquiry_id) {
@@ -107,7 +107,7 @@ class TaskController extends Controller
 
         try {
             $tasks = EnquiryTask::where('project_enquiry_id', $enquiryId)
-                ->with('enquiry', 'creator', 'assignmentHistory.assignedTo', 'assignmentHistory.assignedBy')
+                ->with('enquiry', 'creator', 'assignedTo', 'assignedBy', 'assignmentHistory.assignedTo', 'assignmentHistory.assignedBy')
                 ->orderBy('id') // Order by ID for consistent ordering
                 ->get();
 
@@ -393,7 +393,6 @@ class TaskController extends Controller
      */
     public function assignEnquiryTask(Request $request, int $taskId): JsonResponse
     {
-        \Log::info("[DEBUG] assignEnquiryTask called: taskId={$taskId}, user=" . Auth::id(), $request->all());
 
         // Check permissions - only Project Managers and above can assign tasks
         $user = Auth::user();
@@ -413,7 +412,6 @@ class TaskController extends Controller
         ]);
 
         if ($validator->fails()) {
-            \Log::error("[DEBUG] assignEnquiryTask validation failed: " . json_encode($validator->errors()));
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
@@ -447,7 +445,7 @@ class TaskController extends Controller
             // Send notification
             $this->notificationService->sendTaskAssignmentNotification($task, $assignedUser, $user);
 
-            $loadedTask = $task->load('department', 'assignedBy', 'assignmentHistory');
+            $loadedTask = $task->load('department', 'assignedBy', 'assignedTo', 'assignmentHistory');
             \Log::info("[DEBUG] assignEnquiryTask loaded task with relationships, history count: " . ($loadedTask->assignmentHistory ? $loadedTask->assignmentHistory->count() : 0));
 
             return response()->json([

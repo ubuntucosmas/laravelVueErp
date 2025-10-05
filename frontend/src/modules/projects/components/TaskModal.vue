@@ -27,8 +27,12 @@
     <!-- Right: Meta Info -->
     <div class="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-300">
       <div>
+        <span class="text-gray-400">Assigned to:</span>
+        <span class="ml-1">{{ task.assigned_to?.name || 'Unassigned' }}</span>
+      </div>
+      <div v-if="task.assigned_by">
         <span class="text-gray-400">By:</span>
-        <span class="ml-1">{{ task.assignedBy?.name || 'Unassigned' }}</span>
+        <span class="ml-1">{{ task.assigned_by.name }}</span>
       </div>
       <div v-if="task.due_date">
         <span class="text-gray-400">Due:</span>
@@ -67,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import type { EnquiryTask } from '../types/enquiry'
 import TaskRenderer from './tasks/TaskRenderer.vue'
 
@@ -77,6 +81,16 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+// Debug: Log task data when it changes
+watch(() => props.task, (newTask) => {
+  console.log('[DEBUG] TaskModal received task:', {
+    id: newTask?.id,
+    title: newTask?.title,
+    assigned_to: newTask?.assigned_to,
+    assigned_by: newTask?.assigned_by
+  })
+}, { immediate: true })
 
 const emit = defineEmits<{
   'close': []

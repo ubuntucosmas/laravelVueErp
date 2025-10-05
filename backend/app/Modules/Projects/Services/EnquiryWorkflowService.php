@@ -107,6 +107,7 @@ class EnquiryWorkflowService
         $updateData = [
             'department_id' => $assignedUser->department_id,
             'assigned_by' => $assignedByUserId,
+            'assigned_to' => $assignedUserId,
             'assigned_at' => now(),
         ];
 
@@ -205,6 +206,7 @@ class EnquiryWorkflowService
         $task->update([
             'department_id' => $newAssignedUser->department_id,
             'assigned_by' => $reassignedByUserId,
+            'assigned_to' => $newAssignedUserId,
             'assigned_at' => now(),
         ]);
 
@@ -243,7 +245,7 @@ class EnquiryWorkflowService
     {
         $overdueTasks = EnquiryTask::where('due_date', '<', now())
             ->where('status', '!=', 'completed')
-            ->whereNotNull('assigned_by')
+            ->whereNotNull('assigned_to')
             ->get();
 
         foreach ($overdueTasks as $task) {
@@ -284,8 +286,8 @@ class EnquiryWorkflowService
     private function sendOverdueNotifications(EnquiryTask $task): void
     {
         // Send notification to assigned user if exists
-        if ($task->assigned_by) {
-            $assignedUser = User::find($task->assigned_by);
+        if ($task->assigned_to) {
+            $assignedUser = User::find($task->assigned_to);
             if ($assignedUser) {
                 $this->notificationService->sendTaskOverdueNotification($task, $assignedUser);
             }
@@ -312,11 +314,11 @@ class EnquiryWorkflowService
         $tasksDueSoon = EnquiryTask::where('due_date', '>=', now())
             ->where('due_date', '<=', now()->addDays($dueSoonDays))
             ->where('status', '!=', 'completed')
-            ->whereNotNull('assigned_by')
+            ->whereNotNull('assigned_to')
             ->get();
 
         foreach ($tasksDueSoon as $task) {
-            $assignedUser = User::find($task->assigned_by);
+            $assignedUser = User::find($task->assigned_to);
             if ($assignedUser) {
                 $this->notificationService->sendTaskDueSoonNotification($task, $assignedUser);
             }

@@ -78,6 +78,9 @@
           </div>
         </header>
 
+        <!-- Notification Popup -->
+        <NotificationPopup ref="notificationPopup" />
+
         <!-- Page Content -->
         <main class="flex-1 p-6">
           <router-view @taskAssigned="handleGlobalTaskAssigned" />
@@ -92,6 +95,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import DynamicSidebar from '../components/DynamicSidebar.vue'
 import NotificationCenter from '../modules/shared/components/NotificationCenter.vue'
+import NotificationPopup from '../modules/shared/components/NotificationPopup.vue'
 import { useAuth } from '../composables/useAuth'
 import { useRouteGuard } from '../composables/useRouteGuard'
 import { useTheme } from '../composables/useTheme'
@@ -104,6 +108,7 @@ const route = useRoute()
 
 const sidebarCollapsed = ref(false)
 const notificationCenter = ref()
+const notificationPopup = ref()
 
 const navigationItems = computed(() => {
   return getAllowedRoutes()
@@ -195,6 +200,23 @@ const handleTaskAssigned = (data: {
         assignedBy: user.value?.name || 'System',
         enquiry_id: enquiryId,
         task_id: taskId
+      }
+    })
+  }
+
+  // Show popup notification
+  if (notificationPopup.value) {
+    const enquiryId = data.tasks[0]?.enquiry_id
+    const taskId = data.tasks[0]?.id
+
+    notificationPopup.value.showPopup({
+      type: 'task_assigned',
+      title: 'New Task Assigned',
+      message: data.message,
+      data: {
+        task_id: taskId,
+        enquiry_id: enquiryId,
+        priority: data.tasks[0]?.priority || 'medium'
       }
     })
   }

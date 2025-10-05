@@ -21,6 +21,7 @@ class EnquiryTask extends Model
         'due_date',
         'assigned_at',
         'assigned_by',
+        'assigned_to',
         'notes',
         'created_by',
     ];
@@ -64,6 +65,11 @@ class EnquiryTask extends Model
     public function assignedBy(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class, 'assigned_by');
+    }
+
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'assigned_to');
     }
 
     public function assignmentHistory()
