@@ -123,9 +123,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 import { useAuth } from '@/composables/useAuth'
+import { useRouteGuard } from '@/composables/useRouteGuard'
 
 const { theme } = useTheme()
 const { register: authRegister } = useAuth()
+const { redirectToAppropriateRoute } = useRouteGuard()
 const name = ref('')
 const email = ref('')
 const password = ref('')
@@ -159,7 +161,7 @@ const register = async () => {
     await authRegister(name.value, email.value, password.value, passwordConfirmation.value)
     successMessage.value = 'Account created successfully! Redirecting...'
     setTimeout(() => {
-      router.push('/dashboard')
+      redirectToAppropriateRoute()
     }, 1500)
   } catch (error) {
     console.error('Registration failed:', error)

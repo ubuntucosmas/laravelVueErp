@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\User;
 use App\Modules\ClientService\Models\Client;
+use App\Constants\EnquiryConstants;
+use App\Constants\Permissions;
 
 class ProjectEnquiry extends Model
 {
@@ -103,12 +105,12 @@ class ProjectEnquiry extends Model
 
     public function scopeActive($query)
     {
-        return $query->whereIn('status', ['planning', 'in_progress']);
+        return $query->whereIn('status', EnquiryConstants::getActiveStatuses());
     }
 
     public function scopeCompleted($query)
     {
-        return $query->where('status', 'completed');
+        return $query->where('status', EnquiryConstants::STATUS_COMPLETED);
     }
 
     /**
@@ -118,7 +120,7 @@ class ProjectEnquiry extends Model
     {
         // Check if user has finance approval permission
         $user = User::find($userId);
-        if (!$user || !$user->hasPermissionTo('finance.quote.approve')) {
+        if (!$user || !$user->hasPermissionTo(Permissions::FINANCE_QUOTE_APPROVE)) {
             throw new \Exception('Unauthorized: Only users with finance approval permission can approve quotes');
         }
 
@@ -127,7 +129,7 @@ class ProjectEnquiry extends Model
             'quote_approved_at' => now(),
             'quote_approved_by' => $userId,
             'project_id' => $this->generateProjectId(),
-            'status' => 'converted_to_project'
+            'status' => EnquiryConstants::STATUS_CONVERTED_TO_PROJECT
         ]);
 
         return true;
@@ -146,12 +148,18 @@ class ProjectEnquiry extends Model
         $lastProject = self::whereYear('created_at', $year)
                           ->whereMonth('created_at', $now->month)
                           ->whereNotNull('project_id')
-                          ->orderBy('id', 'desc')
+                          ->orderByRaw('CAST(SUBSTRING(project_id, LENGTH(?) + 1) AS UNSIGNED) DESC', [EnquiryConstants::PROJECT_PREFIX . "-{$year}{$month}-"])
                           ->first();
 
-        $nextNumber = $lastProject ? intval(substr($lastProject->project_id, -3)) + 1 : 1;
+        $nextNumber = 1;
+        if ($lastProject) {
+            // Extract the number part after the prefix
+            $prefix = EnquiryConstants::PROJECT_PREFIX . "-{$year}{$month}-";
+            $numberPart = substr($lastProject->project_id, strlen($prefix));
+            $nextNumber = intval($numberPart) + 1;
+        }
         $formattedNumber = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
-        return "WNG-{$year}{$month}-{$formattedNumber}";
+        return EnquiryConstants::PROJECT_PREFIX . "-{$year}{$month}-{$formattedNumber}";
     }
 }

@@ -38,12 +38,12 @@
           </div>
 
           <div class="flex space-x-3">
-            <router-link
-              to="/dashboard"
+            <button
+              @click="goToAppropriateRoute"
               class="flex-1 bg-primary hover:bg-primary-light text-white py-2 px-4 rounded-md text-sm font-medium text-center transition-colors"
             >
               Go to Dashboard
-            </router-link>
+            </button>
             <button
               @click="goBack"
               class="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
@@ -59,14 +59,20 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { useRouteGuard } from '@/composables/useRouteGuard'
 
 const router = useRouter()
+const { redirectToAppropriateRoute } = useRouteGuard()
 
 const goBack = () => {
   if (window.history.length > 1) {
     router.go(-1)
   } else {
-    router.push('/dashboard')
+    redirectToAppropriateRoute()
   }
+}
+
+const goToAppropriateRoute = () => {
+  redirectToAppropriateRoute()
 }
 </script>

@@ -88,15 +88,12 @@ export function useEnquiries() {
     error.value = null
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await api.delete(`/api/clientservice/enquiries/${id}`)
 
       const index = enquiries.value.findIndex(enquiry => enquiry.id === id)
-      if (index === -1) {
-        throw new Error('Enquiry not found')
+      if (index !== -1) {
+        enquiries.value.splice(index, 1)
       }
-
-      enquiries.value.splice(index, 1)
     } catch (err) {
       error.value = 'Failed to delete enquiry'
       throw err

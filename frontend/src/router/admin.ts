@@ -1,6 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router'
 import MainLayout from '../layouts/MainLayout.vue'
 import AdminDashboard from '../modules/admin/dashboard/AdminDashboard.vue'
+import SuperAdminDashboard from '../modules/admin/dashboard/SuperAdminDashboard.vue'
 import UserManagement from '../modules/admin/userManagement/UserManagement.vue'
 import EmployeeManagement from '../modules/admin/employeeManagement/EmployeeManagement.vue'
 import RoleManagement from '../modules/admin/roleManagement/RoleManagement.vue'
@@ -41,6 +42,19 @@ export const adminRoutes: RouteRecordRaw[] = [
         name: 'admin-departments',
         component: DepartmentManagement,
         meta: { title: 'Department Management' }
+      },
+    ],
+  },
+  {
+    path: '/super-admin',
+    component: MainLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'super-admin-dashboard',
+        component: SuperAdminDashboard,
+        meta: { title: 'Super Admin Dashboard' }
       },
     ],
   },

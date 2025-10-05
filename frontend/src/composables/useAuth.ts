@@ -28,9 +28,16 @@ export interface UserPermissions {
   } | null
 }
 
+export interface UserPermissionList {
+  permissions: UserPermissions
+  user_permissions: string[]
+  roles: string[]
+  departments: any[]
+}
+
 const isLoggedIn = ref(false)
 const user = ref<User | null>(null)
-const permissions = ref<UserPermissions | null>(null)
+const permissions = ref<UserPermissionList | null>(null)
 
 export function useAuth() {
 
@@ -116,11 +123,11 @@ export function useAuth() {
   const fetchPermissions = async () => {
     try {
       const response = await api.get('/api/user/permissions')
-      permissions.value = response.data.permissions
+      permissions.value = response.data
       // Update user with additional data from permissions
       if (user.value && response.data.departments) {
         user.value.department = response.data.departments.find((d: { id: number }) =>
-          d.id === permissions.value?.user_department?.id
+          d.id === permissions.value?.permissions?.user_department?.id
         ) || null
       }
     } catch (error) {

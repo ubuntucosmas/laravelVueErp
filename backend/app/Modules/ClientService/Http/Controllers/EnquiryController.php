@@ -9,9 +9,17 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controller;
 use App\Modules\Projects\Services\EnquiryWorkflowService;
+use App\Modules\Projects\Services\NotificationService;
 
 class EnquiryController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = ProjectEnquiry::with('client', 'department', 'enquiryTasks');
@@ -116,7 +124,7 @@ class EnquiryController extends Controller
         ]);
 
         // Create workflow tasks for the enquiry
-        $workflowService = new EnquiryWorkflowService();
+        $workflowService = new EnquiryWorkflowService($this->notificationService);
         $workflowService->createWorkflowTasksForEnquiry($enquiry);
 
         return response()->json([

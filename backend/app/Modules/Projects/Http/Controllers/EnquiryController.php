@@ -10,37 +10,43 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controller;
 use App\Modules\Projects\Services\EnquiryWorkflowService;
 use App\Constants\Permissions;
+use App\Constants\EnquiryConstants;
+use App\Modules\Projects\Services\NotificationService;
 
 class EnquiryController extends Controller
 {
-    /**
-     * Check if user has access to Projects department enquiries
-     */
-    private function checkProjectsAccess(): bool
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
     {
-        $user = Auth::user();
+        $this->notificationService = $notificationService;
+    }
 
-        // Super Admin has access to everything
-        if ($user->hasRole('Super Admin')) {
-            return true;
+    /**
+     * Generate a unique enquiry number
+     */
+    private function generateEnquiryNumber(): string
+    {
+        $year = date('Y');
+        $prefix = EnquiryConstants::ENQUIRY_PREFIX . '-' . $year . '-';
+
+        // Find the highest existing number for this year
+        $lastEnquiry = ProjectEnquiry::where('enquiry_number', 'like', $prefix . '%')
+            ->orderByRaw('CAST(SUBSTRING(enquiry_number, LENGTH(?) + 1) AS UNSIGNED) DESC', [$prefix])
+            ->first();
+
+        $nextNumber = 1;
+        if ($lastEnquiry) {
+            // Extract the number part after the prefix
+            $numberPart = substr($lastEnquiry->enquiry_number, strlen($prefix));
+            $nextNumber = intval($numberPart) + 1;
         }
 
-        // Check if user has roles that allow project coordination access
-        if ($user->hasRole(['Project Manager', 'Project Officer', 'Manager', 'Employee', 'Client Service'])) {
-            return true;
-        }
-
-        return false;
+        return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 
     public function index(Request $request): JsonResponse
     {
-        // Check Projects department and role access
-        if (!$this->checkProjectsAccess()) {
-            return response()->json([
-                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can access enquiries.'
-            ], 403);
-        }
 
         $query = ProjectEnquiry::with('client', 'department', 'enquiryTasks');
 
@@ -68,7 +74,7 @@ class EnquiryController extends Controller
             $query->where('department_id', $request->department_id);
         }
 
-        $enquiries = $query->orderBy('created_at', 'desc')->paginate(6);
+        $enquiries = $query->orderBy('created_at', 'desc')->paginate(EnquiryConstants::PAGINATION_PER_PAGE);
 
         return response()->json([
             'data' => $enquiries,
@@ -78,12 +84,6 @@ class EnquiryController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        // Check Projects department and role access
-        if (!$this->checkProjectsAccess()) {
-            return response()->json([
-                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can create enquiries.'
-            ], 403);
-        }
 
         // Handle field name alias for enquiry_title
         if ($request->has('enquiry_title') && !$request->has('title')) {
@@ -98,9 +98,9 @@ class EnquiryController extends Controller
             'enquiry_title' => 'nullable|string|max:255', // Allow enquiry_title as alias
             'description' => 'nullable|string',
             'project_scope' => 'nullable|string',
-            'priority' => 'nullable|string|in:low,medium,high,urgent',
+            'priority' => 'nullable|string|in:' . implode(',', EnquiryConstants::getAllPriorities()),
             'contact_person' => 'required|string|max:255',
-            'status' => 'required|string|in:client_registered,enquiry_logged,site_survey_completed,design_completed,design_approved,materials_specified,budget_created,quote_prepared,quote_approved,converted_to_project,planning,in_progress,completed,cancelled',
+            'status' => 'required|string|in:' . implode(',', EnquiryConstants::getAllStatuses()),
             'department_id' => 'nullable|integer|exists:departments,id',
             'assigned_department' => 'nullable|string|max:255',
             'estimated_budget' => 'nullable|numeric|min:0',
@@ -120,7 +120,7 @@ class EnquiryController extends Controller
         }
 
         // Generate enquiry number
-        $enquiryNumber = 'ENQ-' . date('Y') . '-' . str_pad(ProjectEnquiry::count() + 1, 4, '0', STR_PAD_LEFT);
+        $enquiryNumber = $this->generateEnquiryNumber();
 
         $enquiry = ProjectEnquiry::create([
             'date_received' => $request->date_received,
@@ -129,7 +129,7 @@ class EnquiryController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'project_scope' => $request->project_scope,
-            'priority' => $request->priority ?? 'medium',
+            'priority' => $request->priority ?? EnquiryConstants::PRIORITY_MEDIUM,
             'contact_person' => $request->contact_person,
             'status' => $request->status,
             'department_id' => $request->department_id,
@@ -146,7 +146,7 @@ class EnquiryController extends Controller
         ]);
 
         // Create workflow tasks for the enquiry
-        $workflowService = new EnquiryWorkflowService();
+        $workflowService = new EnquiryWorkflowService($this->notificationService);
         $workflowService->createWorkflowTasksForEnquiry($enquiry);
 
         return response()->json([
@@ -157,13 +157,6 @@ class EnquiryController extends Controller
 
     public function show(ProjectEnquiry $enquiry): JsonResponse
     {
-        // Check Projects department and role access
-        if (!$this->checkProjectsAccess()) {
-            return response()->json([
-                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can view enquiries.'
-            ], 403);
-        }
-
         return response()->json([
             'data' => $enquiry->load('client', 'department', 'enquiryTasks'),
             'message' => 'Enquiry retrieved successfully'
@@ -172,12 +165,6 @@ class EnquiryController extends Controller
 
     public function update(Request $request, ProjectEnquiry $enquiry): JsonResponse
     {
-        // Check Projects department and role access
-        if (!$this->checkProjectsAccess()) {
-            return response()->json([
-                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can update enquiries.'
-            ], 403);
-        }
 
         // Handle field name alias for enquiry_title
         if ($request->has('enquiry_title') && !$request->has('title')) {
@@ -192,9 +179,9 @@ class EnquiryController extends Controller
             'enquiry_title' => 'nullable|string|max:255', // Allow enquiry_title as alias
             'description' => 'sometimes|nullable|string',
             'project_scope' => 'nullable|string',
-            'priority' => 'nullable|string|in:low,medium,high,urgent',
+            'priority' => 'nullable|string|in:' . implode(',', EnquiryConstants::getAllPriorities()),
             'contact_person' => 'sometimes|nullable|string|max:255',
-            'status' => 'sometimes|required|string|in:client_registered,enquiry_logged,site_survey_completed,design_completed,design_approved,materials_specified,budget_created,quote_prepared,quote_approved,converted_to_project,planning,in_progress,completed,cancelled',
+            'status' => 'sometimes|required|string|in:' . implode(',', EnquiryConstants::getAllStatuses()),
             'department_id' => 'nullable|integer|exists:departments,id',
             'assigned_department' => 'nullable|string|max:255',
             'estimated_budget' => 'nullable|numeric|min:0',
@@ -242,13 +229,6 @@ class EnquiryController extends Controller
 
     public function destroy(ProjectEnquiry $enquiry): JsonResponse
     {
-        // Check Projects department and role access
-        if (!$this->checkProjectsAccess()) {
-            return response()->json([
-                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can delete enquiries.'
-            ], 403);
-        }
-
         $enquiry->delete();
 
         return response()->json([
@@ -258,12 +238,6 @@ class EnquiryController extends Controller
 
     public function updatePhase(Request $request, ProjectEnquiry $enquiry): JsonResponse
     {
-        // Check Projects department and role access
-        if (!$this->checkProjectsAccess()) {
-            return response()->json([
-                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can update enquiry phases.'
-            ], 403);
-        }
 
         // Implementation for updating enquiry phase
         // This might involve updating status or other phase-related fields
@@ -275,15 +249,12 @@ class EnquiryController extends Controller
 
     public function approveQuote(Request $request, ProjectEnquiry $enquiry): JsonResponse
     {
-        // Check Projects department and role access
-        if (!$this->checkProjectsAccess()) {
-            return response()->json([
-                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can approve quotes.'
-            ], 403);
-        }
-
         // Implementation for approving quote
-        $enquiry->update(['quote_approved' => true, 'quote_approved_at' => now(), 'quote_approved_by' => Auth::id()]);
+        $enquiry->update([
+            'quote_approved' => true,
+            'quote_approved_at' => now(),
+            'quote_approved_by' => Auth::id()
+        ]);
 
         return response()->json([
             'message' => 'Quote approved successfully',
@@ -293,15 +264,8 @@ class EnquiryController extends Controller
 
     public function convertToProject(Request $request, ProjectEnquiry $enquiry): JsonResponse
     {
-        // Check Projects department and role access
-        if (!$this->checkProjectsAccess()) {
-            return response()->json([
-                'message' => 'Access denied. Only Project Managers and Project Officers in the Projects department can convert enquiries to projects.'
-            ], 403);
-        }
-
         // Implementation for converting to project
-        $enquiry->update(['status' => 'converted_to_project']);
+        $enquiry->update(['status' => EnquiryConstants::STATUS_CONVERTED_TO_PROJECT]);
 
         return response()->json([
             'message' => 'Enquiry converted to project successfully',

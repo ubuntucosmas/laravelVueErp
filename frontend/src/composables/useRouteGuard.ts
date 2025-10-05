@@ -75,12 +75,6 @@ const PERMISSIONS = {
   ADMIN_ACCESS: 'admin.access',
   ADMIN_LOGS_VIEW: 'admin.logs.view',
 
-  // Dashboard
-  DASHBOARD_VIEW: 'dashboard.view',
-  DASHBOARD_ADMIN: 'dashboard.admin',
-  DASHBOARD_HR: 'dashboard.hr',
-  DASHBOARD_FINANCE: 'dashboard.finance',
-  DASHBOARD_PROJECTS: 'dashboard.projects',
 }
 
 export function useRouteGuard() {
@@ -131,10 +125,6 @@ export function useRouteGuard() {
       [PERMISSIONS.CLIENT_READ]: ['Client Service', 'Super Admin'],
       [PERMISSIONS.PROCUREMENT_VIEW]: ['Procurement Officer', 'Super Admin'],
       [PERMISSIONS.ADMIN_ACCESS]: ['Admin', 'Super Admin'],
-      [PERMISSIONS.DASHBOARD_ADMIN]: ['Admin', 'Super Admin'],
-      [PERMISSIONS.DASHBOARD_HR]: ['HR', 'Super Admin'],
-      [PERMISSIONS.DASHBOARD_FINANCE]: ['Accounts', 'Costing', 'Super Admin'],
-      [PERMISSIONS.DASHBOARD_PROJECTS]: ['Project Manager', 'Project Officer', 'Super Admin'],
     }
 
     const allowedRoles = permissionRoleMap[permission] || []
@@ -274,9 +264,9 @@ export function useRouteGuard() {
 
     const userRoles = user.value.roles || []
 
-    // Super Admin goes to admin dashboard
+    // Super Admin goes to super admin dashboard
     if (userRoles.includes('Super Admin')) {
-      router.push('/admin')
+      router.push('/super-admin')
       return
     }
 
@@ -304,8 +294,8 @@ export function useRouteGuard() {
       return
     }
 
-    // Fallback to general dashboard
-    router.push('/dashboard')
+    // Fallback to HR dashboard
+    router.push('/hr')
   }
 
   const getAllowedRoutes = () => {
@@ -314,16 +304,79 @@ export function useRouteGuard() {
     const userRoles = user.value.roles || []
     const routes = []
 
-    // Super Admin gets everything
+    // Super Admin gets everything categorized by departments
     if (userRoles.includes('Super Admin')) {
       routes.push(
-        { name: 'admin-dashboard', path: '/admin', label: 'Admin Dashboard', icon: '📊' },
-        { name: 'admin-users', path: '/admin/users', label: 'User Management', icon: '👥' },
-        { name: 'admin-employees', path: '/admin/employees', label: 'Employee Management', icon: '👷' },
-        { name: 'admin-roles', path: '/admin/roles', label: 'Role Management', icon: '🔐' },
-        { name: 'admin-departments', path: '/admin/departments', label: 'Department Management', icon: '🏢' },
-        { name: 'hr-dashboard', path: '/hr', label: 'HR Dashboard', icon: '👥' },
-        { name: 'hr-employees', path: '/hr/employees', label: 'HR Employees', icon: '👷' }
+        {
+          department: 'Super Admin',
+          routes: [
+            { name: 'super-admin-dashboard', path: '/super-admin', label: 'Super Admin Dashboard', icon: '👑' }
+          ]
+        },
+        {
+          department: 'Administration',
+          routes: [
+            { name: 'admin-dashboard', path: '/admin', label: 'Admin Dashboard', icon: '📊' },
+            { name: 'admin-users', path: '/admin/users', label: 'User Management', icon: '👥' },
+            { name: 'admin-employees', path: '/admin/employees', label: 'Employee Management', icon: '👷' },
+            { name: 'admin-roles', path: '/admin/roles', label: 'Role Management', icon: '🔐' },
+            { name: 'admin-departments', path: '/admin/departments', label: 'Department Management', icon: '🏢' }
+          ]
+        },
+        {
+          department: 'Human Resources',
+          routes: [
+            { name: 'hr-dashboard', path: '/hr', label: 'HR Dashboard', icon: '👥' },
+            { name: 'hr-employees', path: '/hr/employees', label: 'Employee Management', icon: '👷' }
+          ]
+        },
+        {
+          department: 'Projects',
+          routes: [
+            { name: 'projects-dashboard', path: '/projects/dashboard', label: 'Project Dashboard', icon: '📈' },
+            { name: 'projects-enquiries', path: '/projects/enquiries', label: 'Project Enquiries', icon: '📝' }
+          ]
+        },
+        {
+          department: 'Client Service',
+          routes: [
+            { name: 'client-service-dashboard', path: '/client-service', label: 'Client Service Dashboard', icon: '📊' },
+            { name: 'client-service-clients', path: '/client-service/clients', label: 'Client Management', icon: '👥' },
+            { name: 'client-service-enquiries', path: '/client-service/enquiries', label: 'Enquiry Management', icon: '📝' }
+          ]
+        },
+        {
+          department: 'Creatives',
+          routes: [
+            { name: 'design-dashboard', path: '/creatives/design', label: 'Design Department', icon: '🎨' },
+            { name: 'creatives-materials', path: '/creatives/materials', label: 'Material & Cost Listing', icon: '📦' },
+            { name: 'creatives-final-design', path: '/creatives/final-design', label: 'Final Design', icon: '✨' },
+            { name: 'creatives-enquiries', path: '/creatives/enquiries', label: 'Enquiries', icon: '📝' },
+            { name: 'creatives-element-templates', path: '/creatives/element-templates', label: 'Element Templates', icon: '📋' }
+          ]
+        },
+        {
+          department: 'Finance',
+          routes: [
+            { name: 'finance-dashboard', path: '/finance', label: 'Finance Dashboard', icon: '📊' },
+            { name: 'finance-budgeting', path: '/finance/budgeting', label: 'Budget Management', icon: '💰' },
+            { name: 'finance-costing', path: '/finance/costing', label: 'Cost Analysis', icon: '🧮' },
+            { name: 'finance-invoicing', path: '/finance/invoicing', label: 'Invoice Management', icon: '📄' },
+            { name: 'finance-reporting', path: '/finance/reporting', label: 'Financial Reports', icon: '📈' },
+            { name: 'finance-enquiries', path: '/finance/enquiries', label: 'Project Enquiries', icon: '📋' },
+            { name: 'finance-analytics', path: '/finance/analytics', label: 'Financial Analytics', icon: '📉' }
+          ]
+        },
+        {
+          department: 'Procurement',
+          routes: [
+            { name: 'procurement-dashboard', path: '/procurement', label: 'Procurement Dashboard', icon: '📦' },
+            { name: 'procurement-materials', path: '/procurement/materials', label: 'Material Requests', icon: '📋' },
+            { name: 'procurement-vendors', path: '/procurement/vendors', label: 'Vendor Management', icon: '🏪' },
+            { name: 'procurement-orders', path: '/procurement/orders', label: 'Purchase Orders', icon: '📄' },
+            { name: 'procurement-quotations', path: '/procurement/quotations', label: 'Supplier Quotations', icon: '💰' }
+          ]
+        }
       )
     }
     // Admin gets admin routes
@@ -355,17 +408,16 @@ export function useRouteGuard() {
     //   }
     // }
 
-    // Add projects routes for authorized users
-    if (canAccessProjects()) {
+    // Add projects routes for authorized users (skip for Super Admin as they're already included in departments)
+    if (canAccessProjects() && !userRoles.includes('Super Admin')) {
       routes.push(
         { name: 'projects-dashboard', path: '/projects/dashboard', label: 'Project Dashboard', icon: '📈' },
-        { name: 'projects-coordination', path: '/projects', label: 'Project Coordination', icon: '📊' },
         { name: 'projects-enquiries', path: '/projects/enquiries', label: 'Project Enquiries', icon: '📝' },
       )
     }
 
-    // Add client service routes for authorized users
-    if (canAccessClientService()) {
+    // Add client service routes for authorized users (skip for Super Admin as they're already included in departments)
+    if (canAccessClientService() && !userRoles.includes('Super Admin')) {
       routes.push(
         { name: 'client-service-dashboard', path: '/client-service', label: 'Client Service Dashboard', icon: '📊' },
         { name: 'client-service-clients', path: '/client-service/clients', label: 'Client Management', icon: '👥' },
@@ -373,8 +425,8 @@ export function useRouteGuard() {
       )
     }
 
-    // Add creatives routes for authorized users
-    if (canAccessCreatives()) {
+    // Add creatives routes for authorized users (skip for Super Admin as they're already included in departments)
+    if (canAccessCreatives() && !userRoles.includes('Super Admin')) {
       routes.push(
         { name: 'design-dashboard', path: '/creatives/design', label: 'Design Department', icon: '🎨' },
         { name: 'creatives-materials', path: '/creatives/materials', label: 'Material & Cost Listing', icon: '📦' },
@@ -384,8 +436,8 @@ export function useRouteGuard() {
       )
     }
 
-    // Add finance routes for authorized users
-    if (canAccessFinance()) {
+    // Add finance routes for authorized users (skip for Super Admin as they're already included in departments)
+    if (canAccessFinance() && !userRoles.includes('Super Admin')) {
       routes.push(
         { name: 'finance-dashboard', path: '/finance', label: 'Finance Dashboard', icon: '📊' },
         { name: 'finance-budgeting', path: '/finance/budgeting', label: 'Budget Management', icon: '💰' },
@@ -397,8 +449,8 @@ export function useRouteGuard() {
       )
     }
 
-    // Add procurement routes for authorized users
-    if (canAccessProcurement()) {
+    // Add procurement routes for authorized users (skip for Super Admin as they're already included in departments)
+    if (canAccessProcurement() && !userRoles.includes('Super Admin')) {
       routes.push(
         { name: 'procurement-dashboard', path: '/procurement', label: 'Procurement Dashboard', icon: '📦' },
         { name: 'procurement-materials', path: '/procurement/materials', label: 'Material Requests', icon: '📋' },
@@ -408,8 +460,8 @@ export function useRouteGuard() {
       )
     }
 
-    // Add Projects department dashboard for users who work in Projects department
-    if (canAccessProjectsDashboard()) {
+    // Add Projects department dashboard for users who work in Projects department (skip for Super Admin)
+    if (canAccessProjectsDashboard() && !userRoles.includes('Super Admin')) {
       routes.push(
         { name: 'projects-department-dashboard', path: '/projects/department', label: 'Project Coordination', icon: '🎯' }
       )

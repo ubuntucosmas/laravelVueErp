@@ -32,48 +32,19 @@
       </ol>
     </nav>
 
-    <!-- Task Dashboard View - Commented out due to deleted projects module -->
-    <!-- <div v-if="showTaskDashboard && selectedEnquiryForTasks">
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <button
-            @click="closeTaskDashboard"
-            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
-          >
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-            Back to Enquiries
-          </button>
-        </div>
-      </div>
-
-      <DepartmentalTaskDashboard
-        :context="'enquiry'"
-        :context-id="selectedEnquiryForTasks.id"
-        :title="`Tasks for ${selectedEnquiryForTasks.title}`"
-        :enquiry="selectedEnquiryForTasks"
-        :department="selectedEnquiryForTasks.assigned_department || selectedEnquiryForTasks.department?.name || 'projects'"
-        @taskAssigned="handleTaskAssigned"
-        @quoteApproved="handleQuoteApproved"
-      />
-    </div> -->
 
     <!-- Enquiries Table View -->
     <div>
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ pageTitle }}</h1>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ pageDescription }}</p>
-        </div>
-        <button
-          v-if="showCreateButton"
-          @click="showCreateModal = true"
-          class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          New Enquiry
-        </button>
-      </div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ pageTitle }}</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ pageDescription }}</p>
+    </div>
+    <button
+      v-if="showCreateButton"
+      @click="showCreateModal = true"
+      class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-lg font-medium transition-colors"
+    >
+      New Enquiry
+    </button>
 
     <!-- Status Tabs -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
@@ -127,143 +98,119 @@
       </div>
     </div>
 
-    <!-- Enquiries Table -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-      <div v-if="loading" class="p-8 text-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p class="mt-2 text-gray-600 dark:text-gray-400">Loading enquiries...</p>
-      </div>
+   <!-- Enquiries Table -->
+   <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+     <div v-if="loading" class="p-8 text-center">
+       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+       <p class="mt-2 text-gray-600 dark:text-gray-400">Loading enquiries...</p>
+     </div>
 
-      <div v-else-if="error" class="p-8 text-center text-red-600">
-        Error: {{ error }}
-      </div>
+     <div v-else-if="error" class="p-8 text-center text-red-600">
+       Error: {{ error }}
+     </div>
 
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead class="bg-gray-50 dark:bg-gray-700">
+     <div v-else class="overflow-x-auto">
+       <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+         <thead class="bg-gray-50 dark:bg-gray-700">
+           <tr>
+             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+               Enquiry
+             </th>
+             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+               Client
+             </th>
+             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+               Contact Person
+             </th>
+             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+               Department
+             </th>
+             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+               Status
+             </th>
+             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+               Enquiry Number
+             </th>
+             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+               Actions
+             </th>
+           </tr>
+         </thead>
+         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <template v-for="enquiry in filteredEnquiries" :key="enquiry.id">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Enquiry
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Client
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Contact Person
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Status
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Enquiry Number
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Departmental Tasks
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="enquiry in paginatedEnquiries" :key="enquiry.id">
-               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 h-10 w-10">
-                    <div class="h-10 w-10 rounded-full bg-yellow-500 flex items-center justify-center">
-                      <span class="text-sm font-medium text-white">{{ enquiry.title.charAt(0) }}</span>
-                    </div>
-                  </div>
-                  <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ enquiry.title }}</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ enquiry.date_received.split('T')[0] }}</div>
-                  </div>
-                </div>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ enquiry.title }}</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">{{ (enquiry.description || '').substring(0, 50) }}{{ (enquiry.description || '').length > 50 ? '...' : '' }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                {{ enquiry.client?.full_name }}
+                {{ enquiry.client?.full_name || enquiry.client?.FullName || 'Unknown Client' }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                   {{ enquiry.contact_person }}
                 </span>
               </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                {{ enquiry.department?.name || 'No Department' }}
+              </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span
-                  :class="getStatusClass(enquiry.status)"
-                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                >
-                  {{ enquiry.status.replace('_', ' ') }}
+                <span :class="getStatusColor(enquiry.status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                  {{ getStatusLabel(enquiry.status) }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                 {{ enquiry.enquiry_number }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button
-                  @click="openTaskDashboard(enquiry)"
-                  class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                  :title="`View departmental tasks for ${enquiry.title}`"
+                  @click="editEnquiry(enquiry)"
+                  class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3"
                 >
-                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                  </svg>
-                  <span class="mr-1">Tasks</span>
-                  <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full min-w-[1.25rem] h-4">
-                    3
-                  </span>
+                  Edit
+                </button>
+                <button
+                  @click="viewEnquiryDetails(enquiry)"
+                  class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 mr-3"
+                >
+                  View
+                </button>
+                <button
+                  @click="openTaskAssignment(enquiry)"
+                  class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3"
+                >
+                  Assign Tasks
+                </button>
+                <router-link
+                  :to="`/projects/tasks?enquiry_id=${enquiry.id}`"
+                  class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 mr-3"
+                >
+                  View All Tasks
+                </router-link>
+                <button
+                  v-if="canConvertToProject(enquiry)"
+                  @click="convertToProject(enquiry.id)"
+                  class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
+                >
+                  Convert to Project
                 </button>
               </td>
-             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <button
-                @click="editEnquiry(enquiry)"
-                class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3"
-              >
-                Edit
-              </button>
-              <button
-                @click="viewEnquiryDetails(enquiry)"
-                class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 mr-3"
-              >
-                View
-              </button>
-              <!-- Tasks button commented out due to deleted projects module -->
-              <!-- <button
-                v-if="canAccessTasks(enquiry)"
-                @click="navigateToDepartmentTasks(enquiry)"
-                class="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300 mr-3"
-              >
-                Tasks
-              </button> -->
-              <!-- Convert to Project button commented out due to deleted projects module -->
-              <!-- <button
-                v-if="canConvertToProject(enquiry)"
-                @click="convertToProject(enquiry.id)"
-                class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 mr-3"
-              >
-                Convert to Project
-              </button> -->
-              <button
-                @click="updateStatus(enquiry, 'site_survey_completed')"
-                v-if="enquiry.status === 'enquiry_logged'"
-                class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-              >
-                Start Progress
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            </tr>
 
-    <!-- Pagination -->
-    <Pagination
-      v-if="filteredEnquiries.length > itemsPerPage"
-      :current-page="currentPage"
-      :total-items="filteredEnquiries.length"
-      :items-per-page="itemsPerPage"
-      @page-change="handlePageChange"
-    />
+          </template>
+         </tbody>
+       </table>
+     </div>
+
+     <!-- Pagination -->
+     <Pagination
+       v-if="pagination.total > PAGINATION_PER_PAGE"
+       :current-page="pagination.current_page"
+       :total-items="pagination.total"
+       :items-per-page="PAGINATION_PER_PAGE"
+       @page-change="handlePageChange"
+     />
+   </div>
 
     <!-- Create/Edit Enquiry Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -272,173 +219,223 @@
           {{ editingEnquiry ? 'Edit Enquiry' : 'Create New Enquiry' }}
         </h2>
 
-        <form @submit.prevent="handleFormSubmit" class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client *</label>
-              <select
-                v-model="enquiryFormData.client_id"
-                required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">Select Client</option>
-                <option v-for="client in activeClients" :key="client.id" :value="client.id">
-                  {{ client.FullName }}
-                </option>
-              </select>
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
+          <nav class="-mb-px flex space-x-8">
+            <button
+              v-for="tab in modalTabs"
+              :key="tab.key"
+              @click="activeModalTab = tab.key"
+              :class="activeModalTab === tab.key
+                ? 'border-primary text-primary dark:text-primary-light'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+              class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors"
+            >
+              {{ tab.label }}
+            </button>
+          </nav>
+        </div>
+
+        <form @submit.prevent="handleFormSubmit" @keydown.enter.prevent="handleFormSubmit" class="space-y-4">
+          <!-- Basic Information Tab -->
+          <div v-if="activeModalTab === 'basic'" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client *</label>
+                <select
+                  v-model.number="enquiryFormData.client_id"
+                  required
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select Client</option>
+                  <option v-for="client in activeClients" :key="client.id" :value="client.id">
+                    {{ client.FullName }}
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Enquiry Received Date *</label>
+                <input
+                  v-model="enquiryFormData.date_received"
+                  type="date"
+                  required
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority *</label>
-              <select
-                v-model="enquiryFormData.priority"
-                required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">Select Priority</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Enquiry Title *</label>
-            <input
-              v-model="enquiryFormData.title"
-              type="text"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Scope *</label>
-            <textarea
-              v-model="enquiryFormData.project_scope"
-              required
-              rows="3"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            ></textarea>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description *</label>
-            <textarea
-              v-model="enquiryFormData.description"
-              required
-              rows="4"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            ></textarea>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Expected Delivery Date</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Enquiry Title *</label>
               <input
-                v-model="enquiryFormData.expected_delivery_date"
-                type="date"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person *</label>
-              <input
-                v-model="enquiryFormData.contact_person"
+                v-model="enquiryFormData.title"
                 type="text"
                 required
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Scope *</label>
+              <textarea
+                v-model="enquiryFormData.project_scope"
+                required
+                rows="3"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              ></textarea>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description *</label>
+              <textarea
+                v-model="enquiryFormData.description"
+                required
+                rows="4"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              ></textarea>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Enquiry Received Date *</label>
-            <input
-              v-model="enquiryFormData.date_received"
-              type="date"
-              required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
+          <!-- Contact & Priority Tab -->
+          <div v-if="activeModalTab === 'contact'" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person *</label>
+                <input
+                  v-model="enquiryFormData.contact_person"
+                  type="text"
+                  required
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority *</label>
+                <select
+                  v-model="enquiryFormData.priority"
+                  required
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select Priority</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Venue</label>
-            <input
-              v-model="enquiryFormData.venue"
-              type="text"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
+          <!-- Assignment & Venue Tab -->
+          <div v-if="activeModalTab === 'assignment'" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Expected Delivery Date</label>
+                <input
+                  v-model="enquiryFormData.expected_delivery_date"
+                  type="date"
+                  :min="enquiryFormData.date_received"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Venue</label>
+                <input
+                  v-model="enquiryFormData.venue"
+                  type="text"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up Notes</label>
+              <textarea
+                v-model="enquiryFormData.follow_up_notes"
+                rows="3"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              ></textarea>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up Notes</label>
-            <textarea
-              v-model="enquiryFormData.follow_up_notes"
-              rows="3"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            ></textarea>
+          <!-- Site Survey Tab -->
+          <div v-if="activeModalTab === 'survey'" class="space-y-4">
+            <div class="flex items-center">
+              <input
+                v-model="enquiryFormData.site_survey_skipped"
+                type="checkbox"
+                class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              />
+              <label class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                Skip Site Survey
+              </label>
+            </div>
+
+            <div v-if="enquiryFormData.site_survey_skipped">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Skip Reason</label>
+              <textarea
+                v-model="enquiryFormData.site_survey_skip_reason"
+                rows="2"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              ></textarea>
+            </div>
           </div>
-
-          <div class="flex items-center">
-            <input
-              v-model="enquiryFormData.site_survey_skipped"
-              type="checkbox"
-              class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-            />
-            <label class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-              Skip Site Survey
-            </label>
-          </div>
-
-          <div v-if="enquiryFormData.site_survey_skipped">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Skip Reason</label>
-            <textarea
-              v-model="enquiryFormData.site_survey_skip_reason"
-              rows="2"
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            ></textarea>
-          </div>
-
-
         </form>
 
-        <div v-if="formError" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-          {{ formError }}
-        </div>
+       <!-- Tab Navigation Buttons -->
+       <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+         <button
+           @click="previousTab"
+           :disabled="activeModalTab === 'basic'"
+           class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+         >
+           Previous
+         </button>
 
-        <div v-if="formSuccess" class="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
-          {{ formSuccess }}
-        </div>
+         <div class="flex space-x-3">
+           <button
+             v-if="activeModalTab !== 'survey'"
+             @click="nextTab"
+             class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+           >
+             Next
+           </button>
+           <button
+             v-if="activeModalTab === 'survey'"
+             @click="handleFormSubmit"
+             :disabled="saving"
+             class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+           >
+             <span v-if="saving" class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+             {{ saving ? 'Saving...' : (editingEnquiry ? 'Update Enquiry' : 'Create Enquiry') }}
+           </button>
+         </div>
+       </div>
 
-        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <button
-            @click="closeModal"
-            class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-            :disabled="saving"
-          >
-            Cancel
-          </button>
-          <button
-            @click="handleFormSubmit"
-            :disabled="saving"
-            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <span v-if="saving" class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-            {{ saving ? 'Saving...' : (editingEnquiry ? 'Update Enquiry' : 'Create Enquiry') }}
-          </button>
-        </div>
+       <div v-if="formError" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+         {{ formError }}
+       </div>
+
+       <div v-if="formSuccess" class="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
+         {{ formSuccess }}
+       </div>
+
+       <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+         <button
+           @click="closeModal"
+           class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+           :disabled="saving"
+         >
+           Cancel
+         </button>
+       </div>
       </div>
       </div>
     </div>
-    </div>
-  </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 // Removed imports from deleted projects module
 // import type { Enquiry, CreateEnquiryData, UpdateEnquiryData, DepartmentalTask } from '../../projects/types'
@@ -532,7 +529,7 @@ const props = withDefaults(defineProps<Props>(), {
 const router = useRouter()
 const route = useRoute()
 
-const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry } = useEnquiries()
+const { enquiries, loading, error, fetchEnquiries, createEnquiry, updateEnquiry, convertToProject, canConvertToProject } = useEnquiries()
 const { activeClients, fetchClients } = useClients()
 // const { navigateToDepartmentWorkflow, getAvailablePhases, getNextAvailablePhase } = useDepartmentWorkflow()
 // const { createProject } = useProjects()
@@ -554,9 +551,37 @@ const formSuccess = ref('')
 const showTaskDashboard = ref(false)
 const selectedEnquiryForTasks = ref<Enquiry | null>(null)
 
+// Modal Tabs
+const activeModalTab = ref('basic')
+const modalTabs = [
+  { key: 'basic', label: 'Basic Information' },
+  { key: 'contact', label: 'Contact & Priority' },
+  { key: 'assignment', label: 'Assignment & Venue' },
+  { key: 'survey', label: 'Site Survey' }
+]
+
+const previousTab = () => {
+  const currentIndex = modalTabs.findIndex(tab => tab.key === activeModalTab.value)
+  if (currentIndex > 0) {
+    activeModalTab.value = modalTabs[currentIndex - 1].key
+  }
+}
+
+const nextTab = () => {
+  const currentIndex = modalTabs.findIndex(tab => tab.key === activeModalTab.value)
+  if (currentIndex < modalTabs.length - 1) {
+    activeModalTab.value = modalTabs[currentIndex + 1].key
+  }
+}
+
 // Pagination
+const PAGINATION_PER_PAGE = 10
 const currentPage = ref(1)
-const itemsPerPage = ref(10)
+const itemsPerPage = ref(PAGINATION_PER_PAGE)
+const pagination = computed(() => ({
+  total: filteredEnquiries.value.length,
+  current_page: currentPage.value
+}))
 const enquiryFormData = ref<CreateEnquiryData>({
   date_received: new Date().toISOString().split('T')[0],
   client_id: 0,
@@ -628,19 +653,40 @@ const getPriorityClass = (priority: string) => {
   return classes[priority as keyof typeof classes] || classes.medium
 }
 
-const getStatusClass = (status: string) => {
+const getStatusColor = (status: string) => {
   const classes = {
-    new: 'bg-blue-100 text-blue-800',
+    enquiry_logged: 'bg-blue-100 text-blue-800',
     in_progress: 'bg-yellow-100 text-yellow-800',
     site_survey_completed: 'bg-green-100 text-green-800',
     design_completed: 'bg-pink-100 text-pink-800',
-    materials_created: 'bg-purple-100 text-purple-800',
-    quoted: 'bg-indigo-100 text-indigo-800',
-    approved: 'bg-green-100 text-green-800',
+    materials_specified: 'bg-purple-100 text-purple-800',
+    budget_created: 'bg-indigo-100 text-indigo-800',
+    quote_prepared: 'bg-indigo-100 text-indigo-800',
+    quote_approved: 'bg-green-100 text-green-800',
     converted_to_project: 'bg-emerald-100 text-emerald-800',
-    cancelled: 'bg-red-100 text-red-800'
+    cancelled: 'bg-red-100 text-red-800',
+    client_registered: 'bg-cyan-100 text-cyan-800',
+    design_approved: 'bg-lime-100 text-lime-800'
   }
-  return classes[status as keyof typeof classes] || classes.new
+  return classes[status as keyof typeof classes] || classes.enquiry_logged
+}
+
+const getStatusLabel = (status: string) => {
+  const labels = {
+    enquiry_logged: 'New Enquiry',
+    in_progress: 'In Progress',
+    site_survey_completed: 'Site Survey Completed',
+    design_completed: 'Design Completed',
+    materials_specified: 'Materials Specified',
+    budget_created: 'Budget Created',
+    quote_prepared: 'Quote Prepared',
+    quote_approved: 'Quote Approved',
+    converted_to_project: 'Converted to Project',
+    cancelled: 'Cancelled',
+    client_registered: 'Client Registered',
+    design_approved: 'Design Approved'
+  }
+  return labels[status as keyof typeof labels] || 'Unknown Status'
 }
 
 
@@ -671,63 +717,12 @@ const viewEnquiryDetails = (enquiry: Enquiry) => {
   router.push(`/projects/enquiries/${enquiry.id}`)
 }
 
-// Commented out task-related functions due to deleted projects module
-// const canAccessTasks = (enquiry: Enquiry) => {
-//   // Check if user has permission to access tasks for this enquiry
-//   // For now, allow access if enquiry has a department assigned
-//   return enquiry.department_id || enquiry.assigned_department
-// }
-
-// const navigateToDepartmentTasks = (enquiry: Enquiry) => {
-//   // Use the department workflow composable for intelligent routing
-//   const department = enquiry.assigned_department
-
-//   if (department) {
-//     // Try to navigate using the department workflow system
-//     const success = navigateToDepartmentWorkflow(enquiry, department.toLowerCase())
-
-//     if (success) {
-//       return
-//     }
-//   }
-
-//   // Fallback to manual routing if department workflow fails
-//   const departmentLower = department?.toLowerCase() || ''
-
-//   if (departmentLower.includes('creative')) {
-//     // Route to Design Concept phase for creatives
-//     router.push(`/projects/enquiries/${enquiry.id}?phase=design_concept&department=creatives`)
-//   } else if (departmentLower.includes('design')) {
-//     // Route to Material Specification phase for design
-//     router.push(`/projects/enquiries/${enquiry.id}?phase=material_specification&department=design`)
-//   } else if (departmentLower.includes('survey') || departmentLower.includes('site')) {
-//     // Route to Site Survey phase
-//     router.push(`/projects/enquiries/${enquiry.id}?phase=survey&department=survey`)
-//   } else if (departmentLower.includes('procurement')) {
-//     // Route to Procurement phase
-//     router.push(`/projects/enquiries/${enquiry.id}?phase=procurement&department=procurement`)
-//   } else if (departmentLower.includes('project')) {
-//     // Route to Project Management phase
-//     router.push(`/projects/enquiries/${enquiry.id}?phase=project_management&department=projects`)
-//   } else {
-//     // Default to general workflow view with intelligent phase detection
-//     const availablePhases = getAvailablePhases(enquiry)
-//     const nextPhase = getNextAvailablePhase(enquiry)
-
-//     if (nextPhase) {
-//       router.push(`/projects/enquiries/${enquiry.id}?phase=${nextPhase.phase}&department=${nextPhase.department}`)
-//     } else {
-//       router.push(`/projects/enquiries/${enquiry.id}`)
-//     }
-//   }
-// }
-
 const updateStatus = async (enquiry: Enquiry, status: Enquiry['status']) => {
   await updateEnquiry(enquiry.id, { status })
   await fetchEnquiries()
 }
 
-const openTaskDashboard = (enquiry: Enquiry) => {
+const openTaskAssignment = (enquiry: Enquiry) => {
   selectedEnquiryForTasks.value = enquiry
   showTaskDashboard.value = true
 }
@@ -736,58 +731,6 @@ const closeTaskDashboard = () => {
   showTaskDashboard.value = false
   selectedEnquiryForTasks.value = null
 }
-
-// Commented out due to deleted projects module
-// const handleTaskAssigned = (data: {
-//   userId: number
-//   userName: string
-//   userEmail: string
-//   taskCount: number
-//   taskNames: string
-//   message: string
-//   tasks: any[]
-// }) => {
-//   // Emit the event up to the parent (MainLayout)
-//   // emit('taskAssigned', data)
-// }
-
-// Commented out due to deleted projects module
-// const handleQuoteApproved = async (data: { enquiryId: number; quotationData: { summary: { totalQuoteAmount: number } } }) => {
-//   try {
-//     // Find the enquiry
-//     const enquiry = enquiries.value.find((e: any) => e.id === data.enquiryId)
-//     if (!enquiry) {
-//       console.error('Enquiry not found for quote approval')
-//       return
-//     }
-
-//     // Generate project ID
-//     const projectId = await generateProjectId()
-
-//     // Create project data - commented out
-//     // const projectData: any = {
-//     //   enquiry_id: data.enquiryId,
-//     //   name: enquiry.title,
-//     //   description: enquiry.project_deliverables || enquiry.description || 'Project created from approved quote',
-//     //   start_date: new Date().toISOString().split('T')[0],
-//     //   budget: data.quotationData.summary.totalQuoteAmount,
-//     //   assigned_users: []
-//     // }
-
-//     // Create the project (this would need to be updated to include project_id in the backend)
-//     // await createProject(projectData)
-
-//     // Update enquiry status to converted
-//     await updateEnquiry(data.enquiryId, { status: 'converted_to_project' })
-
-//     // Refresh enquiries
-//     await fetchEnquiries()
-
-//     console.log('Project created successfully:', projectId)
-//   } catch (error) {
-//     console.error('Error creating project from approved quote:', error)
-//   }
-// }
 
 // Generate project ID in format WNG-YYYYMM-JOB_NUMBER(001)
 const generateProjectId = async (): Promise<string> => {
@@ -810,6 +753,7 @@ const generateProjectId = async (): Promise<string> => {
 const closeModal = () => {
   showCreateModal.value = false
   editingEnquiry.value = null
+  activeModalTab.value = 'basic'
   formError.value = ''
   formSuccess.value = ''
   enquiryFormData.value = {
@@ -909,6 +853,18 @@ onMounted(async () => {
     console.log('ProjectEnquiries onMounted completed successfully')
   } catch (error) {
     console.error('Error in ProjectEnquiries onMounted:', error)
+  }
+})
+
+// Watch for changes to date_received and clear expected_delivery_date if it's now invalid
+watch(() => enquiryFormData.value.date_received, (newDateReceived) => {
+  if (newDateReceived && enquiryFormData.value.expected_delivery_date) {
+    const receivedDate = new Date(newDateReceived)
+    const deliveryDate = new Date(enquiryFormData.value.expected_delivery_date)
+
+    if (deliveryDate < receivedDate) {
+      enquiryFormData.value.expected_delivery_date = undefined
+    }
   }
 })
 </script>

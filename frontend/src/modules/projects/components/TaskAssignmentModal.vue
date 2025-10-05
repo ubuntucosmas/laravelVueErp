@@ -26,124 +26,141 @@
         {{ error }}
       </div>
 
-      <!-- Tasks List -->
-      <div v-else>
+      <!-- Tab Navigation -->
+      <div v-if="enquiryTasks.length > 0" class="border-b border-gray-200 dark:border-gray-700 mb-6">
+        <nav class="flex space-x-1 overflow-x-auto">
+          <button
+            v-for="task in enquiryTasks"
+            :key="task.id"
+            @click="activeTab = task.id"
+            :class="[
+              'px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
+              activeTab === task.id
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+            ]"
+          >
+            {{ task.title }}
+          </button>
+        </nav>
+      </div>
+
+      <!-- Task Assignment Form -->
+      <div>
         <div v-if="enquiryTasks.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
           No tasks available for assignment
         </div>
 
-        <div v-else class="space-y-4">
-          <div
-            v-for="task in enquiryTasks"
-            :key="task.id"
-            class="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-          >
-            <div class="flex justify-between items-start mb-3">
-              <div>
-                <h3 class="font-medium text-gray-900 dark:text-white">{{ task.title }}</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">{{ task.type }}</p>
+        <div v-else-if="!activeTask" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          Select a task to assign
+        </div>
+
+        <div v-else class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <h3 class="font-medium text-gray-900 dark:text-white">{{ activeTask.title }}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">{{ activeTask.type }}</p>
+            </div>
+            <span :class="getStatusColor(activeTask.status)" class="px-2 py-1 text-xs rounded-full">
+              {{ getStatusLabel(activeTask.status) }}
+            </span>
+          </div>
+
+          <!-- Assignment Form -->
+          <form @submit.prevent="assignTask(activeTask)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Assign to User *
+              </label>
+              <select
+                v-model="assignmentData[activeTask.id].assigned_user_id"
+                required
+                :disabled="loadingUsers"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+              >
+                <option value="">{{ loadingUsers ? 'Loading users...' : 'Select user' }}</option>
+                <option v-for="user in availableUsers" :key="user.id" :value="user.id">
+                  {{ user.name }}{{ user.department ? ` (${user.department})` : '' }}
+                </option>
+              </select>
+              <div v-if="loadingUsers" class="text-xs text-gray-500 mt-1">
+                🔍 Loading available users...
               </div>
-              <span :class="getStatusColor(task.status)" class="px-2 py-1 text-xs rounded-full">
-                {{ getStatusLabel(task.status) }}
-              </span>
+              <div v-else-if="availableUsers.length === 0" class="text-xs text-amber-600 mt-1">
+                ⚠️ No users available for assignment
+              </div>
+              <div v-else class="text-xs text-gray-500 mt-1">
+                👥 {{ availableUsers.length }} users available
+              </div>
             </div>
 
-            <!-- Assignment Form -->
-            <form @submit.prevent="assignTask(task)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Assign to User *
-                </label>
-                <select
-                  v-model="assignmentData[task.id].assigned_user_id"
-                  required
-                  :disabled="loadingUsers"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
-                >
-                  <option value="">{{ loadingUsers ? 'Loading users...' : 'Select user' }}</option>
-                  <option v-for="user in availableUsers" :key="user.id" :value="user.id">
-                    {{ user.name }}{{ user.department ? ` (${user.department})` : '' }}
-                  </option>
-                </select>
-                <div v-if="loadingUsers" class="text-xs text-gray-500 mt-1">
-                  🔍 Loading available users...
-                </div>
-                <div v-else-if="availableUsers.length === 0" class="text-xs text-amber-600 mt-1">
-                  ⚠️ No users available for assignment
-                </div>
-                <div v-else class="text-xs text-gray-500 mt-1">
-                  👥 {{ availableUsers.length }} users available
-                </div>
-              </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Priority
+              </label>
+              <select
+                v-model="assignmentData[activeTask.id].priority"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Priority
-                </label>
-                <select
-                  v-model="assignmentData[task.id].priority"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="urgent">Urgent</option>
-                </select>
-              </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Due Date
+              </label>
+              <input
+                v-model="assignmentData[activeTask.id].due_date"
+                type="date"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Due Date
-                </label>
-                <input
-                  v-model="assignmentData[task.id].due_date"
-                  type="date"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Notes
+              </label>
+              <textarea
+                v-model="assignmentData[activeTask.id].notes"
+                rows="2"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Optional notes for the assignment"
+              ></textarea>
+            </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Notes
-                </label>
-                <textarea
-                  v-model="assignmentData[task.id].notes"
-                  rows="2"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Optional notes for the assignment"
-                ></textarea>
-              </div>
+            <div class="md:col-span-2 flex justify-end">
+              <button
+                type="submit"
+                :disabled="!assignmentData[activeTask.id].assigned_user_id || assigningTask === activeTask.id"
+                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span v-if="assigningTask === activeTask.id" class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                {{ assigningTask === activeTask.id ? 'Assigning...' : 'Assign Task' }}
+              </button>
+            </div>
+          </form>
 
-              <div class="md:col-span-2 flex justify-end">
-                <button
-                  type="submit"
-                  :disabled="!assignmentData[task.id].assigned_user_id || assigningTask === task.id"
-                  class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span v-if="assigningTask === task.id" class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-                  {{ assigningTask === task.id ? 'Assigning...' : 'Assign Task' }}
-                </button>
+          <!-- Assignment History -->
+          <div v-if="activeTask.assignmentHistory && activeTask.assignmentHistory.length > 0" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assignment History</h4>
+            <div class="space-y-2">
+              <div
+                v-for="history in activeTask.assignmentHistory.slice(0, 2)"
+                :key="history.id"
+                class="text-xs text-gray-600 dark:text-gray-400"
+              >
+                Assigned to {{ history.assignedTo?.name }} on {{ formatDate(history.assigned_at) }}
+                <span v-if="history.notes"> - {{ history.notes }}</span>
               </div>
-            </form>
-
-            <!-- Assignment History -->
-            <div v-if="task.assignmentHistory && task.assignmentHistory.length > 0" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assignment History</h4>
-              <div class="space-y-2">
-                <div
-                  v-for="history in task.assignmentHistory.slice(0, 2)"
-                  :key="history.id"
-                  class="text-xs text-gray-600 dark:text-gray-400"
-                >
-                  Assigned to {{ history.assignedTo?.name }} on {{ formatDate(history.assigned_at) }}
-                  <span v-if="history.notes"> - {{ history.notes }}</span>
-                </div>
-                <div
-                  v-if="task.assignmentHistory && task.assignmentHistory.length > 2"
-                  class="text-xs text-gray-500 dark:text-gray-400"
-                >
-                  +{{ task.assignmentHistory.length - 2 }} more assignments
-                </div>
+              <div
+                v-if="activeTask.assignmentHistory && activeTask.assignmentHistory.length > 2"
+                class="text-xs text-gray-500 dark:text-gray-400"
+              >
+                +{{ activeTask.assignmentHistory.length - 2 }} more assignments
               </div>
             </div>
           </div>
@@ -164,7 +181,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import type { EnquiryTask } from '../types/enquiry'
 import { useTaskAssignment } from '../composables/useTaskAssignment'
 import api from '@/plugins/axios'
@@ -204,6 +221,9 @@ const availableUsers = ref<User[]>([])
 const assignmentData = reactive<Record<number, AssignmentFormData>>({})
 const assigningTask = ref<number | null>(null)
 const loadingUsers = ref(false)
+const activeTab = ref<number | null>(null)
+
+const activeTask = computed(() => enquiryTasks.value.find(task => task.id === activeTab.value))
 
 const initializeAssignmentData = () => {
   enquiryTasks.value.forEach(task => {
@@ -336,6 +356,7 @@ watch(() => props.show, async (newShow) => {
     console.log('🔍 [TaskAssignmentModal] Fetching enquiry tasks for ID:', props.enquiryId)
     await fetchEnquiryTasks(props.enquiryId)
     initializeAssignmentData()
+    activeTab.value = enquiryTasks.value[0]?.id || null
   }
 })
 

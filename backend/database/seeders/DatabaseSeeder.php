@@ -28,8 +28,6 @@ class DatabaseSeeder extends Seeder
             DesignerRoleSeeder::class,
         ]);
 
-        // Seed sample enquiries for testing
-        $this->call(EnquirySeeder::class);
 
         // Create a default admin user
         $adminUser = \App\Models\User::factory()->create([

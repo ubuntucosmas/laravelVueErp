@@ -59,7 +59,6 @@ const props = defineProps({
   navigationItems: {
     type: Array as () => NavigationItem[],
     default: () => [
-      { path: '/dashboard', label: 'Dashboard', icon: '📊' },
       { path: '/hr', label: 'HR', icon: '👥' },
       { path: '/finance', label: 'Finance', icon: '💰' }
     ]

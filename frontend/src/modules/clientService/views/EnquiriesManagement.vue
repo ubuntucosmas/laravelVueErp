@@ -31,7 +31,6 @@
         </li>
       </ol>
     </nav>
-
     <!-- Enquiries Table View -->
     <div>
       <div class="flex items-center justify-between">
@@ -213,169 +212,227 @@
           {{ editingEnquiry ? 'Edit Enquiry' : 'Log New Enquiry' }}
         </h2>
 
-        <form @submit.prevent="handleFormSubmit" class="space-y-4">
-           <div class="grid grid-cols-2 gap-4">
-             <div>
-               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date Received *</label>
-               <input
-                 v-model="enquiryFormData.date_received"
-                 type="date"
-                 required
-                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-               />
-             </div>
-             <div>
-               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Expected Delivery Date</label>
-               <input
-                 v-model="enquiryFormData.expected_delivery_date"
-                 type="date"
-                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-               />
-             </div>
-           </div>
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
+          <nav class="-mb-px flex space-x-8">
+            <button
+              v-for="tab in modalTabs"
+              :key="tab.key"
+              @click="activeModalTab = tab.key"
+              :class="activeModalTab === tab.key
+                ? 'border-primary text-primary dark:text-primary-light'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+              class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors"
+            >
+              {{ tab.label }}
+            </button>
+          </nav>
+        </div>
 
-           <div>
-             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client *</label>
-             <select
-               v-model="enquiryFormData.client_id"
-               required
-               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-             >
-               <option value="">Select a client</option>
-               <option v-for="client in activeClients" :key="client.id" :value="client.id">
-                 {{ client.FullName }}
-               </option>
-             </select>
-           </div>
+        <form @submit.prevent="handleFormSubmit" @keydown.enter.prevent="handleFormSubmit" class="space-y-4">
+          <!-- Basic Information Tab -->
+          <div v-if="activeModalTab === 'basic'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date Received *</label>
+                <input
+                  v-model="enquiryFormData.date_received"
+                  type="date"
+                  required
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Expected Delivery Date</label>
+                <input
+                  v-model="enquiryFormData.expected_delivery_date"
+                  type="date"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
 
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client *</label>
+              <select
+                v-model="enquiryFormData.client_id"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="">Select a client</option>
+                <option v-for="client in activeClients" :key="client.id" :value="client.id">
+                  {{ client.FullName }}
+                </option>
+              </select>
+            </div>
 
-           <div>
-             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Title *</label>
-             <input
-               v-model="enquiryFormData.title"
-               type="text"
-               required
-               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-             />
-           </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Title *</label>
+              <input
+                v-model="enquiryFormData.title"
+                type="text"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
 
-           <div>
-             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Description *</label>
-             <textarea
-               v-model="enquiryFormData.description"
-               required
-               rows="3"
-               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-             ></textarea>
-           </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Description *</label>
+              <textarea
+                v-model="enquiryFormData.description"
+                required
+                rows="3"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              ></textarea>
+            </div>
 
-           <div>
-             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Scope</label>
-             <textarea
-               v-model="enquiryFormData.project_scope"
-               rows="2"
-               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-             ></textarea>
-           </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Scope</label>
+              <textarea
+                v-model="enquiryFormData.project_scope"
+                rows="2"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              ></textarea>
+            </div>
+          </div>
 
-           <div class="grid grid-cols-2 gap-4">
-             <div>
-               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person *</label>
-               <input
-                 v-model="enquiryFormData.contact_person"
-                 type="text"
-                 required
-                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-               />
-             </div>
-             <div>
-               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
-               <select
-                 v-model="enquiryFormData.priority"
-                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-               >
-                 <option value="low">Low</option>
-                 <option value="medium">Medium</option>
-                 <option value="high">High</option>
-                 <option value="urgent">Urgent</option>
-               </select>
-             </div>
-           </div>
+          <!-- Contact & Priority Tab -->
+          <div v-if="activeModalTab === 'contact'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Person *</label>
+                <input
+                  v-model="enquiryFormData.contact_person"
+                  type="text"
+                  required
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+                <select
+                  v-model="enquiryFormData.priority"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+            </div>
 
-           <div>
-             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status *</label>
-             <select
-               v-model="enquiryFormData.status"
-               required
-               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-             >
-               <option value="client_registered">Client Registered</option>
-               <option value="enquiry_logged">Enquiry Logged</option>
-               <option value="site_survey_completed">Site Survey Completed</option>
-               <option value="design_completed">Design Completed</option>
-               <option value="design_approved">Design Approved</option>
-               <option value="materials_specified">Materials Specified</option>
-               <option value="budget_created">Budget Created</option>
-               <option value="quote_prepared">Quote Prepared</option>
-               <option value="quote_approved">Quote Approved</option>
-               <option value="converted_to_project">Converted to Project</option>
-               <option value="cancelled">Cancelled</option>
-             </select>
-           </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status *</label>
+              <select
+                v-model="enquiryFormData.status"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="client_registered">Client Registered</option>
+                <option value="enquiry_logged">Enquiry Logged</option>
+                <option value="site_survey_completed">Site Survey Completed</option>
+                <option value="design_completed">Design Completed</option>
+                <option value="design_approved">Design Approved</option>
+                <option value="materials_specified">Materials Specified</option>
+                <option value="budget_created">Budget Created</option>
+                <option value="quote_prepared">Quote Prepared</option>
+                <option value="quote_approved">Quote Approved</option>
+                <option value="converted_to_project">Converted to Project</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
 
-           <div class="grid grid-cols-2 gap-4">
-             <div>
-               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assigned Project Officer</label>
-               <select
-                 v-model="enquiryFormData.assigned_po"
-                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-               >
-                 <option value="">Select Project Officer</option>
-                 <option v-for="po in projectOfficers" :key="po.id" :value="po.id">
-                   {{ po.name }}
-                 </option>
-               </select>
-             </div>
-             <div>
-               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Venue</label>
-               <input
-                 v-model="enquiryFormData.venue"
-                 type="text"
-                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-               />
-             </div>
-           </div>
+          <!-- Assignment & Venue Tab -->
+          <div v-if="activeModalTab === 'assignment'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assigned Project Officer</label>
+                <select
+                  v-model="enquiryFormData.assigned_po"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select Project Officer</option>
+                  <option v-for="po in projectOfficers" :key="po.id" :value="po.id">
+                    {{ po.name }}
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Venue</label>
+                <input
+                  v-model="enquiryFormData.venue"
+                  type="text"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
 
-           <div>
-             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up Notes</label>
-             <textarea
-               v-model="enquiryFormData.follow_up_notes"
-               rows="2"
-               class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-             ></textarea>
-           </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up Notes</label>
+              <textarea
+                v-model="enquiryFormData.follow_up_notes"
+                rows="2"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              ></textarea>
+            </div>
+          </div>
 
-           <div class="grid grid-cols-2 gap-4">
-             <div>
-               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                 <input
-                   v-model="enquiryFormData.site_survey_skipped"
-                   type="checkbox"
-                   class="mr-2"
-                 />
-                 Skip Site Survey
-               </label>
-             </div>
-             <div v-if="enquiryFormData.site_survey_skipped">
-               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Skip Reason</label>
-               <input
-                 v-model="enquiryFormData.site_survey_skip_reason"
-                 type="text"
-                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-               />
-             </div>
-           </div>
-         </form>
+          <!-- Site Survey Tab -->
+          <div v-if="activeModalTab === 'survey'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <input
+                    v-model="enquiryFormData.site_survey_skipped"
+                    type="checkbox"
+                    class="mr-2"
+                  />
+                  Skip Site Survey
+                </label>
+              </div>
+              <div v-if="enquiryFormData.site_survey_skipped">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Skip Reason</label>
+                <input
+                  v-model="enquiryFormData.site_survey_skip_reason"
+                  type="text"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Tab Navigation Buttons -->
+        <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <button
+            @click="previousTab"
+            :disabled="activeModalTab === 'basic'"
+            class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+
+          <div class="flex space-x-3">
+            <button
+              v-if="activeModalTab !== 'survey'"
+              @click="nextTab"
+              class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Next
+            </button>
+            <button
+              v-if="activeModalTab === 'survey'"
+              @click="handleFormSubmit"
+              :disabled="saving"
+              class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <span v-if="saving" class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+              {{ saving ? 'Saving...' : (editingEnquiry ? 'Update Enquiry' : 'Log Enquiry') }}
+            </button>
+          </div>
+        </div>
 
         <div v-if="formError" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
           {{ formError }}
@@ -392,14 +449,6 @@
             :disabled="saving"
           >
             Cancel
-          </button>
-          <button
-            @click="handleFormSubmit"
-            :disabled="saving"
-            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <span v-if="saving" class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-            {{ saving ? 'Saving...' : (editingEnquiry ? 'Update Enquiry' : 'Log Enquiry') }}
           </button>
         </div>
       </div>
@@ -460,6 +509,30 @@ const saving = ref(false)
 const formError = ref('')
 const formSuccess = ref('')
 const projectOfficers = ref<Array<{id: number, name: string, email: string}>>([])
+
+// Modal Tabs
+const activeModalTab = ref('basic')
+const modalTabs = [
+  { key: 'basic', label: 'Basic Information' },
+  { key: 'contact', label: 'Contact & Priority' },
+  { key: 'assignment', label: 'Assignment & Venue' },
+  { key: 'survey', label: 'Site Survey' }
+]
+
+const previousTab = () => {
+  const currentIndex = modalTabs.findIndex(tab => tab.key === activeModalTab.value)
+  if (currentIndex > 0) {
+    activeModalTab.value = modalTabs[currentIndex - 1].key
+  }
+}
+
+const nextTab = () => {
+  const currentIndex = modalTabs.findIndex(tab => tab.key === activeModalTab.value)
+  if (currentIndex < modalTabs.length - 1) {
+    activeModalTab.value = modalTabs[currentIndex + 1].key
+  }
+}
+
 const enquiryFormData = ref<CreateEnquiryData>({
   date_received: new Date().toISOString().split('T')[0],
   expected_delivery_date: '',
@@ -585,6 +658,7 @@ const viewEnquiryDetails = (enquiry: Enquiry) => {
 const closeModal = () => {
   showCreateModal.value = false
   editingEnquiry.value = null
+  activeModalTab.value = 'basic'
   formError.value = ''
   formSuccess.value = ''
   enquiryFormData.value = {

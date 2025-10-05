@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/permissions', function () {
         return response()->json([
             'permissions' => auth()->user()->getNavigationPermissions(),
+            'user_permissions' => auth()->user()->getAllPermissions()->pluck('name')->toArray(),
             'roles' => auth()->user()->roles->pluck('name'),
             'departments' => auth()->user()->getAccessibleDepartments()
         ]);
@@ -173,9 +174,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('enquiries', [EnquiryController::class, 'store'])
             ->middleware('permission:' . Permissions::ENQUIRY_CREATE);
         Route::put('enquiries/{enquiry}', [EnquiryController::class, 'update'])
-            ->middleware('permission:' . Permissions::ENQUIRY_UPDATE);
+             ->middleware('permission:' . Permissions::ENQUIRY_UPDATE);
+        Route::delete('enquiries/{enquiry}', [EnquiryController::class, 'destroy'])
+             ->middleware('permission:' . Permissions::ENQUIRY_DELETE);
         Route::put('enquiries/{enquiry}/phases/{phase}', [EnquiryController::class, 'updatePhase'])
-            ->middleware('permission:' . Permissions::ENQUIRY_UPDATE);
+             ->middleware('permission:' . Permissions::ENQUIRY_UPDATE);
         Route::post('enquiries/{enquiry}/approve-quote', [EnquiryController::class, 'approveQuote'])
             ->middleware('permission:' . Permissions::ENQUIRY_UPDATE);
         Route::post('enquiries/{enquiry}/convert', [EnquiryController::class, 'convertToProject'])

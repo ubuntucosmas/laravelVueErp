@@ -7,9 +7,17 @@ use App\Models\TaskAssignmentHistory;
 use App\Models\User;
 use App\Modules\Projects\Models\EnquiryTask;
 use Illuminate\Support\Facades\Log;
+use App\Constants\EnquiryConstants;
 
 class EnquiryWorkflowService
 {
+    private NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * Create workflow tasks for a newly created enquiry (unassigned)
      */
@@ -25,22 +33,7 @@ class EnquiryWorkflowService
         }
 
         try {
-            $taskTemplates = [
-                ['title' => 'Site Survey', 'type' => 'survey'],
-                ['title' => 'Design & Concept Development', 'type' => 'design'],
-                ['title' => 'Material & Cost Listing', 'type' => 'materials'],
-                ['title' => 'Budget Creation', 'type' => 'budget'],
-                ['title' => 'Quote Preparation', 'type' => 'quote'],
-                ['title' => 'Quote Approval', 'type' => 'quote_approval'],
-                ['title' => 'Procurement & Inventory Management', 'type' => 'procurement'],
-                ['title' => 'Project Conversion', 'type' => 'conversion'],
-                ['title' => 'production', 'type' => 'production'],
-                ['title' => 'Logistics', 'type' => 'logistics'],
-                ['title' => 'Event Setup & Execution', 'type' => 'setup'],
-                ['title' => 'Client Handover', 'type' => 'handover'],
-                ['title' => 'Set Down & Return', 'type' => 'setdown'],
-                ['title' => 'Archival & Reporting', 'type' => 'report'],
-            ];
+            $taskTemplates = config('enquiry_workflow.task_templates', []);
 
             foreach ($taskTemplates as $template) {
                 EnquiryTask::create([
@@ -48,8 +41,8 @@ class EnquiryWorkflowService
                     'title' => $template['title'],
                     'type' => $template['type'],
                     'status' => 'pending',
-                    'priority' => 'medium',
-                    'notes' => $this->getDefaultNotesForTask($template['type']),
+                    'priority' => EnquiryConstants::PRIORITY_MEDIUM,
+                    'notes' => $template['notes'] ?? 'Complete this task',
                     'created_by' => $enquiry->created_by,
                 ]);
 
@@ -103,14 +96,9 @@ class EnquiryWorkflowService
      */
     public function assignEnquiryTask(int $taskId, int $assignedUserId, int $assignedByUserId, array $assignmentData = []): EnquiryTask
     {
-        Log::info("[DEBUG] EnquiryWorkflowService::assignEnquiryTask starting: taskId={$taskId}, assignedUserId={$assignedUserId}, assignedByUserId={$assignedByUserId}", $assignmentData);
-
         $task = EnquiryTask::findOrFail($taskId);
-        Log::info("[DEBUG] Found task {$taskId}: title='{$task->title}', current status='{$task->status}', assigned_by=" . ($task->assigned_by ?? 'null'));
-
         $assignedUser = User::findOrFail($assignedUserId);
         $assignedByUser = User::findOrFail($assignedByUserId);
-        Log::info("[DEBUG] Found users: assigned={$assignedUser->name} (dept: {$assignedUser->department_id}), assigner={$assignedByUser->name}");
 
         // Validate assignment rules
         $this->validateTaskAssignment($task, $assignedUser, $assignmentData);
@@ -134,11 +122,10 @@ class EnquiryWorkflowService
             $updateData['notes'] = $assignmentData['notes'];
         }
 
-        Log::info("[DEBUG] Updating task {$taskId} with data: " . json_encode($updateData));
         $task->update($updateData);
 
         // Create assignment history
-        $history = TaskAssignmentHistory::create([
+        TaskAssignmentHistory::create([
             'enquiry_task_id' => $task->id,
             'assigned_to' => $assignedUserId,
             'assigned_by' => $assignedByUserId,
@@ -146,12 +133,9 @@ class EnquiryWorkflowService
             'notes' => $assignmentData['notes'] ?? null,
         ]);
 
-        Log::info("[DEBUG] Created assignment history entry {$history->id} for task {$taskId}");
+        Log::info("Task {$taskId} assigned to user {$assignedUserId} by user {$assignedByUserId}");
 
-        $updatedTask = $task->fresh(); // Get fresh instance
-        Log::info("[DEBUG] Task {$taskId} assignment completed. Final state: status='{$updatedTask->status}', assigned_by={$updatedTask->assigned_by}, department_id=" . ($updatedTask->department_id ?? 'null'));
-
-        return $updatedTask;
+        return $task->fresh(); // Get fresh instance
     }
 
     /**
@@ -278,10 +262,13 @@ class EnquiryWorkflowService
         $daysOverdue = $task->due_date->diffInDays(now());
         $currentPriority = $task->priority;
 
+        $escalationConfig = config('enquiry_workflow.escalation', []);
+        $urgentThreshold = $escalationConfig['urgent_threshold_days'] ?? 7;
+        $highThreshold = $escalationConfig['high_threshold_days'] ?? 3;
+
         $newPriority = match(true) {
-            $daysOverdue >= 7 => 'urgent',
-            $daysOverdue >= 3 => 'high',
-            $daysOverdue >= 1 => 'high',
+            $daysOverdue >= $urgentThreshold => EnquiryConstants::PRIORITY_URGENT,
+            $daysOverdue >= $highThreshold => EnquiryConstants::PRIORITY_HIGH,
             default => $currentPriority
         };
 
@@ -300,7 +287,7 @@ class EnquiryWorkflowService
         if ($task->assigned_by) {
             $assignedUser = User::find($task->assigned_by);
             if ($assignedUser) {
-                app(NotificationService::class)->sendTaskOverdueNotification($task, $assignedUser);
+                $this->notificationService->sendTaskOverdueNotification($task, $assignedUser);
             }
         }
 
@@ -309,7 +296,7 @@ class EnquiryWorkflowService
         if ($projectManagerRole) {
             $projectManagers = $projectManagerRole->users;
             foreach ($projectManagers as $pm) {
-                app(NotificationService::class)->sendTaskOverdueNotification($task, $pm);
+                $this->notificationService->sendTaskOverdueNotification($task, $pm);
             }
         }
     }
@@ -319,9 +306,11 @@ class EnquiryWorkflowService
      */
     public function checkAndSendDueDateReminders(): void
     {
-        // Tasks due in 1 day
+        $reminderConfig = config('enquiry_workflow.reminders', []);
+        $dueSoonDays = $reminderConfig['due_soon_days'] ?? 1;
+
         $tasksDueSoon = EnquiryTask::where('due_date', '>=', now())
-            ->where('due_date', '<=', now()->addDay())
+            ->where('due_date', '<=', now()->addDays($dueSoonDays))
             ->where('status', '!=', 'completed')
             ->whereNotNull('assigned_by')
             ->get();
@@ -329,7 +318,7 @@ class EnquiryWorkflowService
         foreach ($tasksDueSoon as $task) {
             $assignedUser = User::find($task->assigned_by);
             if ($assignedUser) {
-                app(NotificationService::class)->sendTaskDueSoonNotification($task, $assignedUser);
+                $this->notificationService->sendTaskDueSoonNotification($task, $assignedUser);
             }
         }
 
@@ -341,9 +330,12 @@ class EnquiryWorkflowService
      */
     public function getTasksRequiringAttention(): \Illuminate\Database\Eloquent\Collection
     {
-        return EnquiryTask::where(function ($query) {
+        $reminderConfig = config('enquiry_workflow.reminders', []);
+        $requiringAttentionDays = $reminderConfig['requiring_attention_days'] ?? 2;
+
+        return EnquiryTask::where(function ($query) use ($requiringAttentionDays) {
             $query->where('due_date', '<', now()) // Overdue
-                  ->orWhere('due_date', '<=', now()->addDays(2)); // Due within 2 days
+                  ->orWhere('due_date', '<=', now()->addDays($requiringAttentionDays)); // Due within configured days
         })
         ->where('status', '!=', 'completed')
         ->with('enquiry', 'department')
@@ -351,28 +343,4 @@ class EnquiryWorkflowService
         ->get();
     }
 
-    /**
-     * Get default notes for a task type
-     */
-    private function getDefaultNotesForTask(string $type): string
-    {
-        $notes = [
-            'survey' => 'Conduct site survey for the enquiry',
-            'design' => 'Create design concepts and mockups',
-            'materials' => 'Specify and source materials for the project',
-            'budget' => 'Create budget for the project',
-            'quote' => 'Prepare final quote for the project',
-            'quote_approval' => 'Approve the prepared quote',
-            'procurement' => 'Manage procurement and inventory',
-            'conversion' => 'Convert enquiry to project',
-            'production' => 'Handle production activities',
-            'logistics' => 'Manage logistics and transportation',
-            'setup' => 'Set up event and execute',
-            'handover' => 'Hand over to client',
-            'setdown' => 'Set down and return equipment',
-            'report' => 'Archive and generate reports',
-        ];
-
-        return $notes[$type] ?? 'Complete this task';
-    }
 }

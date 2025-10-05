@@ -55,11 +55,10 @@ router.beforeEach(async (to, from, next) => {
 
   // Check department access
   if (to.meta.requiresDepartment) {
-    const { useRouteGuard } = await import('@/composables/useRouteGuard')
-    const { canAccessDepartment } = useRouteGuard()
+    const { canAccessDepartment } = await import('@/utils/routerGuards')
 
     const departmentId = parseInt(to.params.departmentId as string)
-    if (!canAccessDepartment(departmentId)) {
+    if (!(await canAccessDepartment(departmentId))) {
       next('/access-denied')
       return
     }
@@ -67,60 +66,64 @@ router.beforeEach(async (to, from, next) => {
 
   // Check projects access
   if (to.meta.requiresProjectsAccess) {
-    const { useRouteGuard } = await import('@/composables/useRouteGuard')
-    const { canAccessProjects } = useRouteGuard()
+    const { canAccessProjects } = await import('@/utils/routerGuards')
 
-    if (!canAccessProjects()) {
-      console.log('Access denied to projects - redirecting to dashboard')
-      next('/dashboard')
+    if (!(await canAccessProjects())) {
+      console.log('Access denied to projects - redirecting to appropriate dashboard')
+      // Avoid infinite redirect by not redirecting to a projects route
+      // Instead, redirect to a safe route based on user permissions
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        // For now, redirect to HR dashboard as a safe fallback
+        // In a real app, you'd determine the appropriate dashboard
+        next('/hr')
+      } else {
+        next('/login')
+      }
       return
     }
   }
 
   // Check client service access
   if (to.meta.requiresClientServiceAccess) {
-    const { useRouteGuard } = await import('@/composables/useRouteGuard')
-    const { canAccessClientService } = useRouteGuard()
+    const { canAccessClientService } = await import('@/utils/routerGuards')
 
-    if (!canAccessClientService()) {
-      console.log('Access denied to client service - redirecting to dashboard')
-      next('/dashboard')
+    if (!(await canAccessClientService())) {
+      console.log('Access denied to client service - redirecting to client service dashboard')
+      next('/client-service')
       return
     }
   }
 
   // Check creatives access
   if (to.meta.requiresCreativesAccess) {
-    const { useRouteGuard } = await import('@/composables/useRouteGuard')
-    const { canAccessCreatives } = useRouteGuard()
+    const { canAccessCreatives } = await import('@/utils/routerGuards')
 
-    if (!canAccessCreatives()) {
-      console.log('Access denied to creatives - redirecting to dashboard')
-      next('/dashboard')
+    if (!(await canAccessCreatives())) {
+      console.log('Access denied to creatives - redirecting to creatives enquiries')
+      next('/creatives/enquiries')
       return
     }
   }
 
   // Check finance access
   if (to.path.startsWith('/finance') && to.path !== '/finance') {
-    const { useRouteGuard } = await import('@/composables/useRouteGuard')
-    const { canAccessFinance } = useRouteGuard()
+    const { canAccessFinance } = await import('@/utils/routerGuards')
 
-    if (!canAccessFinance()) {
-      console.log('Access denied to finance - redirecting to dashboard')
-      next('/dashboard')
+    if (!(await canAccessFinance())) {
+      console.log('Access denied to finance - redirecting to finance dashboard')
+      next('/finance')
       return
     }
   }
 
   // Check procurement access
   if (to.meta.requiresProcurementAccess) {
-    const { useRouteGuard } = await import('@/composables/useRouteGuard')
-    const { canAccessProcurement } = useRouteGuard()
+    const { canAccessProcurement } = await import('@/utils/routerGuards')
 
-    if (!canAccessProcurement()) {
-      console.log('Access denied to procurement - redirecting to dashboard')
-      next('/dashboard')
+    if (!(await canAccessProcurement())) {
+      console.log('Access denied to procurement - redirecting to procurement dashboard')
+      next('/procurement')
       return
     }
   }

@@ -11,12 +11,6 @@ export const projectsRoutes: RouteRecordRaw[] = [
     },
     children: [
       {
-        path: '',
-        name: 'projects-coordination',
-        component: () => import('../modules/projects/views/ProjectCoordination.vue'),
-        meta: { title: 'Project Coordination' }
-      },
-      {
         path: 'dashboard',
         name: 'projects-dashboard',
         component: () => import('../modules/projects/views/ProjectsDashboard.vue'),

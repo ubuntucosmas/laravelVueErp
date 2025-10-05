@@ -1,12 +1,13 @@
 import { ref, computed } from 'vue'
 import type { ProjectEnquiry, CreateProjectEnquiryData, UpdateProjectEnquiryData } from '../types/enquiry'
 import api from '@/plugins/axios'
+import { PAGINATION_PER_PAGE, CONVERTIBLE_STATUSES } from '../constants/enquiryConstants'
 
 const enquiries = ref<ProjectEnquiry[]>([])
 const pagination = ref({
   current_page: 1,
   last_page: 1,
-  per_page: 6,
+  per_page: PAGINATION_PER_PAGE,
   total: 0,
   from: 0,
   to: 0
@@ -39,13 +40,12 @@ export function useProjectsEnquiries() {
         to: paginationData.to || 0
       }
     } catch (err) {
-      error.value = 'Failed to fetch enquiries'
-      console.error('Error fetching enquiries:', err)
+      error.value = err instanceof Error ? err.message : 'Failed to fetch enquiries'
       enquiries.value = []
       pagination.value = {
         current_page: 1,
         last_page: 1,
-        per_page: 6,
+        per_page: PAGINATION_PER_PAGE,
         total: 0,
         from: 0,
         to: 0
@@ -130,7 +130,7 @@ export function useProjectsEnquiries() {
   }
 
   const canConvertToProject = (enquiry: ProjectEnquiry): boolean => {
-    return enquiry.status === 'quote_approved'
+    return CONVERTIBLE_STATUSES.includes(enquiry.status)
   }
 
   const approveQuote = async (id: number): Promise<void> => {

@@ -1,6 +1,4 @@
 import type { RouteRecordRaw } from 'vue-router'
-import MainLayout from '../layouts/MainLayout.vue'
-import Dashboard from '../views/Dashboard.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import AccessDenied from '../views/AccessDenied.vue'
@@ -9,18 +7,6 @@ export const mainRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     redirect: '/login'
-  },
-  {
-    path: '/dashboard',
-    component: MainLayout,
-    children: [
-      {
-        path: '',
-        name: 'dashboard',
-        component: Dashboard,
-        meta: { title: 'Dashboard' }
-      },
-    ]
   },
   {
     path: '/login',

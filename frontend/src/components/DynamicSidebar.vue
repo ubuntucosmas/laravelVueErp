@@ -22,37 +22,81 @@
     </div>
 
     <nav class="space-y-2 px-3">
-      <!-- Navigation Items -->
-      <div v-for="item in navigationItems" :key="item.path">
-        <RouterLink
-          :to="item.path"
+      <!-- Navigation Items Grouped by Department -->
+      <div v-for="department in navigationItems" :key="department.department" class="space-y-1">
+        <!-- Department Header (Non-accordion for non-superadmin) -->
+        <h3 v-if="!isSuperAdmin && !collapsed" class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+          {{ department.department }}
+        </h3>
+        <!-- Department Header (Accordion) -->
+        <button
+          v-if="!collapsed && isSuperAdmin"
+          @click="toggleAccordion(department.department)"
           :class="[
-            'flex items-center rounded-lg transition-all duration-200 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-gray-700 hover:text-primary',
-            collapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 space-x-3',
-            $route.path === item.path ? 'bg-primary text-white' : ''
+            'w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 text-left',
+            'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-primary',
+            openAccordions[department.department] ? 'bg-gray-50 dark:bg-gray-800' : ''
           ]"
         >
-          <span class="text-lg">{{ item.icon }}</span>
-          <span :class="[
-            'font-medium',
-            collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
-          ]" style="transition: opacity 0.3s ease-in-out 0.1s, width 0.3s ease-in-out;">
-            {{ item.label }}
-          </span>
-        </RouterLink>
+          <h3 class="text-xs font-semibold uppercase tracking-wider">
+            {{ department.department }}
+          </h3>
+          <svg
+            :class="[
+              'w-4 h-4 transition-transform duration-200',
+              openAccordions[department.department] ? 'transform rotate-90' : ''
+            ]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        <!-- Department Routes (Collapsible) -->
+        <div
+          :class="[
+            'space-y-1 overflow-hidden transition-all duration-300 ease-in-out',
+            isSuperAdmin ? (openAccordions[department.department] ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0') : 'max-h-96 opacity-100'
+          ]"
+        >
+          <div v-for="item in department.routes" :key="item.path">
+            <RouterLink
+              :to="item.path"
+              :class="[
+                'flex items-center rounded-lg transition-all duration-200 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-gray-700 hover:text-primary',
+                collapsed ? 'justify-center px-2 py-2' : 'px-4 py-2 space-x-3 ml-4',
+                route.path === item.path ? 'bg-primary text-white' : ''
+              ]"
+            >
+              <span class="text-lg">{{ item.icon }}</span>
+              <span v-if="!collapsed" class="font-medium">
+                {{ item.label }}
+              </span>
+            </RouterLink>
+          </div>
+        </div>
       </div>
     </nav>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRouteGuard } from '@/composables/useRouteGuard'
+import { computed, ref, reactive } from 'vue'
+import { useRoute } from 'vue-router'
+import { useRouteGuard } from '../composables/useRouteGuard'
+import { useAuth } from '../composables/useAuth'
 
 interface NavigationItem {
   path: string
   label: string
   icon: string
+}
+
+interface DepartmentGroup {
+  department: string
+  routes: NavigationItem[]
 }
 
 const props = defineProps({
@@ -65,15 +109,37 @@ const props = defineProps({
 const emit = defineEmits(['update:collapsed'])
 
 const { getAllowedRoutes, getPanelTitle, getPanelSubtitle } = useRouteGuard()
+const { user } = useAuth()
+const route = useRoute()
 
-const navigationItems = computed((): NavigationItem[] => {
+// Accordion state - all collapsed by default
+const openAccordions = reactive<Record<string, boolean>>({})
+
+// Toggle accordion function
+const toggleAccordion = (department: string) => {
+  openAccordions[department] = !openAccordions[department]
+}
+
+const navigationItems = computed((): DepartmentGroup[] => {
   const routes = getAllowedRoutes()
-  return routes.map(route => ({
-    path: route.path,
-    label: route.label,
-    icon: route.icon
-  }))
+
+  // Check if routes is already grouped by department (Super Admin case)
+  if (routes.length > 0 && 'department' in routes[0]) {
+    return routes as DepartmentGroup[]
+  }
+
+  // For other users, group all routes under a single department
+  return [{
+    department: 'Navigation',
+    routes: routes.map(route => ({
+      path: route.path!,
+      label: route.label!,
+      icon: route.icon!
+    }))
+  }]
 })
+
+const isSuperAdmin = computed(() => user.value?.roles?.includes('Super Admin'))
 
 const getSidebarTitle = (): string => {
   return getPanelTitle()
