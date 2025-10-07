@@ -139,7 +139,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { useAuth } from '@/composables/useAuth'

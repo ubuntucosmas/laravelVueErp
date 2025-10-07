@@ -24,6 +24,44 @@ export interface ProjectEnquiry {
   quote_approved_by?: number;
   estimated_budget?: number;
   created_by: number;
+  // Design data from Design & Concept Development task
+  designData?: {
+    project_type: string;
+    brand_name?: string;
+    logo_provided?: boolean;
+    primary_color?: string;
+    secondary_color?: string;
+    accent_colors?: string;
+    typography?: string;
+    brand_guidelines?: string;
+    stage_type?: string;
+    stage_dimensions?: string;
+    stage_height?: string;
+    stage_material?: string;
+    lighting_requirements?: string;
+    backdrop_design?: string;
+    flooring_type?: string;
+    booth_type?: string;
+    booth_size?: string;
+    booth_height?: string;
+    booth_configuration?: string;
+    display_elements?: string;
+    interactive_elements?: string;
+    signage_types?: string[];
+    banner_sizes?: string;
+    digital_signage?: boolean;
+    custom_badges?: boolean;
+    directional_signs?: boolean;
+    materials_list?: string;
+    fabrication_notes?: string;
+    assembly_requirements?: string;
+    transportation_notes?: string;
+    weight_limitations?: string;
+    design_style?: string;
+    requirements?: string;
+    references?: string;
+    notes?: string;
+  };
   // Relations
   client?: {
     id: number;
@@ -73,10 +111,7 @@ export interface EnquiryTask {
   created_by: number;
   created_at: string;
   updated_at: string;
-  enquiry?: {
-    id: number;
-    title: string;
-  };
+  enquiry?: ProjectEnquiry;
   department?: {
     id: number;
     name: string;
