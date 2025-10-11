@@ -79,15 +79,16 @@ const PERMISSIONS = {
 // Cache for user data and permissions to avoid multiple API calls in guards
 let cachedUser: User | null = null
 let cachedPermissions: UserPermissions | null = null
+let cachedUserPermissions: string[] | null = null
 let cacheTimestamp: number = 0
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
-async function fetchUserData(): Promise<{ user: User | null, permissions: UserPermissions | null }> {
+async function fetchUserData(): Promise<{ user: User | null, permissions: UserPermissions | null, userPermissions: string[] | null }> {
   const now = Date.now()
 
   // Return cached data if still valid
-  if (cachedUser && cachedPermissions && (now - cacheTimestamp) < CACHE_DURATION) {
-    return { user: cachedUser, permissions: cachedPermissions }
+  if (cachedUser && cachedPermissions && cachedUserPermissions && (now - cacheTimestamp) < CACHE_DURATION) {
+    return { user: cachedUser, permissions: cachedPermissions, userPermissions: cachedUserPermissions }
   }
 
   try {
@@ -101,6 +102,7 @@ async function fetchUserData(): Promise<{ user: User | null, permissions: UserPe
     // Fetch permissions
     const permissionsResponse = await api.get('/api/user/permissions')
     const permissions = permissionsResponse.data.permissions
+    const userPermissions = permissionsResponse.data.user_permissions || []
 
     // Update user with additional data from permissions
     if (userData && permissionsResponse.data.departments) {
@@ -112,50 +114,28 @@ async function fetchUserData(): Promise<{ user: User | null, permissions: UserPe
     // Cache the data
     cachedUser = userData
     cachedPermissions = permissions
+    cachedUserPermissions = userPermissions
     cacheTimestamp = now
 
-    return { user: userData, permissions }
+    return { user: userData, permissions, userPermissions }
   } catch (error) {
     console.error('Failed to fetch user data for guard:', error)
     // Clear cache on error
     cachedUser = null
     cachedPermissions = null
-    return { user: null, permissions: null }
+    cachedUserPermissions = null
+    return { user: null, permissions: null, userPermissions: null }
   }
 }
 
-function hasPermission(user: User | null, permissions: UserPermissions | null, permission: string): boolean {
+function hasPermission(user: User | null, userPermissions: string[] | null, permission: string): boolean {
   if (!user) return false
 
   // Super Admin bypasses all permission checks
   if (user.roles?.includes('Super Admin')) return true
 
-  // Check if user has the specific permission via roles (temporary mapping)
-  const permissionRoleMap: Record<string, string[]> = {
-    [PERMISSIONS.USER_READ]: ['Admin', 'Super Admin'],
-    [PERMISSIONS.USER_CREATE]: ['Admin', 'Super Admin'],
-    [PERMISSIONS.USER_UPDATE]: ['Admin', 'Super Admin'],
-    [PERMISSIONS.USER_DELETE]: ['Admin', 'Super Admin'],
-    [PERMISSIONS.ROLE_READ]: ['Admin', 'Super Admin'],
-    [PERMISSIONS.DEPARTMENT_READ]: ['Admin', 'HR', 'Super Admin'],
-    [PERMISSIONS.EMPLOYEE_READ]: ['Admin', 'HR', 'Super Admin'],
-    [PERMISSIONS.PROJECT_READ]: ['Project Manager', 'Project Officer', 'Manager', 'Employee', 'Client Service', 'HR', 'Accounts', 'Costing', 'Designer', 'Procurement Officer', 'Super Admin', 'Admin'],
-    [PERMISSIONS.ENQUIRY_READ]: ['Client Service', 'Project Manager', 'Super Admin'],
-    [PERMISSIONS.ENQUIRY_CREATE]: ['Client Service', 'Project Manager', 'Super Admin'],
-    [PERMISSIONS.ENQUIRY_UPDATE]: ['Client Service', 'Project Manager', 'Super Admin'],
-    [PERMISSIONS.TASK_READ]: ['Project Manager', 'Project Officer', 'Super Admin'],
-    [PERMISSIONS.TASK_UPDATE]: ['Project Manager', 'Project Officer', 'Super Admin'],
-    [PERMISSIONS.TASK_ASSIGN]: ['Project Manager', 'Project Officer', 'Super Admin'],
-    [PERMISSIONS.FINANCE_VIEW]: ['Accounts', 'Costing', 'Super Admin'],
-    [PERMISSIONS.HR_VIEW_EMPLOYEES]: ['HR', 'Super Admin'],
-    [PERMISSIONS.CREATIVES_VIEW]: ['Designer', 'Super Admin'],
-    [PERMISSIONS.CLIENT_READ]: ['Client Service', 'Super Admin'],
-    [PERMISSIONS.PROCUREMENT_VIEW]: ['Procurement Officer', 'Super Admin'],
-    [PERMISSIONS.ADMIN_ACCESS]: ['Admin', 'Super Admin'],
-  }
-
-  const allowedRoles = permissionRoleMap[permission] || []
-  return allowedRoles.some(role => user.roles?.includes(role))
+  // Check if user has the specific permission in their permissions array
+  return userPermissions?.includes(permission) || false
 }
 
 export async function canAccessDepartment(departmentId: number): Promise<boolean> {
@@ -165,63 +145,64 @@ export async function canAccessDepartment(departmentId: number): Promise<boolean
 }
 
 export async function canAccessProjects(): Promise<boolean> {
-  const { user } = await fetchUserData()
+  const { user, userPermissions } = await fetchUserData()
   if (!user) return false
 
   // Super Admin can access everything
   if (user.roles?.includes('Super Admin')) return true
 
   // Check project read permission
-  return hasPermission(user, null, PERMISSIONS.PROJECT_READ)
+  return hasPermission(user, userPermissions, PERMISSIONS.PROJECT_READ)
 }
 
 export async function canAccessClientService(): Promise<boolean> {
-  const { user } = await fetchUserData()
+  const { user, userPermissions } = await fetchUserData()
   if (!user) return false
 
   // Super Admin can access everything
   if (user.roles?.includes('Super Admin')) return true
 
   // Check client read permission
-  return hasPermission(user, null, PERMISSIONS.CLIENT_READ)
+  return hasPermission(user, userPermissions, PERMISSIONS.CLIENT_READ)
 }
 
 export async function canAccessCreatives(): Promise<boolean> {
-  const { user } = await fetchUserData()
+  const { user, userPermissions } = await fetchUserData()
   if (!user) return false
 
   // Super Admin can access everything
   if (user.roles?.includes('Super Admin')) return true
 
   // Check creatives view permission
-  return hasPermission(user, null, PERMISSIONS.CREATIVES_VIEW)
+  return hasPermission(user, userPermissions, PERMISSIONS.CREATIVES_VIEW)
 }
 
 export async function canAccessFinance(): Promise<boolean> {
-  const { user } = await fetchUserData()
+  const { user, userPermissions } = await fetchUserData()
   if (!user) return false
 
   // Super Admin can access everything
   if (user.roles?.includes('Super Admin')) return true
 
   // Check finance view permission
-  return hasPermission(user, null, PERMISSIONS.FINANCE_VIEW)
+  return hasPermission(user, userPermissions, PERMISSIONS.FINANCE_VIEW)
 }
 
 export async function canAccessProcurement(): Promise<boolean> {
-  const { user } = await fetchUserData()
+  const { user, userPermissions } = await fetchUserData()
   if (!user) return false
 
   // Super Admin can access everything
   if (user.roles?.includes('Super Admin')) return true
 
   // Check procurement view permission
-  return hasPermission(user, null, PERMISSIONS.PROCUREMENT_VIEW)
+  return hasPermission(user, userPermissions, PERMISSIONS.PROCUREMENT_VIEW)
 }
 
 // Clear cache when user logs out or token changes
 export function clearGuardCache(): void {
   cachedUser = null
   cachedPermissions = null
+  cachedUserPermissions = null
   cacheTimestamp = 0
 }

@@ -88,48 +88,10 @@ export function useRouteGuard() {
     // Super Admin bypasses all permission checks
     if (user.value.roles?.includes('Super Admin')) return true
 
-    // Check if user has the specific permission
-    // Note: Frontend permissions are checked via backend API response
-    // For now, we'll use role-based fallback until full permission sync is implemented
-    return checkPermissionViaRoles(permission)
+    // Check if user has the specific permission in their permissions array
+    return permissions.value?.user_permissions?.includes(permission) || false
   }
 
-  // Temporary function to check permissions via roles (until full permission sync)
-  const checkPermissionViaRoles = (permission: string): boolean => {
-    if (!user.value?.roles) return false
-
-    const userRoles = user.value.roles
-
-    // Super Admin has all permissions
-    if (userRoles.includes('Super Admin')) return true
-
-    // Map permissions to roles (temporary mapping)
-    const permissionRoleMap: Record<string, string[]> = {
-      [PERMISSIONS.USER_READ]: ['Admin', 'Super Admin'],
-      [PERMISSIONS.USER_CREATE]: ['Admin', 'Super Admin'],
-      [PERMISSIONS.USER_UPDATE]: ['Admin', 'Super Admin'],
-      [PERMISSIONS.USER_DELETE]: ['Admin', 'Super Admin'],
-      [PERMISSIONS.ROLE_READ]: ['Admin', 'Super Admin'],
-      [PERMISSIONS.DEPARTMENT_READ]: ['Admin', 'HR', 'Super Admin'],
-      [PERMISSIONS.EMPLOYEE_READ]: ['Admin', 'HR', 'Super Admin'],
-      [PERMISSIONS.PROJECT_READ]: ['Project Manager', 'Project Officer', 'Manager', 'Employee', 'Client Service', 'HR', 'Accounts', 'Costing', 'Designer', 'Procurement Officer', 'Super Admin', 'Admin'],
-      [PERMISSIONS.ENQUIRY_READ]: ['Client Service', 'Project Manager', 'Super Admin'],
-      [PERMISSIONS.ENQUIRY_CREATE]: ['Client Service', 'Project Manager', 'Super Admin'],
-      [PERMISSIONS.ENQUIRY_UPDATE]: ['Client Service', 'Project Manager', 'Super Admin'],
-      [PERMISSIONS.TASK_READ]: ['Project Manager', 'Project Officer', 'Super Admin'],
-      [PERMISSIONS.TASK_UPDATE]: ['Project Manager', 'Project Officer', 'Super Admin'],
-      [PERMISSIONS.TASK_ASSIGN]: ['Project Manager', 'Project Officer', 'Super Admin'],
-      [PERMISSIONS.FINANCE_VIEW]: ['Accounts', 'Costing', 'Super Admin'],
-      [PERMISSIONS.HR_VIEW_EMPLOYEES]: ['HR', 'Super Admin'],
-      [PERMISSIONS.CREATIVES_VIEW]: ['Designer', 'Super Admin'],
-      [PERMISSIONS.CLIENT_READ]: ['Client Service', 'Super Admin'],
-      [PERMISSIONS.PROCUREMENT_VIEW]: ['Procurement Officer', 'Super Admin'],
-      [PERMISSIONS.ADMIN_ACCESS]: ['Admin', 'Super Admin'],
-    }
-
-    const allowedRoles = permissionRoleMap[permission] || []
-    return allowedRoles.some(role => userRoles.includes(role))
-  }
 
   const canAccessRoute = (routeName: string): boolean => {
     if (!isLoggedIn.value || !user.value) {
@@ -165,8 +127,8 @@ export function useRouteGuard() {
   }
 
   const canAccessDepartment = (departmentId: number): boolean => {
-    if (!permissions.value) return false
-    return permissions.value.accessible_departments.includes(departmentId)
+    if (!permissions.value?.permissions) return false
+    return permissions.value.permissions.accessible_departments.includes(departmentId)
   }
 
   const canAccessProjects = (): boolean => {
@@ -250,7 +212,7 @@ export function useRouteGuard() {
     }
 
     // Check if user is in Projects department and has Project Manager role
-    const userDepartment = permissions.value?.user_department?.name
+    const userDepartment = permissions.value?.permissions?.user_department?.name
     const userRoles = user.value.roles || []
 
     return userDepartment === 'Projects' && userRoles.includes('Project Manager')
@@ -289,8 +251,8 @@ export function useRouteGuard() {
     }
 
     // Department users go to their department
-    if ((userRoles.includes('Manager') || userRoles.includes('Employee')) && permissions.value?.user_department) {
-      router.push(`/department/${permissions.value.user_department.id}`)
+    if ((userRoles.includes('Manager') || userRoles.includes('Employee')) && permissions.value?.permissions?.user_department) {
+      router.push(`/department/${permissions.value.permissions.user_department.id}`)
       return
     }
 
@@ -417,13 +379,13 @@ export function useRouteGuard() {
     }
 
     // Add client service routes for authorized users (skip for Super Admin as they're already included in departments)
-    if (canAccessClientService() && !userRoles.includes('Super Admin')) {
-      routes.push(
-        { name: 'client-service-dashboard', path: '/client-service', label: 'Client Service Dashboard', icon: '📊' },
-        { name: 'client-service-clients', path: '/client-service/clients', label: 'Client Management', icon: '👥' },
-        { name: 'client-service-enquiries', path: '/client-service/enquiries', label: 'Enquiry Management', icon: '📝' }
-      )
-    }
+    // if (canAccessClientService() && !userRoles.includes('Super Admin')) {
+    //   routes.push(
+    //     { name: 'client-service-dashboard', path: '/client-service', label: 'Client Service Dashboard', icon: '📊' },
+    //     { name: 'client-service-clients', path: '/client-service/clients', label: 'Client Management', icon: '👥' },
+    //     { name: 'client-service-enquiries', path: '/client-service/enquiries', label: 'Enquiry Management', icon: '📝' }
+    //   )
+    // }
 
     // Add creatives routes for authorized users (skip for Super Admin as they're already included in departments)
     if (canAccessCreatives() && !userRoles.includes('Super Admin')) {
@@ -512,8 +474,8 @@ export function useRouteGuard() {
     }
 
     // Department fallback
-    if (permissions.value?.user_department) {
-      return permissions.value.user_department.name
+    if (permissions.value?.permissions?.user_department) {
+      return permissions.value.permissions.user_department.name
     }
 
     return 'ERP System'
@@ -561,7 +523,7 @@ export function useRouteGuard() {
     }
 
     // Department fallback
-    if (permissions.value?.user_department) {
+    if (permissions.value?.permissions?.user_department) {
       return 'Department Dashboard'
     }
 
