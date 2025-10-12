@@ -28,11 +28,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Register model observers
-        // ProjectEnquiry::observe(EnquiryObserver::class); // Temporarily commented out for debugging
+        // ProjectEnquiry::observe(EnquiryObserver::class); // Observer not implemented yet
 
         // Route model binding
         Route::bind('enquiry', function ($value) {
-            return ProjectEnquiry::findOrFail($value);
+            return \App\Models\Enquiry::findOrFail($value);
         });
     }
 }

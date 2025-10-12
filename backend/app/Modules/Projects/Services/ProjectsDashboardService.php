@@ -18,12 +18,12 @@ class ProjectsDashboardService
     {
         $totalEnquiries = ProjectEnquiry::count();
 
-        $statusCounts = ProjectEnquiry::select('status', DB::raw('count(*) as count'))
+        $statusCounts = Enquiry::select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
 
-        $monthlyEnquiries = ProjectEnquiry::select(
+        $monthlyEnquiries = Enquiry::select(
                 DB::raw('YEAR(created_at) as year'),
                 DB::raw('MONTH(created_at) as month'),
                 DB::raw('count(*) as count')
@@ -40,13 +40,13 @@ class ProjectsDashboardService
                 ];
             });
 
-        $priorityCounts = ProjectEnquiry::select('priority', DB::raw('count(*) as count'))
+        $priorityCounts = Enquiry::select('priority', DB::raw('count(*) as count'))
             ->whereNotNull('priority')
             ->groupBy('priority')
             ->pluck('count', 'priority')
             ->toArray();
 
-        $departmentCounts = ProjectEnquiry::with('department')
+        $departmentCounts = Enquiry::with('department')
             ->select('department_id', DB::raw('count(*) as count'))
             ->whereNotNull('department_id')
             ->groupBy('department_id')
@@ -115,16 +115,16 @@ class ProjectsDashboardService
     public function getProjectMetrics(): array
     {
         // For now, projects are enquiries that have been converted
-        $convertedProjects = ProjectEnquiry::where('status', 'converted_to_project')->count();
+        $convertedProjects = Enquiry::where('status', 'converted_to_project')->count();
 
-        $activeProjects = ProjectEnquiry::whereIn('status', ['planning', 'in_progress'])->count();
+        $activeProjects = Enquiry::whereIn('status', ['planning', 'in_progress'])->count();
 
-        $completedProjects = ProjectEnquiry::where('status', 'completed')->count();
+        $completedProjects = Enquiry::where('status', 'completed')->count();
 
-        $totalBudget = ProjectEnquiry::whereNotNull('estimated_budget')
+        $totalBudget = Enquiry::whereNotNull('estimated_budget')
             ->sum('estimated_budget');
 
-        $projectsByStatus = ProjectEnquiry::select('status', DB::raw('count(*) as count'))
+        $projectsByStatus = Enquiry::select('status', DB::raw('count(*) as count'))
             ->whereIn('status', ['planning', 'in_progress', 'completed', 'converted_to_project'])
             ->groupBy('status')
             ->pluck('count', 'status')
@@ -170,7 +170,7 @@ class ProjectsDashboardService
      */
     private function calculateAverageProjectDuration(): ?float
     {
-        $completedProjects = ProjectEnquiry::where('status', 'completed')
+        $completedProjects = Enquiry::where('status', 'completed')
             ->whereNotNull('start_date')
             ->whereNotNull('end_date')
             ->get();
@@ -220,7 +220,7 @@ class ProjectsDashboardService
         $activities = [];
 
         // Recent enquiries
-        $recentEnquiries = ProjectEnquiry::with('client')
+        $recentEnquiries = Enquiry::with('client')
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get()
@@ -316,7 +316,7 @@ class ProjectsDashboardService
             });
 
         // High priority enquiries without recent updates
-        $staleHighPriority = ProjectEnquiry::where('priority', 'urgent')
+        $staleHighPriority = Enquiry::where('priority', 'urgent')
             ->where('updated_at', '<', Carbon::now()->subDays(3))
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->with('client')

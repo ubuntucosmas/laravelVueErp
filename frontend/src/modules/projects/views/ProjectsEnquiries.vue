@@ -478,9 +478,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import type { ProjectEnquiry, CreateProjectEnquiryData, UpdateProjectEnquiryData } from '../types/enquiry'
-import { useProjectsEnquiries } from '../composables/useProjectsEnquiries'
+import type { ProjectEnquiry, CreateProjectEnquiryData, UpdateProjectEnquiryData, EnquiryTask } from '../types/enquiry'
 import { useClients } from '../../clientService/composables/useClients'
+import { useProjectsEnquiries } from '../composables/useProjectsEnquiries'
 import { useAuth } from '@/composables/useAuth'
 import TaskAssignmentModal from '../components/TaskAssignmentModal.vue'
 import Pagination from '@/components/Pagination.vue'
@@ -495,7 +495,7 @@ const emit = defineEmits<{
     taskCount: number
     taskNames: string
     message: string
-    tasks: any[]
+    tasks: EnquiryTask[]
   }]
 }>()
 
@@ -629,15 +629,15 @@ const closeTaskAssignmentModal = () => {
 
 
 
-const handleTaskAssigned = (updatedTask: any) => {
+const handleTaskAssigned = (updatedTask: EnquiryTask) => {
   // Refresh enquiries to show updated task information
   fetchEnquiries()
 
   // Emit event to parent for notifications
   // The parent expects a specific data structure
   const data = {
-    userId: updatedTask.assigned_by,
-    userName: 'User', // We don't have user name here, but parent will get it
+    userId: updatedTask.assigned_by?.id || 0,
+    userName: updatedTask.assigned_by?.name || 'User',
     userEmail: '',
     taskCount: 1,
     taskNames: updatedTask.title,

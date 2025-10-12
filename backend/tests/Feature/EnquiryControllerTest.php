@@ -134,7 +134,7 @@ class EnquiryControllerTest extends TestCase
     public function it_lists_enquiries()
     {
         // Create some test enquiries
-        ProjectEnquiry::create([
+        Enquiry::create([
             'date_received' => '2024-01-15',
             'client_name' => 'ABC Corporation',
             'project_name' => 'Project 1',
@@ -145,7 +145,7 @@ class EnquiryControllerTest extends TestCase
             'created_by' => auth()->id(),
         ]);
 
-        ProjectEnquiry::create([
+        Enquiry::create([
             'date_received' => '2024-01-16',
             'client_name' => 'XYZ Corp',
             'project_name' => 'Project 2',
@@ -195,7 +195,7 @@ class EnquiryControllerTest extends TestCase
     /** @test */
     public function it_updates_enquiry()
     {
-        $enquiry = ProjectEnquiry::create([
+        $enquiry = Enquiry::create([
             'date_received' => '2024-01-15',
             'client_name' => 'ABC Corporation',
             'project_name' => 'Test Project',
@@ -232,7 +232,7 @@ class EnquiryControllerTest extends TestCase
     /** @test */
     public function it_deletes_enquiry()
     {
-        $enquiry = ProjectEnquiry::create([
+        $enquiry = Enquiry::create([
             'date_received' => '2024-01-15',
             'client_name' => 'ABC Corporation',
             'project_name' => 'Test Project',

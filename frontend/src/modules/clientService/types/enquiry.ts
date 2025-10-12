@@ -7,9 +7,10 @@ export interface Enquiry {
   description?: string;
   project_scope?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'client_registered' | 'enquiry_logged' | 'site_survey_completed' | 'design_completed' | 'design_approved' | 'materials_specified' | 'budget_created' | 'quote_prepared' | 'quote_approved' | 'converted_to_project' | 'cancelled';
+  status: 'client_registered' | 'enquiry_logged' | 'site_survey_completed' | 'design_completed' | 'design_approved' | 'materials_specified' | 'budget_created' | 'quote_prepared' | 'quote_approved' | 'converted_to_project' | 'planning' | 'in_progress' | 'completed' | 'cancelled';
   department_id?: number;
   assigned_department?: string;
+  estimated_budget?: number;
   project_deliverables?: string;
   contact_person: string;
   assigned_po?: number;
@@ -23,6 +24,8 @@ export interface Enquiry {
   quote_approved_at?: string;
   quote_approved_by?: number;
   created_by: number;
+  created_at: string;
+  updated_at: string;
   // Relations
   client?: {
     id: number;
@@ -37,6 +40,7 @@ export interface Enquiry {
     id: number;
     name: string;
   };
+  project?: Project;
 }
 
 export interface CreateEnquiryData {

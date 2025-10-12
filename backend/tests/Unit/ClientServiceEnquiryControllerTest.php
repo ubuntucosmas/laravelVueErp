@@ -80,7 +80,7 @@ class ClientServiceEnquiryControllerTest extends TestCase
         ]);
 
         // Verify enquiry number was generated
-        $enquiry = ProjectEnquiry::where('title', 'Test Enquiry')->first();
+        $enquiry = Enquiry::where('title', 'Test Enquiry')->first();
         $this->assertNotNull($enquiry->enquiry_number);
         $this->assertStringStartsWith('ENQ-2025-', $enquiry->enquiry_number);
     }
@@ -104,7 +104,7 @@ class ClientServiceEnquiryControllerTest extends TestCase
 
         $this->postJson('/api/clientservice/enquiries', $enquiryData);
 
-        $enquiry = ProjectEnquiry::where('title', 'Test Enquiry with Tasks')->first();
+        $enquiry = Enquiry::where('title', 'Test Enquiry with Tasks')->first();
 
         // Verify tasks were created
         $this->assertDatabaseHas('enquiry_tasks', [

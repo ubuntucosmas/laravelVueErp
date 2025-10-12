@@ -60,7 +60,7 @@ class EnquiryWorkflowService
     /**
      * Create project and tasks for an enquiry (when converting to project)
      */
-    public function createProjectAndTasksForEnquiry(ProjectEnquiry $enquiry)
+    public function createProjectAndTasksForEnquiry(Enquiry $enquiry)
     {
         // This would create a full project with all tasks
         // For now, just return the enquiry as project creation logic might be elsewhere
@@ -220,7 +220,7 @@ class EnquiryWorkflowService
      */
     public function createManualEnquiryTask(int $enquiryId, array $taskData, int $createdByUserId): EnquiryTask
     {
-        $enquiry = ProjectEnquiry::findOrFail($enquiryId);
+        $enquiry = Enquiry::findOrFail($enquiryId);
 
         $task = EnquiryTask::create([
             'project_enquiry_id' => $enquiryId,

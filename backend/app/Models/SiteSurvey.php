@@ -73,6 +73,6 @@ class SiteSurvey extends Model
 
     public function enquiry(): BelongsTo
     {
-        return $this->belongsTo(ProjectEnquiry::class);
+        return $this->belongsTo(\App\Models\Enquiry::class);
     }
 }

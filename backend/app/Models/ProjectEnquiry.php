@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Models\User;
 use App\Modules\ClientService\Models\Client;
 use App\Constants\EnquiryConstants;
@@ -58,10 +59,10 @@ class ProjectEnquiry extends Model
         'assigned_po' => 'integer',
         'quote_approved' => 'boolean',
         'quote_approved_at' => 'datetime',
+        'estimated_budget' => 'decimal:2',
         'start_date' => 'date',
         'end_date' => 'date',
         'budget' => 'decimal:2',
-        'estimated_budget' => 'decimal:2',
         'assigned_users' => 'array',
         'current_phase' => 'integer',
     ];
@@ -81,10 +82,16 @@ class ProjectEnquiry extends Model
         return $this->belongsTo(\App\Modules\HR\Models\Department::class);
     }
 
+    public function project(): HasOne
+    {
+        return $this->hasOne(Project::class);
+    }
+
     public function enquiryTasks(): HasMany
     {
         return $this->hasMany(\App\Modules\Projects\Models\EnquiryTask::class, 'project_enquiry_id');
     }
+
 
     // Scopes
     public function scopeByDepartment($query, $departmentId)
@@ -128,9 +135,19 @@ class ProjectEnquiry extends Model
             'quote_approved' => true,
             'quote_approved_at' => now(),
             'quote_approved_by' => $userId,
-            'project_id' => $this->generateProjectId(),
             'status' => EnquiryConstants::STATUS_CONVERTED_TO_PROJECT
         ]);
+
+        // Create project
+        $project = Project::create([
+            'enquiry_id' => $this->id,
+            'project_id' => $this->generateProjectId(),
+            'start_date' => $this->expected_delivery_date,
+            'budget' => $this->estimated_budget,
+            'assigned_users' => [], // can be set later
+        ]);
+
+        $this->update(['converted_to_project_id' => $project->id]);
 
         return true;
     }
@@ -145,11 +162,10 @@ class ProjectEnquiry extends Model
         $month = str_pad($now->month, 2, '0', STR_PAD_LEFT);
 
         // Get the last project number for this month
-        $lastProject = self::whereYear('created_at', $year)
-                          ->whereMonth('created_at', $now->month)
-                          ->whereNotNull('project_id')
-                          ->orderByRaw('CAST(SUBSTRING(project_id, LENGTH(?) + 1) AS UNSIGNED) DESC', [EnquiryConstants::PROJECT_PREFIX . "-{$year}{$month}-"])
-                          ->first();
+        $lastProject = Project::whereYear('created_at', $year)
+                              ->whereMonth('created_at', $now->month)
+                              ->orderByRaw('CAST(SUBSTRING(project_id, LENGTH(?) + 1) AS UNSIGNED) DESC', [EnquiryConstants::PROJECT_PREFIX . "-{$year}{$month}-"])
+                              ->first();
 
         $nextNumber = 1;
         if ($lastProject) {
@@ -162,4 +178,17 @@ class ProjectEnquiry extends Model
 
         return EnquiryConstants::PROJECT_PREFIX . "-{$year}{$month}-{$formattedNumber}";
     }
+
+    /**
+     * Get the route key name for this model.
+     * This tells Laravel to use 'enquiry' as the route parameter name
+     * instead of the default 'project_enquiry'.
+     */
+    public function getRouteKeyName()
+    {
+        return 'enquiry';
+    }
 }
+
+// Alias for backward compatibility
+class_alias(ProjectEnquiry::class, 'App\Models\Enquiry');

@@ -19,9 +19,15 @@ export function useTaskAssignment() {
     loading.value = true
     error.value = null
 
+    console.log('[DEBUG] fetchEnquiryTasks called with enquiryId:', enquiryId)
+
     try {
       const response = await api.get(`/api/projects/enquiries/${enquiryId}/tasks`)
+      console.log('[DEBUG] fetchEnquiryTasks response:', response)
+      console.log('[DEBUG] fetchEnquiryTasks response.data:', response.data)
+      console.log('[DEBUG] fetchEnquiryTasks response.data.data:', response.data.data)
       enquiryTasks.value = response.data.data || []
+      console.log('[DEBUG] fetchEnquiryTasks enquiryTasks.value set to:', enquiryTasks.value)
       return enquiryTasks.value
     } catch (err) {
       error.value = 'Failed to fetch enquiry tasks'

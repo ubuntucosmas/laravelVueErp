@@ -63,6 +63,20 @@
           </div>
         </div>
       </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-lg">
+            <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Active Projects</p>
+            <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ projectsStore.activeProjects.length }}</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Recent Enquiries -->
@@ -82,7 +96,7 @@
                class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
             <div class="flex-1">
               <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ enquiry.title }}</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ enquiry.client?.name }}</p>
+              <p class="text-sm text-gray-600 dark:text-gray-400">{{ enquiry.client?.full_name || enquiry.client?.FullName }}</p>
               <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
                 {{ new Date(enquiry.created_at).toLocaleDateString() }}
               </p>
@@ -112,9 +126,13 @@
 import { onMounted, computed } from 'vue'
 import { useClients } from '../composables/useClients'
 import { useEnquiries } from '../composables/useEnquiries'
+import { useProjects } from '../composables/useProjects'
+import { useProjectsStore } from '@/stores/projects'
 
 const { totalClients, activeClients, fetchClients } = useClients()
 const { totalEnquiries, newEnquiries, enquiries, loading, fetchEnquiries } = useEnquiries()
+const { fetchProjects } = useProjects()
+const projectsStore = useProjectsStore()
 
 const recentEnquiries = computed(() => enquiries.value.slice(0, 5))
 
@@ -162,8 +180,9 @@ const getPriorityColor = (priority: string) => {
   return colors[priority] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
 }
 
-onMounted(() => {
-  fetchClients()
-  fetchEnquiries()
+onMounted(async () => {
+   await fetchClients()
+   await fetchEnquiries()
+   await fetchProjects()
 })
 </script>

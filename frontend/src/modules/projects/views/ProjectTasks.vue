@@ -311,6 +311,7 @@ import { useRoute } from 'vue-router'
 import type { EnquiryTask } from '../types/enquiry'
 import { useTaskAssignment } from '../composables/useTaskAssignment'
 import { useAuth } from '@/composables/useAuth'
+import api from '@/plugins/axios'
 import TaskAssignmentModal from '../components/TaskAssignmentModal.vue'
 import TaskModal from '../components/TaskModal.vue'
 
@@ -513,6 +514,26 @@ onMounted(async () => {
   // Set enquiry title from the first task if available
   if (enquiryId.value && enquiryTasks.value.length > 0) {
     enquiryTitle.value = enquiryTasks.value[0].enquiry?.title || 'Unknown Enquiry'
+  } else if (enquiryId.value) {
+    // If no tasks found but enquiryId exists, try to fetch enquiry details
+    // First try to fetch all tasks for this enquiry (without user filter)
+    try {
+      await fetchAllTasks({
+        enquiry_id: enquiryId.value,
+        assigned_user_id: undefined // Get all tasks for this enquiry
+      })
+      if (enquiryTasks.value.length > 0) {
+        enquiryTitle.value = enquiryTasks.value[0].enquiry?.title || 'Unknown Enquiry'
+      } else {
+        // If still no tasks, try to fetch enquiry directly
+        const response = await api.get(`/api/projects/enquiries/${enquiryId.value}`)
+        enquiryTitle.value = response.data.data?.title || 'Unknown Enquiry'
+      }
+    } catch (error) {
+      console.error('Failed to fetch enquiry details:', error)
+      enquiryTitle.value = 'Unknown Enquiry'
+    }
   }
 })
 </script>
+

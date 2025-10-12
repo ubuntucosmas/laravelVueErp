@@ -184,7 +184,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('enquiries/{enquiry}/convert', [EnquiryController::class, 'convertToProject'])
             ->middleware('permission:' . Permissions::ENQUIRY_CONVERT);
         // Manual project creation for existing enquiries (debugging)
-        Route::post('enquiries/{enquiry}/create-project', function (\App\Models\ProjectEnquiry $enquiry) {
+        Route::post('enquiries/{enquiry}/create-project', function (\App\Models\Enquiry $enquiry) {
             $workflowService = new \App\Modules\Projects\Services\EnquiryWorkflowService();
             $project = $workflowService->createProjectAndTasksForEnquiry($enquiry);
 

@@ -8,57 +8,68 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controller;
-use App\Modules\Projects\Services\EnquiryWorkflowService;
-use App\Modules\Projects\Services\NotificationService;
+use App\Services\EnquiryService;
+use App\Handlers\CreateEnquiryHandler;
+use App\Handlers\GetEnquiriesHandler;
+use App\Commands\CreateEnquiryCommand;
+use App\Queries\GetEnquiriesQuery;
 
 class EnquiryController extends Controller
 {
-    protected $notificationService;
+    protected $enquiryService;
+    protected $createEnquiryHandler;
+    protected $getEnquiriesHandler;
 
-    public function __construct(NotificationService $notificationService)
-    {
-        $this->notificationService = $notificationService;
+    public function __construct(
+        EnquiryService $enquiryService,
+        CreateEnquiryHandler $createEnquiryHandler,
+        GetEnquiriesHandler $getEnquiriesHandler
+    ) {
+        $this->enquiryService = $enquiryService;
+        $this->createEnquiryHandler = $createEnquiryHandler;
+        $this->getEnquiriesHandler = $getEnquiriesHandler;
     }
 
     public function index(Request $request): JsonResponse
     {
-        $query = ProjectEnquiry::with('client', 'department', 'enquiryTasks');
+        try {
+            \Log::info('EnquiryController index called', [
+                'user_id' => Auth::id(),
+                'search' => $request->search,
+                'status' => $request->status,
+                'client_id' => $request->client_id,
+                'department_id' => $request->department_id
+            ]);
 
-        // Apply department-based access control only if user doesn't have global enquiry read permission
-        if (!Auth::user()->hasPermissionTo('enquiry.read')) {
-            $query->accessibleByUser(Auth::user());
+            $query = new GetEnquiriesQuery(
+                Auth::id(),
+                $request->search,
+                $request->status,
+                $request->client_id,
+                $request->department_id
+            );
+
+            \Log::info('GetEnquiriesQuery created');
+
+            $enquiries = $this->getEnquiriesHandler->handle($query)->orderBy('created_at', 'desc')->paginate(15);
+
+            \Log::info('Enquiries fetched', ['count' => $enquiries->count()]);
+
+            return response()->json([
+                'data' => $enquiries,
+                'message' => 'Enquiries retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in EnquiryController index', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'Internal server error',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Apply filters
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhereHas('client', function ($clientQuery) use ($search) {
-                      $clientQuery->where('full_name', 'like', "%{$search}%");
-                  })
-                  ->orWhere('contact_person', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->has('status') && $request->status) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->has('client_id') && $request->client_id) {
-            $query->where('client_id', $request->client_id);
-        }
-
-        if ($request->has('department_id') && $request->department_id) {
-            $query->where('department_id', $request->department_id);
-        }
-
-        $enquiries = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        return response()->json([
-            'data' => $enquiries,
-            'message' => 'Enquiries retrieved successfully'
-        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -97,35 +108,8 @@ class EnquiryController extends Controller
             ], 422);
         }
 
-        // Generate enquiry number
-        $enquiryNumber = 'ENQ-' . date('Y') . '-' . str_pad(ProjectEnquiry::count() + 1, 4, '0', STR_PAD_LEFT);
-
-        $enquiry = ProjectEnquiry::create([
-            'date_received' => $request->date_received,
-            'expected_delivery_date' => $request->expected_delivery_date,
-            'client_id' => $request->client_id,
-            'title' => $request->title,
-            'description' => $request->description,
-            'project_scope' => $request->project_scope,
-            'priority' => $request->priority ?? 'medium',
-            'contact_person' => $request->contact_person,
-            'status' => $request->status,
-            'department_id' => $request->department_id,
-            'assigned_department' => $request->assigned_department,
-            'estimated_budget' => $request->estimated_budget,
-            'project_deliverables' => $request->project_deliverables,
-            'assigned_po' => $request->assigned_po,
-            'follow_up_notes' => $request->follow_up_notes,
-            'enquiry_number' => $enquiryNumber,
-            'venue' => $request->venue,
-            'site_survey_skipped' => $request->site_survey_skipped ?? false,
-            'site_survey_skip_reason' => $request->site_survey_skip_reason,
-            'created_by' => Auth::id(),
-        ]);
-
-        // Create workflow tasks for the enquiry
-        $workflowService = new EnquiryWorkflowService($this->notificationService);
-        $workflowService->createWorkflowTasksForEnquiry($enquiry);
+        $command = new CreateEnquiryCommand($request->all());
+        $enquiry = $this->createEnquiryHandler->handle($command);
 
         return response()->json([
             'message' => 'Enquiry created successfully',
@@ -136,7 +120,7 @@ class EnquiryController extends Controller
     public function show(ProjectEnquiry $enquiry): JsonResponse
     {
         return response()->json([
-            'data' => $enquiry->load('client', 'department', 'enquiryTasks' ),
+            'data' => $enquiry->load('client', 'department', 'enquiryTasks', 'project'),
             'message' => 'Enquiry retrieved successfully'
         ]);
     }
@@ -177,30 +161,11 @@ class EnquiryController extends Controller
             ], 422);
         }
 
-        $enquiry->update($request->only([
-            'date_received',
-            'expected_delivery_date',
-            'client_id',
-            'title',
-            'description',
-            'project_scope',
-            'priority',
-            'contact_person',
-            'status',
-            'department_id',
-            'assigned_department',
-            'estimated_budget',
-            'project_deliverables',
-            'assigned_po',
-            'follow_up_notes',
-            'venue',
-            'site_survey_skipped',
-            'site_survey_skip_reason',
-        ]));
+        $updatedEnquiry = $this->enquiryService->updateEnquiry($enquiry, $request->all());
 
         return response()->json([
             'message' => 'Enquiry updated successfully',
-            'data' => $enquiry->load('client', 'department')
+            'data' => $updatedEnquiry->load('client', 'department')
         ]);
     }
 

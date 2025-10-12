@@ -32,15 +32,6 @@ class TaskController extends Controller
     {
         \Log::info("[DEBUG] getAllEnquiryTasks called, user: " . Auth::id());
 
-        // Check permissions
-        if (!Auth::user()->hasPermissionTo(Permissions::TASK_READ) &&
-            !Auth::user()->hasRole(['Super Admin', 'Project Manager', 'Project Officer'])) {
-            \Log::warning("[DEBUG] getAllEnquiryTasks permission denied for user " . Auth::id());
-            return response()->json([
-                'message' => 'Unauthorized access to tasks'
-            ], 403);
-        }
-
         try {
             $query = EnquiryTask::with('enquiry', 'creator', 'assignedTo', 'assignedBy', 'assignmentHistory.assignedTo', 'assignmentHistory.assignedBy');
 
@@ -95,15 +86,6 @@ class TaskController extends Controller
     public function getEnquiryTasks(int $enquiryId): JsonResponse
     {
         \Log::info("[DEBUG] getEnquiryTasks called for enquiryId: {$enquiryId}, user: " . Auth::id());
-
-        // Check permissions
-        if (!Auth::user()->hasPermissionTo(Permissions::TASK_READ) &&
-            !Auth::user()->hasRole(['Super Admin', 'Project Manager', 'Project Officer'])) {
-            \Log::warning("[DEBUG] getEnquiryTasks permission denied for user " . Auth::id());
-            return response()->json([
-                'message' => 'Unauthorized access to tasks'
-            ], 403);
-        }
 
         try {
             $tasks = EnquiryTask::where('project_enquiry_id', $enquiryId)

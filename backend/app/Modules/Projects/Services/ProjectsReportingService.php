@@ -192,7 +192,7 @@ class ProjectsReportingService
         $startDate = $filters['start_date'] ?? Carbon::now()->subMonths(6);
         $endDate = $filters['end_date'] ?? Carbon::now();
 
-        $monthlyData = ProjectEnquiry::select(
+        $monthlyData = Enquiry::select(
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
                 DB::raw('count(*) as count'),
                 DB::raw('sum(estimated_budget) as total_budget')
