@@ -46,7 +46,7 @@ class RoleAndPermissionSeeder extends Seeder
             Permissions::USER_READ, Permissions::DEPARTMENT_READ, Permissions::CLIENT_CREATE,
             Permissions::CLIENT_READ, Permissions::CLIENT_UPDATE, Permissions::CLIENT_DELETE,
             Permissions::ENQUIRY_CREATE, Permissions::ENQUIRY_READ, Permissions::ENQUIRY_UPDATE,
-            Permissions::ENQUIRY_ASSIGN, Permissions::PROJECT_READ, Permissions::DASHBOARD_VIEW
+            Permissions::ENQUIRY_ASSIGN, Permissions::TASK_READ, Permissions::DASHBOARD_VIEW
         ]);
 
         $managerRole = Role::firstOrCreate(['name' => 'Manager'], ['description' => 'Department management']);

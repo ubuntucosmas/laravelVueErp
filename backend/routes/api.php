@@ -65,7 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Admin Module Routes
-    Route::prefix('admin')->middleware(['permission:' . Permissions::ADMIN_ACCESS])->group(function () {
+    Route::prefix('admin')->group(function () {
         // User management
         Route::get('users/available-employees', [UserController::class, 'availableEmployees'])
             ->middleware('permission:' . Permissions::USER_READ . ',' . Permissions::TASK_ASSIGN);

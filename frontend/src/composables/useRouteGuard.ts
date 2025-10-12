@@ -244,6 +244,30 @@ export function useRouteGuard() {
       return
     }
 
+    // Project Managers and Project Officers go to projects dashboard
+    if (userRoles.includes('Project Manager') || userRoles.includes('Project Officer')) {
+      router.push('/projects/dashboard')
+      return
+    }
+
+    // Client Service users go to client service dashboard
+    if (userRoles.includes('Client Service')) {
+      router.push('/client-service')
+      return
+    }
+
+    // Finance users go to finance dashboard
+    if (canAccessFinance()) {
+      router.push('/finance')
+      return
+    }
+
+    // Procurement users go to procurement dashboard
+    if (canAccessProcurement()) {
+      router.push('/procurement')
+      return
+    }
+
     // Creatives/Designers go to Design dashboard
     if (userRoles.includes('Designer')) {
       router.push('/creatives/design')
@@ -379,13 +403,13 @@ export function useRouteGuard() {
     }
 
     // Add client service routes for authorized users (skip for Super Admin as they're already included in departments)
-    // if (canAccessClientService() && !userRoles.includes('Super Admin')) {
-    //   routes.push(
-    //     { name: 'client-service-dashboard', path: '/client-service', label: 'Client Service Dashboard', icon: '📊' },
-    //     { name: 'client-service-clients', path: '/client-service/clients', label: 'Client Management', icon: '👥' },
-    //     { name: 'client-service-enquiries', path: '/client-service/enquiries', label: 'Enquiry Management', icon: '📝' }
-    //   )
-    // }
+    if (canAccessClientService() && !userRoles.includes('Super Admin')) {
+      routes.push(
+        { name: 'client-service-dashboard', path: '/client-service', label: 'Client Service Dashboard', icon: '📊' },
+        { name: 'client-service-clients', path: '/client-service/clients', label: 'Client Management', icon: '👥' },
+        { name: 'client-service-enquiries', path: '/client-service/enquiries', label: 'Enquiry Management', icon: '📝' }
+      )
+    }
 
     // Add creatives routes for authorized users (skip for Super Admin as they're already included in departments)
     if (canAccessCreatives() && !userRoles.includes('Super Admin')) {

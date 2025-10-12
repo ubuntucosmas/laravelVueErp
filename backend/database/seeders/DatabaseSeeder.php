@@ -22,12 +22,8 @@ class DatabaseSeeder extends Seeder
         // Finally seed roles and permissions
         $this->call(RoleAndPermissionSeeder::class);
 
-        // Seed Creatives department and Designer role
-        $this->call([
-            CreativesDepartmentSeeder::class,
-            DesignerRoleSeeder::class,
-        ]);
-
+        // Seed clients
+        $this->call(ClientSeeder::class);
 
         // Create a default admin user
         $adminUser = \App\Models\User::factory()->create([
@@ -46,14 +42,8 @@ class DatabaseSeeder extends Seeder
             HRUserSeeder::class,
             ClientServiceUserSeeder::class,
             DesignerUserSeeder::class,
-            FinanceRolesSeeder::class,
             ProjectsUserSeeder::class,
         ]);
 
-        // Seed projects and project phases
-        // $this->call(ProjectsSeeder::class);
-
-        // Seed departmental tasks (after all prerequisites are created)
-        $this->call(DepartmentalTaskSeeder::class);
     }
 }

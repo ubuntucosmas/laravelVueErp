@@ -14,15 +14,16 @@ class DesignerUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get the Creatives department
-        $creativesDepartment = Department::where('name', 'Creatives')->first();
+        // Get the Design/Creatives department
+        $creativesDepartment = Department::where('name', 'Design/Creatives')->first();
 
         if (!$creativesDepartment) {
-            // If Creatives department doesn't exist, create it
+            // If Design/Creatives department doesn't exist, create it
             $creativesDepartment = Department::create([
-                'name' => 'Creatives',
+                'name' => 'Design/Creatives',
                 'description' => 'Handles enquiry designs, mockups, renders, and material lists for production',
-                'is_active' => true,
+                'budget' => 200000.00,
+                'location' => 'Design Studio',
             ]);
         }
 

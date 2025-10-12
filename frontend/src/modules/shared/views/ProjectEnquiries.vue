@@ -181,6 +181,12 @@
                 >
                   Assign Tasks
                 </button>
+                <button
+                  @click="viewEnquiryTasks(enquiry)"
+                  class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 mr-3"
+                >
+                  View Tasks
+                </button>
                 <router-link
                   :to="`/projects/tasks?enquiry_id=${enquiry.id}`"
                   class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 mr-3"
@@ -430,9 +436,57 @@
            Cancel
          </button>
        </div>
-      </div>
-      </div>
-    </div>
+     </div>
+     </div>
+   </div>
+
+   <!-- View Tasks Modal -->
+   <div v-if="showTasksModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+     <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+       <h2 class="text-xl font-bold mb-6 text-gray-900 dark:text-white">
+         Tasks for Enquiry: {{ selectedEnquiryForTasks?.title }}
+       </h2>
+
+       <div v-if="!selectedEnquiryForTasks?.enquiryTasks || selectedEnquiryForTasks.enquiryTasks.length === 0" class="text-center py-8">
+         <p class="text-gray-600 dark:text-gray-400">No tasks found for this enquiry.</p>
+       </div>
+
+       <div v-else class="space-y-4">
+         <div v-for="task in selectedEnquiryForTasks.enquiryTasks" :key="task.id" class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+           <div class="flex justify-between items-start">
+             <div class="flex-1">
+               <h3 class="font-semibold text-gray-900 dark:text-white">{{ task.title }}</h3>
+               <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ task.notes || 'No description' }}</p>
+               <div class="flex items-center space-x-4 mt-2">
+                 <span :class="getTaskStatusColor(task.status)" class="px-2 py-1 text-xs rounded-full">
+                   {{ getTaskStatusLabel(task.status) }}
+                 </span>
+                 <span :class="getPriorityColor(task.priority)" class="px-2 py-1 text-xs rounded-full">
+                   {{ task.priority }}
+                 </span>
+                 <span class="text-sm text-gray-500 dark:text-gray-400">
+                   Type: {{ task.type }}
+                 </span>
+               </div>
+             </div>
+             <div class="text-right text-sm text-gray-500 dark:text-gray-400">
+               <div v-if="task.assigned_to">Assigned to: {{ task.assigned_to }}</div>
+               <div v-if="task.due_date">Due: {{ new Date(task.due_date).toLocaleDateString() }}</div>
+             </div>
+           </div>
+         </div>
+       </div>
+
+       <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+         <button
+           @click="closeTasksModal"
+           class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+         >
+           Close
+         </button>
+       </div>
+     </div>
+   </div>
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
@@ -468,6 +522,7 @@ interface Enquiry {
   site_survey_skipped: boolean
   site_survey_skip_reason?: string
   expected_delivery_date?: string
+  enquiryTasks?: any[]
 }
 
 interface CreateEnquiryData {
@@ -549,6 +604,7 @@ const saving = ref(false)
 const formError = ref('')
 const formSuccess = ref('')
 const showTaskDashboard = ref(false)
+const showTasksModal = ref(false)
 const selectedEnquiryForTasks = ref<Enquiry | null>(null)
 
 // Modal Tabs
@@ -689,6 +745,41 @@ const getStatusLabel = (status: string) => {
   return labels[status as keyof typeof labels] || 'Unknown Status'
 }
 
+const getTaskStatusColor = (status: string) => {
+  const classes = {
+    pending: 'bg-gray-100 text-gray-800',
+    in_progress: 'bg-blue-100 text-blue-800',
+    completed: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800'
+  }
+  return classes[status as keyof typeof classes] || classes.pending
+}
+
+const getTaskStatusLabel = (status: string) => {
+  const labels = {
+    pending: 'Pending',
+    in_progress: 'In Progress',
+    completed: 'Completed',
+    cancelled: 'Cancelled'
+  }
+  return labels[status as keyof typeof labels] || 'Pending'
+}
+
+const getPriorityColor = (priority: string) => {
+  const classes = {
+    low: 'bg-gray-100 text-gray-800',
+    medium: 'bg-yellow-100 text-yellow-800',
+    high: 'bg-orange-100 text-orange-800',
+    urgent: 'bg-red-100 text-red-800'
+  }
+  return classes[priority as keyof typeof classes] || classes.medium
+}
+
+const closeTasksModal = () => {
+  showTasksModal.value = false
+  selectedEnquiryForTasks.value = null
+}
+
 
 const editEnquiry = (enquiry: Enquiry) => {
   editingEnquiry.value = enquiry
@@ -725,6 +816,11 @@ const updateStatus = async (enquiry: Enquiry, status: Enquiry['status']) => {
 const openTaskAssignment = (enquiry: Enquiry) => {
   selectedEnquiryForTasks.value = enquiry
   showTaskDashboard.value = true
+}
+
+const viewEnquiryTasks = (enquiry: Enquiry) => {
+  selectedEnquiryForTasks.value = enquiry
+  showTasksModal.value = true
 }
 
 const closeTaskDashboard = () => {

@@ -18,9 +18,14 @@ export function useEnquiries() {
 
     try {
       const response = await api.get('/api/clientservice/enquiries', { params: filters })
-      const apiEnquiries = response.data.data.data || []
+      let apiEnquiries = response.data.data
 
-      enquiries.value = apiEnquiries
+      // Handle pagination - if it's a paginated response, get the data array
+      if (apiEnquiries && typeof apiEnquiries === 'object' && 'data' in apiEnquiries) {
+        apiEnquiries = apiEnquiries.data
+      }
+
+      enquiries.value = apiEnquiries || []
     } catch (err) {
       error.value = 'Failed to fetch enquiries'
       console.error('Error fetching enquiries:', err)
