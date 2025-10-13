@@ -6,10 +6,8 @@ import { mainRoutes } from './main'
 import { adminRoutes } from './admin'
 import { hrRoutes } from './hr'
 import { projectsRoutes } from './projects'
-import { procurementRoutes } from './procurement'
 import { clientServiceRoutes } from './clientservice'
 import { creativesRoutes } from './creatives'
-import financeRoutes from './finance'
 
 // Combine all routes
 const routes: RouteRecordRaw[] = [
@@ -17,10 +15,8 @@ const routes: RouteRecordRaw[] = [
   ...adminRoutes,
   ...hrRoutes,
   ...projectsRoutes,
-  ...procurementRoutes,
   ...clientServiceRoutes,
   ...creativesRoutes,
-  ...financeRoutes,
 ]
 
 const router = createRouter({
@@ -106,27 +102,6 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // Check finance access
-  if (to.path.startsWith('/finance') && to.path !== '/finance') {
-    const { canAccessFinance } = await import('@/utils/routerGuards')
-
-    if (!(await canAccessFinance())) {
-      console.log('Access denied to finance - redirecting to finance dashboard')
-      next('/finance')
-      return
-    }
-  }
-
-  // Check procurement access
-  if (to.meta.requiresProcurementAccess) {
-    const { canAccessProcurement } = await import('@/utils/routerGuards')
-
-    if (!(await canAccessProcurement())) {
-      console.log('Access denied to procurement - redirecting to procurement dashboard')
-      next('/procurement')
-      return
-    }
-  }
 
   next()
 })

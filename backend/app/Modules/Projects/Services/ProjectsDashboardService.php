@@ -18,12 +18,12 @@ class ProjectsDashboardService
     {
         $totalEnquiries = ProjectEnquiry::count();
 
-        $statusCounts = Enquiry::select('status', DB::raw('count(*) as count'))
+        $statusCounts = ProjectEnquiry::select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
 
-        $monthlyEnquiries = Enquiry::select(
+        $monthlyEnquiries = ProjectEnquiry::select(
                 DB::raw('YEAR(created_at) as year'),
                 DB::raw('MONTH(created_at) as month'),
                 DB::raw('count(*) as count')
@@ -40,13 +40,13 @@ class ProjectsDashboardService
                 ];
             });
 
-        $priorityCounts = Enquiry::select('priority', DB::raw('count(*) as count'))
+        $priorityCounts = ProjectEnquiry::select('priority', DB::raw('count(*) as count'))
             ->whereNotNull('priority')
             ->groupBy('priority')
             ->pluck('count', 'priority')
             ->toArray();
 
-        $departmentCounts = Enquiry::with('department')
+        $departmentCounts = ProjectEnquiry::with('department')
             ->select('department_id', DB::raw('count(*) as count'))
             ->whereNotNull('department_id')
             ->groupBy('department_id')
@@ -115,16 +115,16 @@ class ProjectsDashboardService
     public function getProjectMetrics(): array
     {
         // For now, projects are enquiries that have been converted
-        $convertedProjects = Enquiry::where('status', 'converted_to_project')->count();
+        $convertedProjects = ProjectEnquiry::where('status', 'converted_to_project')->count();
 
-        $activeProjects = Enquiry::whereIn('status', ['planning', 'in_progress'])->count();
+        $activeProjects = ProjectEnquiry::whereIn('status', ['planning', 'in_progress'])->count();
 
-        $completedProjects = Enquiry::where('status', 'completed')->count();
+        $completedProjects = ProjectEnquiry::where('status', 'completed')->count();
 
-        $totalBudget = Enquiry::whereNotNull('estimated_budget')
+        $totalBudget = ProjectEnquiry::whereNotNull('estimated_budget')
             ->sum('estimated_budget');
 
-        $projectsByStatus = Enquiry::select('status', DB::raw('count(*) as count'))
+        $projectsByStatus = ProjectEnquiry::select('status', DB::raw('count(*) as count'))
             ->whereIn('status', ['planning', 'in_progress', 'completed', 'converted_to_project'])
             ->groupBy('status')
             ->pluck('count', 'status')
@@ -170,7 +170,7 @@ class ProjectsDashboardService
      */
     private function calculateAverageProjectDuration(): ?float
     {
-        $completedProjects = Enquiry::where('status', 'completed')
+        $completedProjects = ProjectEnquiry::where('status', 'completed')
             ->whereNotNull('start_date')
             ->whereNotNull('end_date')
             ->get();
@@ -220,7 +220,7 @@ class ProjectsDashboardService
         $activities = [];
 
         // Recent enquiries
-        $recentEnquiries = Enquiry::with('client')
+        $recentEnquiries = ProjectEnquiry::with('client')
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get()
@@ -316,7 +316,7 @@ class ProjectsDashboardService
             });
 
         // High priority enquiries without recent updates
-        $staleHighPriority = Enquiry::where('priority', 'urgent')
+        $staleHighPriority = ProjectEnquiry::where('priority', 'urgent')
             ->where('updated_at', '<', Carbon::now()->subDays(3))
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->with('client')
@@ -340,5 +340,202 @@ class ProjectsDashboardService
             ->toArray();
 
         return $alerts;
+    }
+
+    /**
+     * Export dashboard data to PDF
+     */
+    public function exportToPDF(array $filters = []): string
+    {
+        // This would generate a PDF with dashboard data
+        // For now, return a placeholder path
+        return 'exports/dashboard_' . now()->format('Y-m-d_H-i-s') . '.pdf';
+    }
+
+    /**
+     * Export dashboard data to Excel
+     */
+    public function exportToExcel(array $filters = []): string
+    {
+        // This would generate an Excel file with dashboard data
+        // For now, return a placeholder path
+        return 'exports/dashboard_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+    }
+
+    /**
+     * Apply filters to dashboard data
+     */
+    public function getFilteredDashboardData(array $filters = []): array
+    {
+        $query = ProjectEnquiry::query();
+
+        // Apply search filter
+        if (!empty($filters['searchQuery'])) {
+            $search = $filters['searchQuery'];
+            $query->where(function ($q) use ($search) {
+                $q->where('enquiry_number', 'like', "%{$search}%")
+                  ->orWhere('title', 'like', "%{$search}%")
+                  ->orWhereHas('client', function ($clientQuery) use ($search) {
+                      $clientQuery->where('full_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Apply date range filter
+        if (!empty($filters['dateFrom'])) {
+            $query->where('created_at', '>=', $filters['dateFrom']);
+        }
+        if (!empty($filters['dateTo'])) {
+            $query->where('created_at', '<=', $filters['dateTo']);
+        }
+
+        // Apply status filter
+        if (!empty($filters['status'])) {
+            $query->whereIn('status', $filters['status']);
+        }
+
+        // Apply priority filter
+        if (!empty($filters['priority'])) {
+            $query->whereIn('priority', $filters['priority']);
+        }
+
+        // Apply department filter
+        if (!empty($filters['department'])) {
+            $query->where('department_id', $filters['department']);
+        }
+
+        // Apply budget range filter
+        if (!empty($filters['budgetRange'])) {
+            $minBudget = $filters['budgetRange']['min'] ?? 0;
+            $maxBudget = $filters['budgetRange']['max'] ?? 1000000;
+            $query->whereBetween('estimated_budget', [$minBudget, $maxBudget]);
+        }
+
+        // Get filtered metrics
+        $filteredEnquiries = $query->get();
+
+        // Calculate filtered metrics
+        $enquiryMetrics = $this->calculateFilteredEnquiryMetrics($filteredEnquiries);
+        $taskMetrics = $this->calculateFilteredTaskMetrics($filteredEnquiries);
+        $projectMetrics = $this->calculateFilteredProjectMetrics($filteredEnquiries);
+
+        return [
+            'enquiry_metrics' => $enquiryMetrics,
+            'task_metrics' => $taskMetrics,
+            'project_metrics' => $projectMetrics,
+            'filtered_count' => $filteredEnquiries->count(),
+            'applied_filters' => $filters
+        ];
+    }
+
+    /**
+     * Calculate filtered enquiry metrics
+     */
+    private function calculateFilteredEnquiryMetrics($enquiries): array
+    {
+        $totalEnquiries = $enquiries->count();
+
+        $statusBreakdown = $enquiries->groupBy('status')->map->count()->toArray();
+
+        $priorityDistribution = $enquiries->whereNotNull('priority')
+            ->groupBy('priority')
+            ->map->count()
+            ->toArray();
+
+        $departmentDistribution = $enquiries->whereNotNull('department_id')
+            ->groupBy('department.name')
+            ->map->count()
+            ->toArray();
+
+        // Monthly trend for filtered data
+        $monthlyTrend = $enquiries->groupBy(function ($enquiry) {
+            return $enquiry->created_at->format('M Y');
+        })->map->count()->toArray();
+
+        return [
+            'total_enquiries' => $totalEnquiries,
+            'status_breakdown' => $statusBreakdown,
+            'monthly_trend' => array_map(function ($month, $count) {
+                return ['month' => $month, 'count' => $count];
+            }, array_keys($monthlyTrend), $monthlyTrend),
+            'priority_distribution' => $priorityDistribution,
+            'department_distribution' => $departmentDistribution,
+        ];
+    }
+
+    /**
+     * Calculate filtered task metrics
+     */
+    private function calculateFilteredTaskMetrics($enquiries): array
+    {
+        $enquiryIds = $enquiries->pluck('id');
+
+        $enquiryTasks = EnquiryTask::whereIn('enquiry_id', $enquiryIds)
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $departmentalTasks = EnquiryDepartmentalTask::whereIn('enquiry_id', $enquiryIds)
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $overdueTasks = EnquiryDepartmentalTask::whereIn('enquiry_id', $enquiryIds)
+            ->where('due_date', '<', Carbon::now())
+            ->whereIn('status', ['pending', 'in_progress'])
+            ->count();
+
+        $completionRate = $this->calculateFilteredTaskCompletionRate($enquiryIds);
+
+        return [
+            'enquiry_tasks' => $enquiryTasks,
+            'departmental_tasks' => $departmentalTasks,
+            'total_tasks' => array_sum($enquiryTasks) + array_sum($departmentalTasks),
+            'overdue_tasks' => $overdueTasks,
+            'completion_rate' => $completionRate,
+        ];
+    }
+
+    /**
+     * Calculate filtered project metrics
+     */
+    private function calculateFilteredProjectMetrics($enquiries): array
+    {
+        $activeProjects = $enquiries->whereIn('status', ['planning', 'in_progress'])->count();
+        $completedProjects = $enquiries->where('status', 'completed')->count();
+        $convertedProjects = $enquiries->where('status', 'converted_to_project')->count();
+
+        $totalBudget = $enquiries->whereNotNull('estimated_budget')->sum('estimated_budget');
+
+        $projectsByStatus = $enquiries->whereIn('status', ['planning', 'in_progress', 'completed', 'converted_to_project'])
+            ->groupBy('status')
+            ->map->count()
+            ->toArray();
+
+        return [
+            'total_projects' => $enquiries->count(),
+            'active_projects' => $activeProjects,
+            'completed_projects' => $completedProjects,
+            'converted_enquiries' => $convertedProjects,
+            'total_budget' => $totalBudget,
+            'projects_by_status' => $projectsByStatus,
+        ];
+    }
+
+    /**
+     * Calculate task completion rate for filtered enquiries
+     */
+    private function calculateFilteredTaskCompletionRate(array $enquiryIds): float
+    {
+        $totalTasks = EnquiryDepartmentalTask::whereIn('enquiry_id', $enquiryIds)->count();
+        if ($totalTasks === 0) return 0;
+
+        $completedTasks = EnquiryDepartmentalTask::whereIn('enquiry_id', $enquiryIds)
+            ->where('status', 'completed')
+            ->count();
+
+        return round(($completedTasks / $totalTasks) * 100, 2);
     }
 }

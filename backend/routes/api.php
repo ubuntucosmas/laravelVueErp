@@ -136,6 +136,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('dashboard/project-metrics', [DashboardController::class, 'projectMetrics']);
         Route::get('dashboard/recent-activities', [DashboardController::class, 'recentActivities']);
         Route::get('dashboard/alerts', [DashboardController::class, 'alerts']);
+        Route::post('dashboard/filter', [DashboardController::class, 'filterDashboard']);
+        Route::get('dashboard/export/pdf', [DashboardController::class, 'exportToPDF']);
+        Route::get('dashboard/export/excel', [DashboardController::class, 'exportToExcel']);
 
         // Task management routes
         Route::get('tasks', [TaskController::class, 'getDepartmentalTasks']);

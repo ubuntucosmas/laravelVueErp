@@ -192,4 +192,97 @@ class DashboardController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Filter dashboard data
+     */
+    public function filterDashboard(Request $request): JsonResponse
+    {
+        // Check permissions
+        if (!Auth::user()->hasPermissionTo(Permissions::DASHBOARD_PROJECTS) &&
+            !Auth::user()->hasRole(['Super Admin', 'Project Manager', 'Project Officer'])) {
+            return response()->json([
+                'message' => 'Unauthorized access to dashboard filtering'
+            ], 403);
+        }
+
+        try {
+            $filters = $request->all();
+            $filteredData = $this->dashboardService->getFilteredDashboardData($filters);
+
+            return response()->json([
+                'data' => $filteredData,
+                'message' => 'Filtered dashboard data retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to filter dashboard data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export dashboard data to PDF
+     */
+    public function exportToPDF(Request $request): JsonResponse
+    {
+        // Check permissions
+        if (!Auth::user()->hasPermissionTo(Permissions::DASHBOARD_PROJECTS) &&
+            !Auth::user()->hasRole(['Super Admin', 'Project Manager', 'Project Officer'])) {
+            return response()->json([
+                'message' => 'Unauthorized access to dashboard export'
+            ], 403);
+        }
+
+        try {
+            $filters = $request->get('filters', []);
+            $filePath = $this->dashboardService->exportToPDF($filters);
+
+            return response()->json([
+                'data' => [
+                    'file_path' => $filePath,
+                    'download_url' => url('storage/' . $filePath)
+                ],
+                'message' => 'PDF export generated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to generate PDF export',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export dashboard data to Excel
+     */
+    public function exportToExcel(Request $request): JsonResponse
+    {
+        // Check permissions
+        if (!Auth::user()->hasPermissionTo(Permissions::DASHBOARD_PROJECTS) &&
+            !Auth::user()->hasRole(['Super Admin', 'Project Manager', 'Project Officer'])) {
+            return response()->json([
+                'message' => 'Unauthorized access to dashboard export'
+            ], 403);
+        }
+
+        try {
+            $filters = $request->get('filters', []);
+            $filePath = $this->dashboardService->exportToExcel($filters);
+
+            return response()->json([
+                'data' => [
+                    'file_path' => $filePath,
+                    'download_url' => url('storage/' . $filePath)
+                ],
+                'message' => 'Excel export generated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to generate Excel export',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

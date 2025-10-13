@@ -45,15 +45,6 @@ const PERMISSIONS = {
   TASK_UPDATE: 'task.update',
   TASK_ASSIGN: 'task.assign',
 
-  // Finance
-  FINANCE_VIEW: 'finance.view',
-  FINANCE_BUDGET_CREATE: 'finance.budget.create',
-  FINANCE_BUDGET_APPROVE: 'finance.budget.approve',
-  FINANCE_QUOTE_CREATE: 'finance.quote.create',
-  FINANCE_QUOTE_APPROVE: 'finance.quote.approve',
-  FINANCE_INVOICE_CREATE: 'finance.invoice.create',
-  FINANCE_REPORTS_VIEW: 'finance.reports.view',
-
   // HR
   HR_VIEW_EMPLOYEES: 'hr.view_employees',
   HR_MANAGE_PAYROLL: 'hr.manage_payroll',
@@ -66,10 +57,6 @@ const PERMISSIONS = {
   CLIENT_READ: 'client.read',
   CLIENT_CREATE: 'client.create',
   CLIENT_UPDATE: 'client.update',
-
-  // Procurement
-  PROCUREMENT_VIEW: 'procurement.view',
-  PROCUREMENT_ORDERS_CREATE: 'procurement.orders.create',
 
   // Admin
   ADMIN_ACCESS: 'admin.access',
@@ -173,33 +160,6 @@ export function useRouteGuard() {
     return hasPermission(PERMISSIONS.CREATIVES_VIEW)
   }
 
-  const canAccessFinance = (): boolean => {
-    if (!isLoggedIn.value || !user.value) {
-      return false
-    }
-
-    // Super Admin can access everything
-    if (user.value.roles?.includes('Super Admin')) {
-      return true
-    }
-
-    // Check finance view permission
-    return hasPermission(PERMISSIONS.FINANCE_VIEW)
-  }
-
-  const canAccessProcurement = (): boolean => {
-    if (!isLoggedIn.value || !user.value) {
-      return false
-    }
-
-    // Super Admin can access everything
-    if (user.value.roles?.includes('Super Admin')) {
-      return true
-    }
-
-    // Check procurement view permission
-    return hasPermission(PERMISSIONS.PROCUREMENT_VIEW)
-  }
 
   const canAccessProjectsDashboard = (): boolean => {
     if (!isLoggedIn.value || !user.value) {
@@ -256,17 +216,6 @@ export function useRouteGuard() {
       return
     }
 
-    // Finance users go to finance dashboard
-    if (canAccessFinance()) {
-      router.push('/finance')
-      return
-    }
-
-    // Procurement users go to procurement dashboard
-    if (canAccessProcurement()) {
-      router.push('/procurement')
-      return
-    }
 
     // Creatives/Designers go to Design dashboard
     if (userRoles.includes('Designer')) {
@@ -422,29 +371,6 @@ export function useRouteGuard() {
       )
     }
 
-    // Add finance routes for authorized users (skip for Super Admin as they're already included in departments)
-    if (canAccessFinance() && !userRoles.includes('Super Admin')) {
-      routes.push(
-        { name: 'finance-dashboard', path: '/finance', label: 'Finance Dashboard', icon: '📊' },
-        { name: 'finance-budgeting', path: '/finance/budgeting', label: 'Budget Management', icon: '💰' },
-        { name: 'finance-costing', path: '/finance/costing', label: 'Cost Analysis', icon: '🧮' },
-        { name: 'finance-invoicing', path: '/finance/invoicing', label: 'Invoice Management', icon: '📄' },
-        { name: 'finance-reporting', path: '/finance/reporting', label: 'Financial Reports', icon: '📈' },
-        { name: 'finance-enquiries', path: '/finance/enquiries', label: 'Project Enquiries', icon: '📋' },
-        { name: 'finance-analytics', path: '/finance/analytics', label: 'Financial Analytics', icon: '📉' }
-      )
-    }
-
-    // Add procurement routes for authorized users (skip for Super Admin as they're already included in departments)
-    if (canAccessProcurement() && !userRoles.includes('Super Admin')) {
-      routes.push(
-        { name: 'procurement-dashboard', path: '/procurement', label: 'Procurement Dashboard', icon: '📦' },
-        { name: 'procurement-materials', path: '/procurement/materials', label: 'Material Requests', icon: '📋' },
-        { name: 'procurement-vendors', path: '/procurement/vendors', label: 'Vendor Management', icon: '🏪' },
-        { name: 'procurement-orders', path: '/procurement/orders', label: 'Purchase Orders', icon: '📄' },
-        { name: 'procurement-quotations', path: '/procurement/quotations', label: 'Supplier Quotations', icon: '💰' }
-      )
-    }
 
     // Add Projects department dashboard for users who work in Projects department (skip for Super Admin)
     if (canAccessProjectsDashboard() && !userRoles.includes('Super Admin')) {
@@ -489,13 +415,6 @@ export function useRouteGuard() {
       return 'Creatives Panel'
     }
 
-    if (canAccessFinance()) {
-      return 'Finance Panel'
-    }
-
-    if (canAccessProcurement()) {
-      return 'Procurement Panel'
-    }
 
     // Department fallback
     if (permissions.value?.permissions?.user_department) {
@@ -538,13 +457,6 @@ export function useRouteGuard() {
       return 'Creative Design & Production'
     }
 
-    if (canAccessFinance()) {
-      return 'Financial Management'
-    }
-
-    if (canAccessProcurement()) {
-      return 'Procurement & Supply Chain'
-    }
 
     // Department fallback
     if (permissions.value?.permissions?.user_department) {
@@ -561,8 +473,6 @@ export function useRouteGuard() {
     canAccessProjectsDashboard,
     canAccessClientService,
     canAccessCreatives,
-    canAccessFinance,
-    canAccessProcurement,
     redirectToAppropriateRoute,
     getAllowedRoutes,
     getPanelTitle,

@@ -256,26 +256,6 @@
                 </div>
               </div>
 
-              <!-- Finance Permissions -->
-              <div v-if="financePermissions.length > 0" class="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
-                <h4 class="font-medium text-gray-900 dark:text-white mb-2 flex items-center">
-                  <span class="text-lg mr-2">💰</span>
-                  Finance
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-1">
-                  <label v-for="permission in financePermissions" :key="permission.id" class="flex items-center">
-                    <input
-                      v-model="roleForm.selectedPermissions"
-                      :value="permission.id"
-                      type="checkbox"
-                      class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                    />
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                      {{ permission.name.replace('finance.', '').replace('_', ' ').toUpperCase() }}
-                    </span>
-                  </label>
-                </div>
-              </div>
 
               <!-- HR Permissions -->
               <div v-if="hrPermissions.length > 0" class="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
@@ -368,7 +348,6 @@ const roleForm = ref({
 // Permission data grouped by modules - will be populated from API
 const userPermissions = ref([])
 const projectPermissions = ref([])
-const financePermissions = ref([])
 const hrPermissions = ref([])
 const adminPermissions = ref([])
 const rolePermissions = ref([])
@@ -379,7 +358,6 @@ const employeePermissions = ref([])
 const groupPermissionsByModule = (permissions) => {
   userPermissions.value = permissions.filter(p => p.name.startsWith('user.'))
   projectPermissions.value = permissions.filter(p => p.name.startsWith('project.'))
-  financePermissions.value = permissions.filter(p => p.name.startsWith('finance.'))
   hrPermissions.value = permissions.filter(p => p.name.startsWith('hr.'))
   adminPermissions.value = permissions.filter(p => p.name.startsWith('admin.'))
   rolePermissions.value = permissions.filter(p => p.name.startsWith('role.'))

@@ -45,15 +45,6 @@ const PERMISSIONS = {
   TASK_UPDATE: 'task.update',
   TASK_ASSIGN: 'task.assign',
 
-  // Finance
-  FINANCE_VIEW: 'finance.view',
-  FINANCE_BUDGET_CREATE: 'finance.budget.create',
-  FINANCE_BUDGET_APPROVE: 'finance.budget.approve',
-  FINANCE_QUOTE_CREATE: 'finance.quote.create',
-  FINANCE_QUOTE_APPROVE: 'finance.quote.approve',
-  FINANCE_INVOICE_CREATE: 'finance.invoice.create',
-  FINANCE_REPORTS_VIEW: 'finance.reports.view',
-
   // HR
   HR_VIEW_EMPLOYEES: 'hr.view_employees',
   HR_MANAGE_PAYROLL: 'hr.manage_payroll',
@@ -66,10 +57,6 @@ const PERMISSIONS = {
   CLIENT_READ: 'client.read',
   CLIENT_CREATE: 'client.create',
   CLIENT_UPDATE: 'client.update',
-
-  // Procurement
-  PROCUREMENT_VIEW: 'procurement.view',
-  PROCUREMENT_ORDERS_CREATE: 'procurement.orders.create',
 
   // Admin
   ADMIN_ACCESS: 'admin.access',
@@ -177,27 +164,6 @@ export async function canAccessCreatives(): Promise<boolean> {
   return hasPermission(user, userPermissions, PERMISSIONS.CREATIVES_VIEW)
 }
 
-export async function canAccessFinance(): Promise<boolean> {
-  const { user, userPermissions } = await fetchUserData()
-  if (!user) return false
-
-  // Super Admin can access everything
-  if (user.roles?.includes('Super Admin')) return true
-
-  // Check finance view permission
-  return hasPermission(user, userPermissions, PERMISSIONS.FINANCE_VIEW)
-}
-
-export async function canAccessProcurement(): Promise<boolean> {
-  const { user, userPermissions } = await fetchUserData()
-  if (!user) return false
-
-  // Super Admin can access everything
-  if (user.roles?.includes('Super Admin')) return true
-
-  // Check procurement view permission
-  return hasPermission(user, userPermissions, PERMISSIONS.PROCUREMENT_VIEW)
-}
 
 // Clear cache when user logs out or token changes
 export function clearGuardCache(): void {
