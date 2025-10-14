@@ -483,7 +483,8 @@ const getTaskTypeIcon = (type: string) => {
     'design': 'bg-purple-500',
     'materials': 'bg-green-500',
     'budget': 'bg-yellow-500',
-    'quote': 'bg-indigo-500'
+    'quote': 'bg-indigo-500',
+    'event': 'bg-pink-500',
   }
   return icons[type] || 'bg-gray-500'
 }
@@ -494,7 +495,8 @@ const getTaskTypeInitial = (type: string) => {
     'design': 'D',
     'materials': 'M',
     'budget': 'B',
-    'quote': 'Q'
+    'quote': 'Q',
+    'event': 'E',
   }
   return initials[type] || 'T'
 }

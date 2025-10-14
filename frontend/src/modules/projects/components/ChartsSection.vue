@@ -33,7 +33,7 @@
 import { computed } from 'vue'
 import Chart from 'primevue/chart'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 interface Props {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   enquiryMetrics?: any

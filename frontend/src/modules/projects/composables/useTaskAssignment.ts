@@ -108,7 +108,9 @@ export function useTaskAssignment() {
     error.value = null
 
     try {
-      const response = await api.put(`/api/projects/tasks/${taskId}`, updateData)
+      console.log('[DEBUG] updateTask called with taskId:', taskId, 'updateData:', updateData)
+      const response = await api.put(`/api/projects/enquiry-tasks/${taskId}`, updateData)
+      console.log('[DEBUG] updateTask response:', response.data)
       const updatedTask = response.data.data
 
       // Update the task in the local array
@@ -119,6 +121,7 @@ export function useTaskAssignment() {
 
       return updatedTask
     } catch (err) {
+      console.error('[DEBUG] updateTask failed:', err)
       error.value = 'Failed to update task'
       throw err
     } finally {

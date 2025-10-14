@@ -25,16 +25,6 @@ class DatabaseSeeder extends Seeder
         // Seed clients
         $this->call(ClientSeeder::class);
 
-        // Create a default admin user
-        $adminUser = \App\Models\User::factory()->create([
-            'name' => 'System Administrator',
-            'email' => 'admin@company.com',
-            'is_active' => true,
-        ]);
-
-        // Assign Super Admin role
-        $adminUser->assignRole('Super Admin');
-
         // Create department-specific users
         $this->call([
             SuperAdminUserSeeder::class,

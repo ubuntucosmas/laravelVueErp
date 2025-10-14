@@ -3,6 +3,7 @@
     <component
       :is="taskComponent"
       :task="task"
+      :readonly="task.status === 'completed'"
       @update-status="handleStatusUpdate"
       @complete="handleComplete"
     />

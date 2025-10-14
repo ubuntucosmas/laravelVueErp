@@ -43,7 +43,341 @@
       </nav>
     </div>
 
-    <form @submit.prevent="handleSubmit" class="space-y-6">
+    <!-- Read-only view for completed tasks -->
+    <div v-if="readonly" class="space-y-6">
+      <!-- Loading State for Read-only View -->
+      <div v-if="isLoadingExistingData" class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div class="flex items-center space-x-2">
+          <svg class="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-sm font-medium text-blue-800 dark:text-blue-200">Loading survey data...</span>
+        </div>
+      </div>
+
+      <!-- Survey Completed Banner -->
+      <div v-else class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+        <div class="flex items-center space-x-2">
+          <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-sm font-medium text-green-800 dark:text-green-200">Survey Completed</span>
+        </div>
+        <p class="text-sm text-green-700 dark:text-green-300 mt-1">This survey has been completed and is now read-only.</p>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
+        <nav class="flex space-x-8" aria-label="Tabs">
+          <button
+            v-for="tab in tabs"
+            :key="tab.key"
+            @click="activeTab = tab.key"
+            :class="[
+              'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors',
+              activeTab === tab.key
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+            ]"
+          >
+            {{ tab.label }}
+          </button>
+        </nav>
+      </div>
+
+      <!-- Basic Information Read-only -->
+      <div v-show="activeTab === 'basic' && !isLoadingExistingData" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+        <div class="flex items-center space-x-2 mb-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Basic Information</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Site Visit Date</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formatDate(formData.site_visit_date) || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formData.location || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Name</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formData.client_name || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Person</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formData.client_contact_person || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formData.client_phone || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formData.client_email || 'Not specified' }}</p>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Attendees</label>
+          <div v-if="formData.attendees && formData.attendees.length > 0" class="text-sm text-gray-900 dark:text-white">
+            <ul class="list-disc list-inside space-y-1">
+              <li v-for="attendee in formData.attendees" :key="attendee">{{ attendee }}</li>
+            </ul>
+          </div>
+          <p v-else class="text-sm text-gray-500 dark:text-gray-400">No attendees specified</p>
+        </div>
+      </div>
+
+      <!-- Site Assessment Read-only -->
+      <div v-show="activeTab === 'assessment' && !isLoadingExistingData" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+        <div class="flex items-center space-x-2 mb-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+            <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Site Assessment</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project Description</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.project_description || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Objectives</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.objectives || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Site Condition</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.current_condition || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Existing Branding</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.existing_branding || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Site Measurements</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.site_measurements || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Room/Area Size</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formData.room_size || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Site Constraints</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.constraints || 'Not specified' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Access & Logistics Read-only -->
+      <div v-show="activeTab === 'access' && !isLoadingExistingData" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+        <div class="flex items-center space-x-2 mb-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
+            <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Access & Logistics</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Access Logistics</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.access_logistics || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Parking Availability</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.parking_availability || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Size & Accessibility</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.size_accessibility || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lifts/Elevators</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formData.lifts || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Door Sizes</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formData.door_sizes || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Loading Areas</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.loading_areas || 'Not specified' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Requirements & Preferences Read-only -->
+      <div v-show="activeTab === 'requirements' && !isLoadingExistingData" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+        <div class="flex items-center space-x-2 mb-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+            <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Requirements & Preferences</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Branding Preferences</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.branding_preferences || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Material Preferences</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.material_preferences || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color Scheme</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formData.color_scheme || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Brand Guidelines</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.brand_guidelines || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Special Instructions</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.special_instructions || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Electrical Requirements</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.electrical_outlets || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Food & Refreshment</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.food_refreshment || 'Not specified' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Safety & Timeline Read-only -->
+      <div v-show="activeTab === 'safety' && !isLoadingExistingData" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+        <div class="flex items-center space-x-2 mb-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+            <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Safety & Timeline</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Safety Conditions</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.safety_conditions || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Potential Hazards</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.potential_hazards || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Safety Requirements</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.safety_requirements || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project Start Date</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formatDateTime(formData.project_start_date) || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project Deadline</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formatDateTime(formData.project_deadline) || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Key Milestones</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.milestones || 'Not specified' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Information Read-only -->
+      <div v-show="activeTab === 'additional' && !isLoadingExistingData" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+        <div class="flex items-center space-x-2 mb-4">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+            <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Additional Information</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Additional Notes</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.additional_notes || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Special Requests</label>
+            <p class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ formData.special_requests || 'Not specified' }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prepared By</label>
+            <p class="text-sm text-gray-900 dark:text-white">{{ formData.prepared_by || 'Not specified' }}</p>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Action Items</label>
+          <div v-if="formData.action_items && formData.action_items.length > 0" class="text-sm text-gray-900 dark:text-white">
+            <ul class="list-disc list-inside space-y-1">
+              <li v-for="item in formData.action_items" :key="item">{{ item }}</li>
+            </ul>
+          </div>
+          <p v-else class="text-sm text-gray-500 dark:text-gray-400">No action items specified</p>
+        </div>
+      </div>
+    </div>
+
+    <form v-else @submit.prevent="handleSubmit" class="space-y-6">
+      <!-- Loading State -->
+      <div v-if="isLoadingExistingData" class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div class="flex items-center space-x-2">
+          <svg class="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-sm font-medium text-blue-800 dark:text-blue-200">Loading existing survey data...</span>
+        </div>
+      </div>
+
       <!-- Basic Information -->
       <div v-show="activeTab === 'basic'" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
         <div class="flex items-center space-x-2 mb-4">
@@ -681,16 +1015,31 @@
         <div class="flex space-x-2">
           <button
             @click="handleSaveDraft"
-            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            :disabled="isSavingDraft"
+            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save to Draft
+            <span v-if="isSavingDraft" class="inline-flex items-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving...
+            </span>
+            <span v-else>Save to Draft</span>
           </button>
           <button
             type="submit"
-            :disabled="hasValidationErrors"
+            :disabled="hasValidationErrors || isLoading"
             class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save Survey Data
+            <span v-if="isLoading" class="inline-flex items-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving...
+            </span>
+            <span v-else>Save Survey Data</span>
           </button>
         </div>
       </div>
@@ -700,13 +1049,24 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import api from '@/plugins/axios'
 import type { EnquiryTask } from '../../types/enquiry'
 
 interface Props {
   task: EnquiryTask
+  readonly?: boolean
 }
 
 const props = defineProps<Props>()
+
+console.log('[DEBUG] SurveyTask component mounted/created with props:', {
+  task: props.task,
+  readonly: props.readonly,
+  taskId: props.task?.id,
+  taskStatus: props.task?.status,
+  enquiry_id: props.task?.enquiry_id,
+  project_enquiry_id: props.task?.project_enquiry_id
+})
 
 const emit = defineEmits<{
   'update-status': [status: EnquiryTask['status']]
@@ -758,6 +1118,9 @@ const actionItemsText = ref('')
 const error = ref('')
 const successMessage = ref('')
 const activeTab = ref('basic')
+const isLoading = ref(false)
+const isSavingDraft = ref(false)
+const isLoadingExistingData = ref(false)
 
 const tabs = [
   { key: 'basic', label: 'Basic Information' },
@@ -775,6 +1138,87 @@ const hasValidationErrors = computed(() => {
          !formData.value.client_name?.trim() ||
          !formData.value.project_description?.trim()
 })
+
+// API Methods
+const fetchExistingSurveyData = async () => {
+  console.log('[DEBUG] fetchExistingSurveyData FUNCTION CALLED DIRECTLY')
+
+  try {
+    const enquiryId = props.task.enquiry_id || props.task.project_enquiry_id
+    console.log('[DEBUG] fetchExistingSurveyData called with task:', {
+      taskId: props.task.id,
+      enquiry_id: props.task.enquiry_id,
+      project_enquiry_id: props.task.project_enquiry_id,
+      resolvedEnquiryId: enquiryId
+    })
+
+    if (!enquiryId) {
+      console.warn('[DEBUG] No enquiry_id found in task')
+      return null
+    }
+
+    const apiUrl = `/api/projects/site-surveys?enquiry_id=${enquiryId}`
+    console.log('[DEBUG] Making API call to:', apiUrl)
+
+    const response = await api.get(apiUrl)
+    console.log('[DEBUG] API Response received:', {
+      status: response.status,
+      dataLength: response.data?.length || 0,
+      data: response.data
+    })
+
+    const result = response.data.length > 0 ? response.data[0] : null
+    console.log('[DEBUG] Returning survey data:', result)
+    return result
+  } catch (error: unknown) {
+    console.error('[DEBUG] Error fetching existing survey data:', error)
+    const err = error as { response?: { status?: number; data?: unknown } }
+    console.error('[DEBUG] Error details:', {
+      status: err.response?.status,
+      data: err.response?.data
+    })
+
+    // Handle authentication errors
+    if (err.response?.status === 401) {
+      error.value = 'Authentication failed. Please log in again.'
+      return null
+    }
+
+    // Handle other API errors
+    if (err.response?.status === 403) {
+      error.value = 'You do not have permission to access this survey data.'
+      return null
+    }
+
+    error.value = 'Failed to load existing survey data. Please try again.'
+    return null
+  }
+}
+
+const saveSurveyData = async (data: Record<string, unknown>, isDraft = false) => {
+  try {
+    const payload = {
+      ...data,
+      enquiry_id: props.task.enquiry_id || props.task.project_enquiry_id,
+      status: isDraft ? 'pending' : 'completed'
+    }
+
+    console.log('Sending payload:', payload)
+    console.log('enquiry_id from props.task:', props.task.enquiry_id)
+    console.log('project_enquiry_id from props.task:', props.task.project_enquiry_id)
+    console.log('Full task object:', props.task)
+    const response = await api.post('/api/projects/site-surveys', payload)
+    console.log('Response:', response.data)
+    return response.data
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
+    console.error('API Error:', err.response?.data)
+    const message = err.response?.data?.message || err.response?.data?.errors
+      ? Object.values(err.response.data.errors || {}).flat().join(', ')
+      : 'Failed to save survey data'
+    throw new Error(message)
+  }
+}
 
 // Methods
 const updateStatus = (status: EnquiryTask['status']) => {
@@ -794,86 +1238,261 @@ const parseActionItems = () => {
   formData.value.action_items = lines
 }
 
-const handleSubmit = () => {
+// Utility methods for formatting
+const formatDate = (dateString: string) => {
+  if (!dateString) return null
+  try {
+    return new Date(dateString).toLocaleDateString()
+  } catch {
+    return dateString
+  }
+}
+
+const formatDateTime = (dateTimeString: string) => {
+  if (!dateTimeString) return null
+  try {
+    return new Date(dateTimeString).toLocaleString()
+  } catch {
+    return dateTimeString
+  }
+}
+
+const handleSubmit = async () => {
   error.value = ''
   successMessage.value = ''
+  isLoading.value = true
 
   if (hasValidationErrors.value) {
     error.value = 'Please fill in all required fields.'
+    isLoading.value = false
     return
   }
 
-  // Here you would typically save the form data
-  console.log('Survey data:', formData.value)
-  // For now, just mark as completed if not already
-  if (props.task.status !== 'completed') {
-    updateStatus('completed')
-  }
+  try {
+    await saveSurveyData(formData.value, false)
+    successMessage.value = 'Survey data saved successfully!'
 
-  successMessage.value = 'Survey data saved successfully!'
-  setTimeout(() => {
-    successMessage.value = ''
-  }, 3000)
+    // Update task status to completed
+    if (props.task.status !== 'completed') {
+      updateStatus('completed')
+    }
+
+    setTimeout(() => {
+      successMessage.value = ''
+    }, 3000)
+  } catch (err: unknown) {
+    const errorObj = err as { message?: string }
+    error.value = errorObj.message || 'Failed to save survey data'
+  } finally {
+    isLoading.value = false
+  }
 }
 
-const handleSaveDraft = () => {
+const handleSaveDraft = async () => {
   error.value = ''
   successMessage.value = ''
+  isSavingDraft.value = true
 
-  // Save draft without validation
-  console.log('Survey draft data:', formData.value)
-
-  successMessage.value = 'Survey draft saved successfully!'
-  setTimeout(() => {
-    successMessage.value = ''
-  }, 3000)
+  try {
+    await saveSurveyData(formData.value, true)
+    successMessage.value = 'Survey draft saved successfully!'
+    setTimeout(() => {
+      successMessage.value = ''
+    }, 3000)
+  } catch (err: unknown) {
+    const errorObj = err as { message?: string }
+    error.value = errorObj.message || 'Failed to save survey draft'
+  } finally {
+    isSavingDraft.value = false
+  }
 }
 
-// Watch for task changes to reset form if needed
-watch(() => props.task.id, () => {
+// Watch for task changes to load existing data or reset form
+watch(() => props.task.id, async (newTaskId, oldTaskId) => {
+  console.log('[DEBUG] WATCH FUNCTION TRIGGERED - Task ID changed:', {
+    oldTaskId: oldTaskId,
+    newTaskId: newTaskId,
+    taskStatus: props.task.status,
+    readonly: props.readonly,
+    enquiry_id: props.task.enquiry_id,
+    project_enquiry_id: props.task.project_enquiry_id,
+    fullTask: props.task
+  })
+
+  await loadSurveyData()
+}, { immediate: true })
+
+// Function to load survey data
+const loadSurveyData = async () => {
+  console.log('[DEBUG] loadSurveyData called')
+
   error.value = ''
   successMessage.value = ''
-  // Reset form for new task
-  formData.value = {
-    site_visit_date: '',
-    location: '',
-    client_name: '',
-    attendees: [],
-    client_contact_person: '',
-    client_phone: '',
-    client_email: '',
-    project_description: '',
-    objectives: '',
-    current_condition: '',
-    existing_branding: '',
-    access_logistics: '',
-    parking_availability: '',
-    size_accessibility: '',
-    lifts: '',
-    door_sizes: '',
-    loading_areas: '',
-    site_measurements: '',
-    room_size: '',
-    constraints: '',
-    electrical_outlets: '',
-    food_refreshment: '',
-    branding_preferences: '',
-    material_preferences: '',
-    color_scheme: '',
-    brand_guidelines: '',
-    special_instructions: '',
-    safety_conditions: '',
-    potential_hazards: '',
-    safety_requirements: '',
-    project_start_date: '',
-    project_deadline: '',
-    additional_notes: '',
-    special_requests: '',
-    action_items: [],
-    milestones: '',
-    prepared_by: ''
+  isLoadingExistingData.value = true
+
+  console.log('[DEBUG] Task watcher triggered:', {
+    taskId: props.task.id,
+    taskStatus: props.task.status,
+    readonly: props.readonly,
+    enquiry_id: props.task.enquiry_id,
+    project_enquiry_id: props.task.project_enquiry_id
+  })
+
+  try {
+    const existingData = await fetchExistingSurveyData()
+
+    console.log('[DEBUG] Existing data loaded:', {
+      hasData: !!existingData,
+      dataKeys: existingData ? Object.keys(existingData) : null,
+      readonly: props.readonly
+    })
+
+    if (existingData) {
+      // Populate form with existing data
+      formData.value = {
+        site_visit_date: existingData.site_visit_date || '',
+        location: existingData.location || '',
+        client_name: existingData.client_name || '',
+        attendees: existingData.attendees || [],
+        client_contact_person: existingData.client_contact_person || '',
+        client_phone: existingData.client_phone || '',
+        client_email: existingData.client_email || '',
+        project_description: existingData.project_description || '',
+        objectives: existingData.objectives || '',
+        current_condition: existingData.current_condition || '',
+        existing_branding: existingData.existing_branding || '',
+        access_logistics: existingData.access_logistics || '',
+        parking_availability: existingData.parking_availability || '',
+        size_accessibility: existingData.size_accessibility || '',
+        lifts: existingData.lifts || '',
+        door_sizes: existingData.door_sizes || '',
+        loading_areas: existingData.loading_areas || '',
+        site_measurements: existingData.site_measurements || '',
+        room_size: existingData.room_size || '',
+        constraints: existingData.constraints || '',
+        electrical_outlets: existingData.electrical_outlets || '',
+        food_refreshment: existingData.food_refreshment || '',
+        branding_preferences: existingData.branding_preferences || '',
+        material_preferences: existingData.material_preferences || '',
+        color_scheme: existingData.color_scheme || '',
+        brand_guidelines: existingData.brand_guidelines || '',
+        special_instructions: existingData.special_instructions || '',
+        safety_conditions: existingData.safety_conditions || '',
+        potential_hazards: existingData.potential_hazards || '',
+        safety_requirements: existingData.safety_requirements || '',
+        project_start_date: existingData.project_start_date || '',
+        project_deadline: existingData.project_deadline || '',
+        additional_notes: existingData.additional_notes || '',
+        special_requests: existingData.special_requests || '',
+        action_items: existingData.action_items || [],
+        milestones: existingData.milestones || '',
+        prepared_by: existingData.prepared_by || ''
+      }
+
+      // Populate text areas for attendees and action items
+      attendeesText.value = (existingData.attendees || []).join('\n')
+      actionItemsText.value = (existingData.action_items || []).join('\n')
+
+      console.log('[DEBUG] Form data populated:', {
+        formDataKeys: Object.keys(formData.value),
+        sampleData: {
+          site_visit_date: formData.value.site_visit_date,
+          location: formData.value.location,
+          client_name: formData.value.client_name,
+          project_description: formData.value.project_description?.substring(0, 50)
+        }
+      })
+    } else {
+      console.log('[DEBUG] No existing data found, resetting form')
+      // Reset form for new task
+      formData.value = {
+        site_visit_date: '',
+        location: '',
+        client_name: '',
+        attendees: [],
+        client_contact_person: '',
+        client_phone: '',
+        client_email: '',
+        project_description: '',
+        objectives: '',
+        current_condition: '',
+        existing_branding: '',
+        access_logistics: '',
+        parking_availability: '',
+        size_accessibility: '',
+        lifts: '',
+        door_sizes: '',
+        loading_areas: '',
+        site_measurements: '',
+        room_size: '',
+        constraints: '',
+        electrical_outlets: '',
+        food_refreshment: '',
+        branding_preferences: '',
+        material_preferences: '',
+        color_scheme: '',
+        brand_guidelines: '',
+        special_instructions: '',
+        safety_conditions: '',
+        potential_hazards: '',
+        safety_requirements: '',
+        project_start_date: '',
+        project_deadline: '',
+        additional_notes: '',
+        special_requests: '',
+        action_items: [],
+        milestones: '',
+        prepared_by: ''
+      }
+      attendeesText.value = ''
+      actionItemsText.value = ''
+    }
+  } catch (err) {
+    console.error('[DEBUG] Error loading existing survey data:', err)
+    // Reset form on error
+    formData.value = {
+      site_visit_date: '',
+      location: '',
+      client_name: '',
+      attendees: [],
+      client_contact_person: '',
+      client_phone: '',
+      client_email: '',
+      project_description: '',
+      objectives: '',
+      current_condition: '',
+      existing_branding: '',
+      access_logistics: '',
+      parking_availability: '',
+      size_accessibility: '',
+      lifts: '',
+      door_sizes: '',
+      loading_areas: '',
+      site_measurements: '',
+      room_size: '',
+      constraints: '',
+      electrical_outlets: '',
+      food_refreshment: '',
+      branding_preferences: '',
+      material_preferences: '',
+      color_scheme: '',
+      brand_guidelines: '',
+      special_instructions: '',
+      safety_conditions: '',
+      potential_hazards: '',
+      safety_requirements: '',
+      project_start_date: '',
+      project_deadline: '',
+      additional_notes: '',
+      special_requests: '',
+      action_items: [],
+      milestones: '',
+      prepared_by: ''
+    }
+    attendeesText.value = ''
+    actionItemsText.value = ''
+  } finally {
+    isLoadingExistingData.value = false
   }
-  attendeesText.value = ''
-  actionItemsText.value = ''
-})
+}
 </script>

@@ -92,4 +92,10 @@ class EnquiryTask extends Model
     {
         return $query->where('department_id', $departmentId);
     }
+
+    // Accessor to provide enquiry_id as alias for project_enquiry_id
+    public function getEnquiryIdAttribute()
+    {
+        return $this->project_enquiry_id;
+    }
 }

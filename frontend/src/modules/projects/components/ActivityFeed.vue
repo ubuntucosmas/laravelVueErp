@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 interface Props {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   activities?: any[]

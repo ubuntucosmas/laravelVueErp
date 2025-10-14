@@ -18,43 +18,28 @@ class DesignerUserSeeder extends Seeder
         $creativesDepartment = Department::where('name', 'Design/Creatives')->first();
 
         if (!$creativesDepartment) {
-            // If Design/Creatives department doesn't exist, create it
-            $creativesDepartment = Department::create([
-                'name' => 'Design/Creatives',
-                'description' => 'Handles enquiry designs, mockups, renders, and material lists for production',
-                'budget' => 200000.00,
-                'location' => 'Design Studio',
-            ]);
+            return; // Department not found, skip creating designer user
         }
 
-        // Create employee record for designer
-        $designerEmployee = Employee::create([
-            'employee_id' => 'EMP' . time(), // Generate unique employee ID
-            'first_name' => 'John',
-            'last_name' => 'Designer',
-            'email' => 'designer@company.com',
-            'phone' => '+1234567890',
-            'hire_date' => now()->subMonths(6),
-            'department_id' => $creativesDepartment->id,
-            'position' => 'Senior Designer',
-            'salary' => 75000,
-            'status' => 'active',
-            'employment_type' => 'full-time',
-        ]);
-
-        // Create user account for designer
-        $designerUser = User::create([
-            'name' => 'John Designer',
-            'email' => 'designer@company.com',
-            'password' => bcrypt('password'),
-            'employee_id' => $designerEmployee->id,
-            'department_id' => $creativesDepartment->id,
-            'is_active' => true,
-            'email_verified_at' => now(),
-            'last_login_at' => null,
-        ]);
+        // Create user account for designer (without employee record)
+        $designerUser = User::firstOrCreate(
+            ['email' => 'designer@company.com'],
+            [
+                'name' => 'Designer',
+                'password' => Hash::make('password'),
+                'department_id' => $creativesDepartment->id,
+                'is_active' => true,
+                'email_verified_at' => now(),
+                'last_login_at' => null,
+            ]
+        );
 
         // Assign Designer role
         $designerUser->assignRole('Designer');
+
+        $this->command->info('Designer user created/updated successfully!');
+        $this->command->info('Email: designer@company.com');
+        $this->command->info('Password: password');
+        $this->command->info('Role: Designer');
     }
 }

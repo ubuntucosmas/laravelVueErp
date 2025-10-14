@@ -16,56 +16,56 @@ class DepartmentSeeder extends Seeder
             [
                 'name' => 'Projects',
                 'description' => 'Project management and coordination across all departments',
-                'budget' => 500000.00,
-                'location' => 'Main Office'
+                'budget' => 0.00,
+                'location' => ''
             ],
             [
                 'name' => 'Accounts/Finance',
                 'description' => 'Financial management, accounting, and budgeting',
-                'budget' => 300000.00,
-                'location' => 'Finance Wing'
+                'budget' => 0.00,
+                'location' => ''
             ],
             [
                 'name' => 'Production',
                 'description' => 'Manufacturing, quality control, and production operations',
-                'budget' => 800000.00,
-                'location' => 'Production Floor'
+                'budget' => 0.00,
+                'location' => ''
             ],
             [
                 'name' => 'Design/Creatives',
                 'description' => 'Creative design, branding, and visual communications',
-                'budget' => 200000.00,
-                'location' => 'Design Studio'
+                'budget' => 0.00,
+                'location' => ''
             ],
             [
                 'name' => 'Procurement',
                 'description' => 'Supplier management and purchasing operations',
-                'budget' => 150000.00,
-                'location' => 'Procurement Office'
+                'budget' => 0.00,
+                'location' => ''
             ],
             [
                 'name' => 'Costing',
                 'description' => 'Cost analysis, pricing strategy, and financial planning',
-                'budget' => 100000.00,
-                'location' => 'Finance Wing'
+                'budget' => 0.00,
+                'location' => ''
             ],
             [
                 'name' => 'Logistics',
                 'description' => 'Transportation, warehousing, and supply chain management',
-                'budget' => 250000.00,
-                'location' => 'Warehouse'
+                'budget' => 0.00,
+                'location' => ''
             ],
             [
                 'name' => 'Stores',
                 'description' => 'Inventory management and stock control',
-                'budget' => 120000.00,
-                'location' => 'Warehouse'
+                'budget' => 0.00,
+                'location' => ''
             ],
             [
                 'name' => 'Client Service',
                 'description' => 'Client acquisition, enquiry management, and marketing',
-                'budget' => 180000.00,
-                'location' => 'Main Office'
+                'budget' => 0.00,
+                'location' => ''
             ]
         ];
 
