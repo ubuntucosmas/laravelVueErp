@@ -14,7 +14,7 @@ return [
     'task_templates' => [
         [
             'title' => 'Site Survey',
-            'type' => 'survey',
+            'type' => 'site-survey',
             'notes' => 'Conduct site survey for the enquiry'
         ],
         [

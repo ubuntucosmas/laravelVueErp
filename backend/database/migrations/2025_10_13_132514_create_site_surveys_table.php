@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('site_surveys', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('enquiry_id')->constrained('project_enquiries')->onDelete('cascade');
+            $table->foreignId('project_enquiry_id')->constrained('project_enquiries')->onDelete('cascade');
             $table->foreignId('project_id')->nullable()->constrained('projects')->onDelete('cascade');
             $table->date('site_visit_date');
             $table->enum('status', ['pending', 'completed', 'approved', 'rejected'])->nullable();

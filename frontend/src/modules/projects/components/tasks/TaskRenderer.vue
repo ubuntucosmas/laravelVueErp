@@ -42,7 +42,7 @@ const emit = defineEmits<{
 
 const taskComponent = computed(() => {
   switch (props.task.type) {
-    case 'survey':
+    case 'site-survey':
       return SurveyTask
     case 'design':
       return DesignTask

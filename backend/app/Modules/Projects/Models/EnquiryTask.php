@@ -35,7 +35,7 @@ class EnquiryTask extends Model
 
     // Task type to department mapping
     const TASK_TYPE_DEPARTMENT_MAPPING = [
-        'survey' => 'Client Service',
+        'site-survey' => 'Client Service',
         'design' => 'Design/Creatives',
         'materials' => 'Procurement',
         'budget' => 'Accounts/Finance',
@@ -93,9 +93,4 @@ class EnquiryTask extends Model
         return $query->where('department_id', $departmentId);
     }
 
-    // Accessor to provide enquiry_id as alias for project_enquiry_id
-    public function getEnquiryIdAttribute()
-    {
-        return $this->project_enquiry_id;
-    }
 }

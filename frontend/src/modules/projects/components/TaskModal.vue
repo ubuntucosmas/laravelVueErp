@@ -140,7 +140,7 @@ const formatDate = (dateString: string) => {
 
 const getTaskTypeIcon = (type: string) => {
   const icons: Record<string, string> = {
-    'survey': 'bg-blue-500',
+    'site-survey': 'bg-blue-500',
     'design': 'bg-purple-500',
     'materials': 'bg-green-500',
     'budget': 'bg-yellow-500',
@@ -160,7 +160,7 @@ const getTaskTypeIcon = (type: string) => {
 
 const getTaskTypeInitial = (type: string) => {
   const initials: Record<string, string> = {
-    'survey': 'S',
+    'site-survey': 'S',
     'design': 'D',
     'materials': 'M',
     'budget': 'B',

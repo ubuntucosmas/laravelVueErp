@@ -14,17 +14,30 @@ class SiteSurveyController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = SiteSurvey::with('enquiry.client');
+        \Log::info("[DEBUG] SiteSurveyController::index called with params: " . json_encode($request->all()));
 
-        if ($request->has('enquiry_id')) {
-            $query->where('enquiry_id', $request->enquiry_id);
+        $query = SiteSurvey::with('enquiry.client', 'enquiryTask');
+
+        if ($request->has('enquiry_task_id')) {
+            $enquiryTaskId = $request->enquiry_task_id;
+            \Log::info("[DEBUG] Filtering by enquiry_task_id: {$enquiryTaskId}");
+            $query->where('enquiry_task_id', $enquiryTaskId);
+        }
+
+        if ($request->has('project_enquiry_id')) {
+            $projectEnquiryId = $request->project_enquiry_id;
+            \Log::info("[DEBUG] Filtering by project_enquiry_id: {$projectEnquiryId}");
+            $query->where('project_enquiry_id', $projectEnquiryId);
         }
 
         if ($request->has('project_id')) {
-            $query->where('project_id', $request->project_id);
+            $projectId = $request->project_id;
+            \Log::info("[DEBUG] Filtering by project_id: {$projectId}");
+            $query->where('project_id', $projectId);
         }
 
         $siteSurveys = $query->get();
+        \Log::info("[DEBUG] SiteSurveyController::index returning " . $siteSurveys->count() . " site surveys");
 
         return response()->json($siteSurveys);
     }
@@ -35,7 +48,8 @@ class SiteSurveyController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'enquiry_id' => 'required|numeric|exists:project_enquiries,id',
+            'project_enquiry_id' => 'required|numeric|exists:project_enquiries,id',
+            'enquiry_task_id' => 'nullable|numeric|exists:enquiry_tasks,id',
             'project_id' => 'nullable|numeric',
             'site_visit_date' => 'required|date',
             'status' => ['nullable', Rule::in(['pending', 'completed', 'approved', 'rejected'])],
@@ -86,9 +100,23 @@ class SiteSurveyController extends Controller
             'client_approval_date' => 'nullable|date',
         ]);
 
+        // If enquiry_task_id is not provided, automatically find and set the survey task
+        if (!isset($validated['enquiry_task_id']) || !$validated['enquiry_task_id']) {
+            $surveyTask = \App\Modules\Projects\Models\EnquiryTask::where('project_enquiry_id', $validated['project_enquiry_id'])
+                ->where('type', 'site-survey')
+                ->first();
+
+            if ($surveyTask) {
+                $validated['enquiry_task_id'] = $surveyTask->id;
+                \Log::info("[DEBUG] SiteSurveyController::store automatically linked to survey task ID: {$surveyTask->id}");
+            } else {
+                \Log::warning("[DEBUG] SiteSurveyController::store no survey task found for enquiry ID: {$validated['project_enquiry_id']}");
+            }
+        }
+
         $siteSurvey = SiteSurvey::create($validated);
 
-        return response()->json($siteSurvey->load('enquiry.client'), 201);
+        return response()->json($siteSurvey->load('enquiry.client', 'enquiryTask'), 201);
     }
 
     /**
@@ -96,7 +124,7 @@ class SiteSurveyController extends Controller
      */
     public function show(SiteSurvey $siteSurvey): JsonResponse
     {
-        return response()->json($siteSurvey->load('enquiry.client'));
+        return response()->json($siteSurvey->load('enquiry.client', 'enquiryTask'));
     }
 
     /**
@@ -105,7 +133,8 @@ class SiteSurveyController extends Controller
     public function update(Request $request, SiteSurvey $siteSurvey): JsonResponse
     {
         $validated = $request->validate([
-            'enquiry_id' => 'sometimes|numeric|exists:project_enquiries,id',
+            'project_enquiry_id' => 'sometimes|numeric|exists:project_enquiries,id',
+            'enquiry_task_id' => 'nullable|numeric|exists:enquiry_tasks,id',
             'project_id' => 'nullable|numeric',
             'site_visit_date' => 'sometimes|date',
             'status' => ['nullable', Rule::in(['pending', 'completed', 'approved', 'rejected'])],
@@ -158,7 +187,7 @@ class SiteSurveyController extends Controller
 
         $siteSurvey->update($validated);
 
-        return response()->json($siteSurvey->load('enquiry.client'));
+        return response()->json($siteSurvey->load('enquiry.client', 'enquiryTask'));
     }
 
     /**

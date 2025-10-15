@@ -72,7 +72,7 @@ const emit = defineEmits<{
 
 const getTaskDescription = (type: string) => {
   const descriptions: Record<string, string> = {
-    'survey': 'Conduct site survey for the enquiry',
+    'site-survey': 'Conduct site survey for the enquiry',
     'design': 'Create design concepts and mockups',
     'materials': 'Specify and source materials for the project',
     'budget': 'Create budget for the project',

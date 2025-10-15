@@ -5,13 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Modules\Projects\Models\EnquiryTask;
 
 class SiteSurvey extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'enquiry_id',
+        'project_enquiry_id',
+        'enquiry_task_id',
         'project_id',
         'site_visit_date',
         'status',
@@ -73,6 +75,11 @@ class SiteSurvey extends Model
 
     public function enquiry(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\ProjectEnquiry::class, 'enquiry_id');
+        return $this->belongsTo(\App\Models\ProjectEnquiry::class, 'project_enquiry_id');
+    }
+
+    public function enquiryTask(): BelongsTo
+    {
+        return $this->belongsTo(EnquiryTask::class, 'enquiry_task_id');
     }
 }
