@@ -60,7 +60,7 @@ class EnquiryWorkflowService
     /**
      * Create project and tasks for an enquiry (when converting to project)
      */
-    public function createProjectAndTasksForEnquiry(Enquiry $enquiry)
+    public function createProjectAndTasksForEnquiry(ProjectEnquiry $enquiry)
     {
         // This would create a full project with all tasks
         // For now, just return the enquiry as project creation logic might be elsewhere
@@ -84,7 +84,13 @@ class EnquiryWorkflowService
 
         Log::info("Task {$taskId} status changed from {$oldStatus} to {$status}");
 
-        // Note: Automatic workflow progression is disabled for manual assignment workflow
+        // Handle enquiry status progression based on task completion
+        if ($status === 'completed') {
+            $this->handleEnquiryStatusProgression($task);
+        } elseif ($oldStatus === 'completed' && $status !== 'completed') {
+            // Handle status reversion when task is reopened
+            $this->handleEnquiryStatusReversion($task);
+        }
 
         return $task;
     }
@@ -220,7 +226,7 @@ class EnquiryWorkflowService
      */
     public function createManualEnquiryTask(int $enquiryId, array $taskData, int $createdByUserId): EnquiryTask
     {
-        $enquiry = Enquiry::findOrFail($enquiryId);
+        $enquiry = ProjectEnquiry::findOrFail($enquiryId);
 
         $task = EnquiryTask::create([
             'project_enquiry_id' => $enquiryId,
@@ -345,4 +351,173 @@ class EnquiryWorkflowService
         ->get();
     }
 
+    /**
+     * Handle enquiry status progression based on task completion
+     */
+    private function handleEnquiryStatusProgression(EnquiryTask $task): void
+    {
+        $enquiry = $task->enquiry;
+
+        // Define task type to status mapping
+        $statusMapping = [
+            'site-survey' => EnquiryConstants::STATUS_SITE_SURVEY_COMPLETED,
+            'design' => EnquiryConstants::STATUS_DESIGN_COMPLETED,
+            'materials' => EnquiryConstants::STATUS_MATERIALS_SPECIFIED,
+            'budget' => EnquiryConstants::STATUS_BUDGET_CREATED,
+            'quote' => EnquiryConstants::STATUS_QUOTE_PREPARED,
+            'quote_approval' => EnquiryConstants::STATUS_QUOTE_APPROVED,
+        ];
+
+        // Check if this task type maps to a status update
+        if (!isset($statusMapping[$task->type])) {
+            Log::info("Task type '{$task->type}' does not trigger status progression");
+            return;
+        }
+
+        $newStatus = $statusMapping[$task->type];
+
+        // Check if all prerequisite tasks are completed for certain statuses
+        if (!$this->arePrerequisitesMet($task, $newStatus)) {
+            Log::info("Prerequisites not met for status '{$newStatus}' - skipping progression");
+            return;
+        }
+
+        // Update enquiry status
+        $oldEnquiryStatus = $enquiry->status;
+        $enquiry->status = $newStatus;
+        $enquiry->save();
+
+        Log::info("Enquiry {$enquiry->id} status progressed from '{$oldEnquiryStatus}' to '{$newStatus}' due to task '{$task->type}' completion");
+
+        // Handle special cases
+        $this->handleSpecialStatusCases($enquiry, $newStatus);
+    }
+
+    /**
+     * Check if prerequisites are met for status progression
+     */
+    private function arePrerequisitesMet(EnquiryTask $completedTask, string $newStatus): bool
+    {
+        $enquiry = $completedTask->enquiry;
+
+        // Define prerequisites for each status
+        $prerequisites = [
+            EnquiryConstants::STATUS_QUOTE_APPROVED => [
+                'required_tasks' => ['site-survey', 'design', 'materials', 'budget', 'quote'],
+                'all_required' => true, // All must be completed
+            ],
+            EnquiryConstants::STATUS_QUOTE_PREPARED => [
+                'required_tasks' => ['site-survey', 'design', 'materials', 'budget'],
+                'all_required' => true,
+            ],
+            EnquiryConstants::STATUS_BUDGET_CREATED => [
+                'required_tasks' => ['site-survey', 'design', 'materials'],
+                'all_required' => true,
+            ],
+            EnquiryConstants::STATUS_MATERIALS_SPECIFIED => [
+                'required_tasks' => ['site-survey', 'design'],
+                'all_required' => true,
+            ],
+            EnquiryConstants::STATUS_DESIGN_COMPLETED => [
+                'required_tasks' => ['site-survey'],
+                'all_required' => true,
+            ],
+        ];
+
+        if (!isset($prerequisites[$newStatus])) {
+            return true; // No prerequisites for this status
+        }
+
+        $requiredTasks = $prerequisites[$newStatus]['required_tasks'];
+        $allRequired = $prerequisites[$newStatus]['all_required'];
+
+        $completedTasks = EnquiryTask::where('project_enquiry_id', $enquiry->id)
+            ->whereIn('type', $requiredTasks)
+            ->where('status', 'completed')
+            ->pluck('type')
+            ->toArray();
+
+        if ($allRequired) {
+            // All required tasks must be completed
+            return count(array_intersect($requiredTasks, $completedTasks)) === count($requiredTasks);
+        } else {
+            // At least one required task must be completed (for future use)
+            return !empty(array_intersect($requiredTasks, $completedTasks));
+        }
+    }
+
+    /**
+     * Handle special cases for status progression
+     */
+    private function handleSpecialStatusCases(ProjectEnquiry $enquiry, string $newStatus): void
+    {
+        // Auto-convert to project when quote is approved and all tasks are completed
+        if ($newStatus === EnquiryConstants::STATUS_QUOTE_APPROVED) {
+            $allTasksCompleted = EnquiryTask::where('project_enquiry_id', $enquiry->id)
+                ->where('status', '!=', 'completed')
+                ->doesntExist();
+
+            if ($allTasksCompleted) {
+                $enquiry->update([
+                    'status' => EnquiryConstants::STATUS_CONVERTED_TO_PROJECT,
+                    'quote_approved' => true,
+                    'quote_approved_at' => now(),
+                ]);
+
+                Log::info("Enquiry {$enquiry->id} automatically converted to project due to all tasks completion and quote approval");
+            }
+        }
+    }
+
+    /**
+     * Handle enquiry status reversion when a task is reopened
+     */
+    private function handleEnquiryStatusReversion(EnquiryTask $task): void
+    {
+        $enquiry = $task->enquiry;
+
+        // Recalculate the appropriate status based on completed tasks
+        $newStatus = $this->calculateEnquiryStatusFromTasks($enquiry);
+
+        // Only update if the status has changed
+        if ($newStatus !== $enquiry->status) {
+            $oldEnquiryStatus = $enquiry->status;
+            $enquiry->status = $newStatus;
+            $enquiry->save();
+
+            Log::info("Enquiry {$enquiry->id} status reverted from '{$oldEnquiryStatus}' to '{$newStatus}' due to task '{$task->type}' reopening");
+        }
+    }
+
+    /**
+     * Calculate the appropriate enquiry status based on completed tasks
+     */
+    private function calculateEnquiryStatusFromTasks(ProjectEnquiry $enquiry): string
+    {
+        // Get all completed tasks for this enquiry
+        $completedTasks = EnquiryTask::where('project_enquiry_id', $enquiry->id)
+            ->where('status', 'completed')
+            ->pluck('type')
+            ->toArray();
+
+        // Define the progression order and required tasks for each status
+        $statusProgression = [
+            EnquiryConstants::STATUS_QUOTE_APPROVED => ['site-survey', 'design', 'materials', 'budget', 'quote', 'quote_approval'],
+            EnquiryConstants::STATUS_QUOTE_PREPARED => ['site-survey', 'design', 'materials', 'budget', 'quote'],
+            EnquiryConstants::STATUS_BUDGET_CREATED => ['site-survey', 'design', 'materials', 'budget'],
+            EnquiryConstants::STATUS_MATERIALS_SPECIFIED => ['site-survey', 'design', 'materials'],
+            EnquiryConstants::STATUS_DESIGN_COMPLETED => ['site-survey', 'design'],
+            EnquiryConstants::STATUS_SITE_SURVEY_COMPLETED => ['site-survey'],
+        ];
+
+        // Find the highest status where all required tasks are completed
+        foreach ($statusProgression as $status => $requiredTasks) {
+            if (count(array_intersect($requiredTasks, $completedTasks)) === count($requiredTasks)) {
+                return $status;
+            }
+        }
+
+        // If no tasks are completed, return initial status
+        return EnquiryConstants::STATUS_NEW;
+    }
 }

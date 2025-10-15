@@ -564,17 +564,23 @@ class TaskController extends Controller
             $task = EnquiryTask::findOrFail($taskId);
 
             $oldStatus = $task->status;
+
+            // Update non-status fields directly
             $task->update($request->only([
                 'title',
                 'priority',
                 'due_date',
                 'notes',
-                'status',
             ]));
 
-            // Send notification if task was marked as completed
-            if ($oldStatus !== 'completed' && $request->status === 'completed') {
-                $this->notificationService->sendTaskCompletedNotification($task, $user);
+            // Use workflow service for status updates to trigger automatic progression/reversion
+            if ($request->has('status') && $request->status !== $oldStatus) {
+                $task = $this->workflowService->updateTaskStatus($taskId, $request->status, $user->id);
+
+                // Send notification if task was marked as completed
+                if ($oldStatus !== 'completed' && $request->status === 'completed') {
+                    $this->notificationService->sendTaskCompletedNotification($task, $user);
+                }
             }
 
             return response()->json([
