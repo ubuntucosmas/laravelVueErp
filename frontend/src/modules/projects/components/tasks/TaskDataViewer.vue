@@ -66,6 +66,18 @@ import type { EnquiryTask } from '../../types/enquiry'
 // Import data display components for different task types
 import SurveyDataDisplay from './data-displays/SurveyDataDisplay.vue'
 import MaterialsDataDisplay from './data-displays/MaterialsDataDisplay.vue'
+import BudgetDataDisplay from './data-displays/BudgetDataDisplay.vue'
+import ConversionDataDisplay from './data-displays/ConversionDataDisplay.vue'
+import DesignDataDisplay from './data-displays/DesignDataDisplay.vue'
+import HandoverDataDisplay from './data-displays/HandoverDataDisplay.vue'
+import LogisticsDataDisplay from './data-displays/LogisticsDataDisplay.vue'
+import ProcurementDataDisplay from './data-displays/ProcurementDataDisplay.vue'
+import ProductionDataDisplay from './data-displays/ProductionDataDisplay.vue'
+import QuoteApprovalDataDisplay from './data-displays/QuoteApprovalDataDisplay.vue'
+import QuoteDataDisplay from './data-displays/QuoteDataDisplay.vue'
+import ReportDataDisplay from './data-displays/ReportDataDisplay.vue'
+import SetdownDataDisplay from './data-displays/SetdownDataDisplay.vue'
+import SetupDataDisplay from './data-displays/SetupDataDisplay.vue'
 import DefaultDataDisplay from './data-displays/DefaultDataDisplay.vue'
 
 interface Props {
@@ -81,7 +93,19 @@ const error = ref('')
 // Map task types to their data display components
 const dataDisplayComponents = {
   'site-survey': SurveyDataDisplay,
-  'materials-request': MaterialsDataDisplay,
+  'materials': MaterialsDataDisplay,
+  'budget': BudgetDataDisplay,
+  'conversion': ConversionDataDisplay,
+  'design': DesignDataDisplay,
+  'handover': HandoverDataDisplay,
+  'logistics': LogisticsDataDisplay,
+  'procurement': ProcurementDataDisplay,
+  'production': ProductionDataDisplay,
+  'quote_approval': QuoteApprovalDataDisplay,
+  'quote': QuoteDataDisplay,
+  'report': ReportDataDisplay,
+  'setdown': SetdownDataDisplay,
+  'setup': SetupDataDisplay,
   // Add more task types here as needed
 }
 

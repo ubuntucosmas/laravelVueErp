@@ -185,6 +185,20 @@ class SiteSurveyController extends Controller
             'client_approval_date' => 'nullable|date',
         ]);
 
+        // If enquiry_task_id is not provided, automatically find and set the survey task
+        if (!isset($validated['enquiry_task_id']) || !$validated['enquiry_task_id']) {
+            $surveyTask = \App\Modules\Projects\Models\EnquiryTask::where('project_enquiry_id', $validated['project_enquiry_id'])
+                ->where('type', 'site-survey')
+                ->first();
+
+            if ($surveyTask) {
+                $validated['enquiry_task_id'] = $surveyTask->id;
+                \Log::info("[DEBUG] SiteSurveyController::update automatically linked to survey task ID: {$surveyTask->id}");
+            } else {
+                \Log::warning("[DEBUG] SiteSurveyController::update no survey task found for enquiry ID: {$validated['project_enquiry_id']}");
+            }
+        }
+
         $siteSurvey->update($validated);
 
         return response()->json($siteSurvey->load('enquiry.client', 'enquiryTask'));
