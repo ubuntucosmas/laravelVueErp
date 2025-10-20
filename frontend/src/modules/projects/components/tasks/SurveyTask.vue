@@ -746,14 +746,6 @@ interface Props {
 
 const props = defineProps<Props>()
 
-console.log('[DEBUG] SurveyTask component mounted/created with props:', {
-  task: props.task,
-  readonly: props.readonly,
-  taskId: props.task?.id,
-  taskStatus: props.task?.status,
-  project_enquiry_id: props.task?.project_enquiry_id,
-  fullTaskObject: JSON.stringify(props.task, null, 2)
-})
 
 const emit = defineEmits<{
   'update-status': [status: EnquiryTask['status']]
@@ -829,33 +821,19 @@ const hasValidationErrors = computed(() => {
 
 // API Methods
 const fetchExistingSurveyData = async () => {
-  console.log('[DEBUG] fetchExistingSurveyData FUNCTION CALLED DIRECTLY')
-
   try {
     const enquiryId = props.task.project_enquiry_id
-    console.log('[DEBUG] fetchExistingSurveyData called with task:', {
-      taskId: props.task.id,
-      project_enquiry_id: props.task.project_enquiry_id,
-      resolvedEnquiryId: enquiryId
-    })
 
     if (!enquiryId) {
-      console.warn('[DEBUG] No project_enquiry_id found in task')
+      console.warn('No project_enquiry_id found in task')
       return null
     }
 
     const apiUrl = `/api/projects/site-surveys?project_enquiry_id=${enquiryId}`
-    console.log('[DEBUG] Making API call to:', apiUrl)
 
     const response = await api.get(apiUrl)
-    console.log('[DEBUG] API Response received:', {
-      status: response.status,
-      dataLength: response.data?.length || 0,
-      data: response.data
-    })
 
     const result = response.data.length > 0 ? response.data[0] : null
-    console.log('[DEBUG] Returning survey data:', result)
     return result
   } catch (apiError: unknown) {
     console.error('[DEBUG] Error fetching existing survey data:', apiError)
@@ -891,12 +869,7 @@ const saveSurveyData = async (data: Record<string, unknown>, isDraft = false) =>
       status: isDraft ? 'pending' : 'completed'
     }
 
-    console.log('Sending payload:', payload)
-    console.log('project_enquiry_id from props.task:', props.task.project_enquiry_id)
-    console.log('enquiry_task_id from props.task:', props.task.id)
-    console.log('Full task object:', props.task)
     const response = await api.post('/api/projects/site-surveys', payload)
-    console.log('Response:', response.data)
     return response.data
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
@@ -928,53 +901,33 @@ const parseActionItems = () => {
 
 
 const handleSubmit = async () => {
-  console.log('[DEBUG] SurveyTask.handleSubmit - STARTING SURVEY SUBMISSION')
-  console.log('[DEBUG] SurveyTask.handleSubmit - Task details:', {
-    taskId: props.task.id,
-    taskStatus: props.task.status,
-    project_enquiry_id: props.task.project_enquiry_id,
-    readonly: props.readonly
-  })
-  console.log('[DEBUG] SurveyTask.handleSubmit - Form data to submit:', JSON.stringify(formData.value, null, 2))
-
   error.value = ''
   successMessage.value = ''
   isLoading.value = true
 
   if (hasValidationErrors.value) {
-    console.log('[DEBUG] SurveyTask.handleSubmit - VALIDATION FAILED - Required fields missing')
     error.value = 'Please fill in all required fields.'
     isLoading.value = false
     return
   }
 
-  console.log('[DEBUG] SurveyTask.handleSubmit - Validation passed, proceeding with save')
-
   try {
-    console.log('[DEBUG] SurveyTask.handleSubmit - Calling saveSurveyData...')
-    const savedData = await saveSurveyData(formData.value, false)
-    console.log('[DEBUG] SurveyTask.handleSubmit - Survey data saved successfully:', savedData)
+    await saveSurveyData(formData.value, false)
 
     successMessage.value = 'Survey data saved successfully!'
 
     // Update task status to completed
-    console.log('[DEBUG] SurveyTask.handleSubmit - Current task status:', props.task.status)
     if (props.task.status !== 'completed') {
-      console.log('[DEBUG] SurveyTask.handleSubmit - Updating task status to completed')
       updateStatus('completed')
-    } else {
-      console.log('[DEBUG] SurveyTask.handleSubmit - Task already completed, skipping status update')
     }
 
     setTimeout(() => {
       successMessage.value = ''
     }, 3000)
   } catch (err: unknown) {
-    console.error('[DEBUG] SurveyTask.handleSubmit - ERROR during survey submission:', err)
     const errorObj = err as { message?: string }
     error.value = errorObj.message || 'Failed to save survey data'
   } finally {
-    console.log('[DEBUG] SurveyTask.handleSubmit - COMPLETED - Setting loading to false')
     isLoading.value = false
   }
 }
@@ -998,43 +951,14 @@ const handleSaveDraft = async () => {
   }
 }
 
-// Watch for task changes to load existing data or reset form
-watch(() => props.task.id, async (newTaskId, oldTaskId) => {
-  console.log('[DEBUG] WATCH FUNCTION TRIGGERED - Task ID changed:', {
-    oldTaskId: oldTaskId,
-    newTaskId: newTaskId,
-    taskStatus: props.task.status,
-    readonly: props.readonly,
-    project_enquiry_id: props.task.project_enquiry_id,
-    fullTask: props.task
-  })
-
-  await loadSurveyData()
-}, { immediate: true })
-
 // Function to load survey data
 const loadSurveyData = async () => {
-  console.log('[DEBUG] loadSurveyData called')
-
   error.value = ''
   successMessage.value = ''
   isLoadingExistingData.value = true
 
-  console.log('[DEBUG] Task watcher triggered:', {
-    taskId: props.task.id,
-    taskStatus: props.task.status,
-    readonly: props.readonly,
-    project_enquiry_id: props.task.project_enquiry_id
-  })
-
   try {
     const existingData = await fetchExistingSurveyData()
-
-    console.log('[DEBUG] Existing data loaded:', {
-      hasData: !!existingData,
-      dataKeys: existingData ? Object.keys(existingData) : null,
-      readonly: props.readonly
-    })
 
     if (existingData) {
       // Populate form with existing data
@@ -1083,24 +1007,7 @@ const loadSurveyData = async () => {
       const actionItemsArray = Array.isArray(existingData.action_items) ? existingData.action_items : []
       attendeesText.value = attendeesArray.join('\n')
       actionItemsText.value = actionItemsArray.join('\n')
-
-      console.log('[DEBUG] Form data populated:', {
-        formDataKeys: Object.keys(formData.value),
-        sampleData: {
-          site_visit_date: formData.value.site_visit_date,
-          location: formData.value.location,
-          client_name: formData.value.client_name,
-          project_description: formData.value.project_description?.substring(0, 50)
-        },
-        fullFormData: JSON.stringify(formData.value, null, 2)
-      })
-
-      console.log('[DEBUG] Text areas populated:', {
-        attendeesText: attendeesText.value,
-        actionItemsText: actionItemsText.value
-      })
     } else {
-      console.log('[DEBUG] No existing data found, resetting form')
       // Reset form for new task
       formData.value = {
         site_visit_date: '',
@@ -1145,7 +1052,7 @@ const loadSurveyData = async () => {
       actionItemsText.value = ''
     }
   } catch (loadError) {
-    console.error('[DEBUG] Error loading existing survey data:', loadError)
+    console.error('Error loading existing survey data:', loadError)
     // Reset form on error
     formData.value = {
       site_visit_date: '',
@@ -1192,4 +1099,31 @@ const loadSurveyData = async () => {
     isLoadingExistingData.value = false
   }
 }
+
+// Watch for task changes to load existing data or reset form
+watch(() => props.task?.id, async (newTaskId, oldTaskId) => {
+  try {
+    console.log('[DEBUG] WATCH FUNCTION TRIGGERED - Task ID changed:', {
+      oldTaskId: oldTaskId,
+      newTaskId: newTaskId,
+      taskStatus: props.task?.status,
+      readonly: props.readonly,
+      project_enquiry_id: props.task?.project_enquiry_id,
+      fullTask: props.task
+    })
+
+    // Ensure task object is available before proceeding
+    if (!props.task) {
+      console.warn('[DEBUG] Task object is not available in watcher')
+      return
+    }
+
+    await loadSurveyData()
+  } catch (watcherError) {
+    console.error('[DEBUG] Error in task watcher callback:', watcherError)
+    // Set error state to prevent further issues
+    error.value = 'Failed to load survey data. Please refresh the page.'
+    isLoadingExistingData.value = false
+  }
+}, { immediate: true })
 </script>

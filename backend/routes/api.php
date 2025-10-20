@@ -15,6 +15,7 @@ use App\Modules\Projects\Http\Controllers\DashboardController;
 use App\Modules\Projects\Http\Controllers\TaskController;
 use App\Modules\Projects\Http\Controllers\PhaseDepartmentalTaskController;
 use App\Http\Controllers\SiteSurveyController;
+use App\Http\Controllers\DesignAssetController;
 use App\Constants\Permissions;
 
 // Authentication routes
@@ -208,6 +209,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Site survey management
         Route::apiResource('site-surveys', SiteSurveyController::class); // Temporarily remove permissions for debugging
+
+        // Design asset management
+        Route::prefix('enquiry-tasks/{task}/design-assets')->group(function () {
+            Route::get('/', [DesignAssetController::class, 'index']);
+            Route::post('/', [DesignAssetController::class, 'store']);
+            Route::get('/{asset}', [DesignAssetController::class, 'show']);
+            Route::put('/{asset}', [DesignAssetController::class, 'update']);
+            Route::delete('/{asset}', [DesignAssetController::class, 'destroy']);
+            Route::get('/{asset}/download', [DesignAssetController::class, 'download']);
+        });
 
         // Notification management
         Route::get('notifications', function () {

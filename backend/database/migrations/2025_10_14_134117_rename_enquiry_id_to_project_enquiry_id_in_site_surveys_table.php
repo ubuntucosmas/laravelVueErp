@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('site_surveys', function (Blueprint $table) {
-            $table->renameColumn('enquiry_id', 'project_enquiry_id');
+            // Column is already named project_enquiry_id, no need to rename
         });
     }
 

@@ -2,7 +2,6 @@
 
 namespace App\Modules\Projects\Http\Controllers;
 
-use App\Models\EnquiryDepartmentalTask;
 use App\Modules\Projects\Models\EnquiryTask;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -125,7 +124,7 @@ class TaskController extends Controller
         }
 
         try {
-            $query = EnquiryDepartmentalTask::with('enquiry', 'department', 'assignedUser', 'creator');
+            $query = EnquiryTask::with('enquiry', 'department', 'assignedUser', 'creator');
 
             // Filter by enquiry if provided
             if ($request->has('enquiry_id')) {
@@ -191,7 +190,7 @@ class TaskController extends Controller
         }
 
         try {
-            $task = EnquiryDepartmentalTask::findOrFail($taskId);
+            $task = EnquiryTask::findOrFail($taskId);
 
             // Check if task belongs to user's department
             $user = Auth::user();
@@ -246,7 +245,7 @@ class TaskController extends Controller
         }
 
         try {
-            $task = EnquiryDepartmentalTask::findOrFail($taskId);
+            $task = EnquiryTask::findOrFail($taskId);
 
             // Check if task belongs to user's department
             $user = Auth::user();
@@ -288,7 +287,7 @@ class TaskController extends Controller
         }
 
         try {
-            $task = EnquiryDepartmentalTask::with('enquiry', 'department', 'assignedUser', 'creator')
+            $task = EnquiryTask::with('enquiry', 'department', 'assignedUser', 'creator')
                 ->findOrFail($taskId);
 
             // Check if task belongs to user's department
@@ -340,7 +339,7 @@ class TaskController extends Controller
         }
 
         try {
-            $task = EnquiryDepartmentalTask::findOrFail($taskId);
+            $task = EnquiryTask::findOrFail($taskId);
 
             // Check if task belongs to user's department
             $user = Auth::user();
@@ -562,6 +561,7 @@ class TaskController extends Controller
 
         try {
             $task = EnquiryTask::findOrFail($taskId);
+            $user = Auth::user();
 
             $oldStatus = $task->status;
 

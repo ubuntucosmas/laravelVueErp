@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('enquiry_id')->constrained('enquiries')->onDelete('cascade');
+            $table->foreignId('enquiry_id')->constrained('project_enquiries')->onDelete('cascade');
             $table->string('project_id')->unique();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
