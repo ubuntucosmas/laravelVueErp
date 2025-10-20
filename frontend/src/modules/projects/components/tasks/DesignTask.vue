@@ -222,9 +222,9 @@
             </button>
 
             <button
-              v-if="canCompleteTask"
-              @click="updateTaskStatus('completed')"
-              :disabled="isUpdatingTask || designAssets.length === 0"
+              v-if="designAssets.length > 0 && props.task.status !== 'completed'"
+              @click="showCompletionConfirmation"
+              :disabled="isUpdatingTask"
               class="inline-flex items-center px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg transition-colors duration-200"
             >
               <svg v-if="isUpdatingTask" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -477,6 +477,70 @@
       </div>
     </div>
 
+    <!-- Completion Confirmation Modal -->
+    <div
+      v-if="showCompletionConfirm"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      @click="cancelCompletion"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full shadow-2xl"
+        @click.stop
+      >
+        <div class="p-6">
+          <div class="flex items-center mb-4">
+            <div class="p-3 bg-green-100 dark:bg-green-900/20 rounded-full mr-4">
+              <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Complete Design Task</h3>
+              <p class="text-gray-600 dark:text-gray-400">Are you ready to mark this design task as completed?</p>
+            </div>
+          </div>
+
+          <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <h4 class="font-medium text-blue-900 dark:text-blue-100 mb-2">What happens when you complete this task:</h4>
+            <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+              <li>• The task status will be changed to "Completed"</li>
+              <li>• All uploaded design assets will be finalized</li>
+              <li>• The task will be marked as done in the workflow</li>
+              <li>• Stakeholders will be notified of the completion</li>
+            </ul>
+          </div>
+
+          <div class="mb-6">
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              <strong>{{ designAssets.length }}</strong> design asset{{ designAssets.length !== 1 ? 's' : '' }} uploaded
+              <span v-if="approvedCount > 0" class="text-green-600 dark:text-green-400">
+                ({{ approvedCount }} approved)
+              </span>
+            </div>
+          </div>
+
+          <div class="flex gap-3 justify-end">
+            <button
+              @click="cancelCompletion"
+              class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              @click="confirmCompletion"
+              :disabled="isUpdatingTask"
+              class="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg transition-colors duration-200"
+            >
+              <svg v-if="isUpdatingTask" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              {{ isUpdatingTask ? 'Completing...' : 'Complete Task' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div class="fixed top-4 right-4 z-50 space-y-2">
       <div
@@ -559,6 +623,7 @@ const selectedStatus = ref('')
 const isDragOver = ref(false)
 const showPreview = ref(false)
 const showDeleteConfirm = ref(false)
+const showCompletionConfirm = ref(false)
 const selectedAsset = ref<DesignAsset | null>(null)
 const assetToDelete = ref<DesignAsset | null>(null)
 const fileInput = ref<HTMLInputElement>()
@@ -790,6 +855,19 @@ const deleteAsset = () => {
   }
   showDeleteConfirm.value = false
   assetToDelete.value = null
+}
+
+const showCompletionConfirmation = () => {
+  showCompletionConfirm.value = true
+}
+
+const cancelCompletion = () => {
+  showCompletionConfirm.value = false
+}
+
+const confirmCompletion = async () => {
+  showCompletionConfirm.value = false
+  await updateTaskStatus('completed')
 }
 
 const updateTaskStatus = async (newStatus: EnquiryTask['status']) => {

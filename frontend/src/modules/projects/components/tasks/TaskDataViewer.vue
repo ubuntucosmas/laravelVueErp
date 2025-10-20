@@ -181,6 +181,9 @@ const fetchTaskData = async () => {
       case 'materials-request':
         endpoint = `/api/projects/materials-requests?task_id=${props.task.id}`
         break
+      case 'design':
+        endpoint = `/api/projects/enquiry-tasks/${props.task.id}/design-assets`
+        break
       // Add more task types here
       default:
         throw new Error(`Data display not implemented for task type: ${taskKey}`)
@@ -188,13 +191,19 @@ const fetchTaskData = async () => {
 
     const response = await api.get(endpoint)
 
+    console.log('TaskDataViewer: API response for task type', taskKey, ':', response.data)
+    console.log('TaskDataViewer: Response data type:', typeof response.data, 'isArray:', Array.isArray(response.data))
+
     if (response.data && Array.isArray(response.data) && response.data.length > 0) {
       taskData.value = response.data[0] // Usually the first/most recent record
+      console.log('TaskDataViewer: Set taskData to first array item:', taskData.value)
     } else if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
       // Handle single object response
       taskData.value = response.data
+      console.log('TaskDataViewer: Set taskData to object:', taskData.value)
     } else {
       taskData.value = null
+      console.log('TaskDataViewer: Set taskData to null')
     }
   } catch (err: unknown) {
     const errorObj = err as { response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> }; statusText?: string }; message?: string }
