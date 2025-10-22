@@ -43,34 +43,68 @@
     <div class="mb-6">
       <div class="flex items-center justify-between mb-4">
         <h5 class="text-md font-medium text-gray-700 dark:text-gray-300">Project Elements</h5>
-        <button
-          @click="openAddElementModal"
-          class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors flex items-center space-x-2"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-          </svg>
-          <span>Add Element</span>
-        </button>
+        <div class="flex items-center space-x-3">
+          <button
+            @click="toggleAllElements"
+            class="px-3 py-1 text-xs bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors flex items-center space-x-1"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+            </svg>
+            <span>{{ allElementsCollapsed ? 'Expand All' : 'Collapse All' }}</span>
+          </button>
+          <button
+            @click="openAddElementModal"
+            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors flex items-center space-x-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Add Element</span>
+          </button>
+        </div>
       </div>
 
       <!-- Elements Display -->
       <div class="space-y-4">
         <div v-for="element in materialsData.projectElements" :key="element.id" class="border border-gray-200 dark:border-gray-700 rounded-lg">
-          <!-- Element Header -->
-          <div :class="getElementHeaderClass(element.templateId)" class="px-4 py-3 rounded-t-lg flex items-center justify-between">
+          <!-- Element Header (Clickable) -->
+          <div
+            :class="[
+              getElementHeaderClass(element.templateId),
+              'cursor-pointer hover:opacity-90 transition-opacity px-4 py-3 flex items-center justify-between',
+              { 'rounded-lg': isElementCollapsed(element.id), 'rounded-t-lg': !isElementCollapsed(element.id) }
+            ]"
+            @click="toggleElementCollapse(element.id)"
+          >
             <div class="flex items-center space-x-3">
               <input
                 type="checkbox"
                 v-model="element.isIncluded"
                 class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                @click.stop
               />
-              <h6 class="text-sm font-semibold">{{ element.name }}</h6>
+              <div class="flex flex-col space-y-1">
+                <div class="flex items-center space-x-2">
+                  <h6 class="text-sm font-semibold">{{ element.name }}</h6>
+                  <span :class="getElementCategoryClass(element.category)" class="text-xs px-2 py-0.5 rounded-full font-medium">
+                    {{ getElementCategoryLabel(element.category) }}
+                  </span>
+                </div>
+                <div v-if="element.dimensions && (element.dimensions.length || element.dimensions.width || element.dimensions.height)" class="text-xs opacity-75">
+                  <span>Dimensions: </span>
+                  <span v-if="element.dimensions.length">{{ element.dimensions.length }}mm</span>
+                  <span v-if="element.dimensions.length && (element.dimensions.width || element.dimensions.height)"> × </span>
+                  <span v-if="element.dimensions.width">{{ element.dimensions.width }}mm</span>
+                  <span v-if="element.dimensions.width && element.dimensions.height"> × </span>
+                  <span v-if="element.dimensions.height">{{ element.dimensions.height }}mm</span>
+                </div>
+              </div>
             </div>
             <div class="flex items-center space-x-3">
               <span class="text-xs opacity-75">{{ getIncludedMaterialsCount(element) }} materials</span>
               <button
-                @click="openEditElementModal(element)"
+                @click.stop="openEditElementModal(element)"
                 class="text-xs opacity-75 hover:opacity-100 transition-opacity flex items-center space-x-1"
                 title="Edit Element"
               >
@@ -79,61 +113,88 @@
                 </svg>
                 <span>Edit</span>
               </button>
+              <!-- Collapse/Expand Icon -->
+              <div class="text-xs opacity-75">
+                <svg
+                  class="w-4 h-4 transition-transform duration-200"
+                  :class="{ 'rotate-180': !isElementCollapsed(element.id) }"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
             </div>
           </div>
 
-          <!-- Materials Table (only show if element is included) -->
-          <div v-if="element.isIncluded" class="p-4">
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr class="border-b border-gray-200 dark:border-gray-700">
-                    <th class="text-left py-2 text-gray-700 dark:text-gray-300 w-8">Include</th>
-                    <th class="text-left py-2 text-gray-700 dark:text-gray-300">Description</th>
-                    <th class="text-left py-2 text-gray-700 dark:text-gray-300">Unit</th>
-                    <th class="text-left py-2 text-gray-700 dark:text-gray-300">Quantity</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="material in element.materials" :key="material.id" class="border-b border-gray-100 dark:border-gray-800">
-                    <td class="py-2">
-                      <input
-                        type="checkbox"
-                        v-model="material.isIncluded"
-                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                    </td>
-                    <td class="py-2" :class="material.isIncluded ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500 line-through'">
-                      {{ material.description }}
-                    </td>
-                    <td class="py-2" :class="material.isIncluded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'">
-                      {{ material.unitOfMeasurement }}
-                    </td>
-                    <td class="py-2" :class="material.isIncluded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'">
-                      <input
-                        v-if="material.isIncluded"
-                        type="number"
-                        v-model.number="material.quantity"
-                        step="0.1"
-                        min="0"
-                        class="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
-                      />
-                      <span v-else>{{ material.quantity }}</span>
-                    </td>
-                  </tr>
-                  <tr v-if="element.materials.length === 0">
-                    <td colspan="4" class="py-4 text-center text-gray-500 dark:text-gray-400 italic">
-                      No materials defined for this element
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <!-- Materials Table (collapsible) -->
+          <div v-if="element.isIncluded && !isElementCollapsed(element.id)" class="border-t border-gray-200 dark:border-gray-700">
+            <div class="p-4">
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                      <th class="text-left py-2 text-gray-700 dark:text-gray-300 w-8">Include</th>
+                      <th class="text-left py-2 text-gray-700 dark:text-gray-300">Particulars</th>
+                      <th class="text-left py-2 text-gray-700 dark:text-gray-300">Unit</th>
+                      <th class="text-left py-2 text-gray-700 dark:text-gray-300">Quantity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="material in element.materials" :key="material.id" class="border-b border-gray-100 dark:border-gray-800">
+                      <td class="py-2">
+                        <input
+                          type="checkbox"
+                          v-model="material.isIncluded"
+                          class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </td>
+                      <td class="py-2" :class="material.isIncluded ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500 line-through'">
+                        {{ material.description }}
+                      </td>
+                      <td class="py-2" :class="material.isIncluded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'">
+                        {{ material.unitOfMeasurement }}
+                      </td>
+                      <td class="py-2" :class="material.isIncluded ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'">
+                        <input
+                          v-if="material.isIncluded"
+                          type="number"
+                          v-model.number="material.quantity"
+                          step="0.1"
+                          min="0"
+                          class="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <span v-else>{{ material.quantity }}</span>
+                      </td>
+                    </tr>
+                    <tr v-if="element.materials.length === 0">
+                      <td colspan="4" class="py-4 text-center text-gray-500 dark:text-gray-400 italic">
+                        No materials defined for this element
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
-          <!-- Collapsed state message -->
-          <div v-else class="p-4 text-center text-gray-500 dark:text-gray-400 italic">
+          <!-- Collapsed state message for excluded elements -->
+          <div v-else-if="!element.isIncluded" class="border-t border-gray-200 dark:border-gray-700 p-4 text-center text-gray-500 dark:text-gray-400 italic">
             Element not included in project
+          </div>
+
+          <!-- Collapsed state summary for included elements (clickable) -->
+          <div
+            v-else-if="element.isIncluded && isElementCollapsed(element.id)"
+            class="border-t border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            @click="toggleElementCollapse(element.id)"
+          >
+            <div class="text-sm text-gray-600 dark:text-gray-400 text-center">
+              <span class="font-medium">{{ getIncludedMaterialsCount(element) }}</span> of
+              <span class="font-medium">{{ element.materials.length }}</span> materials included
+              <span class="text-xs ml-2 opacity-75">• Click to expand</span>
+            </div>
           </div>
         </div>
       </div>
@@ -275,9 +336,14 @@
             <div v-for="element in getIncludedElements()" :key="element.id" class="print:break-inside-avoid">
               <!-- Element Header -->
               <div class="bg-gray-100 dark:bg-gray-700 px-4 py-3 rounded-t-lg print:bg-gray-100 print:border print:border-gray-300">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white print:text-black">
-                  {{ element.name }}
-                </h3>
+                <div class="flex items-center space-x-3">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white print:text-black">
+                    {{ element.name }}
+                  </h3>
+                  <span :class="getElementCategoryClass(element.category)" class="text-xs px-2 py-1 rounded-full font-medium print:text-black print:border print:border-gray-400">
+                    {{ getElementCategoryLabel(element.category) }}
+                  </span>
+                </div>
               </div>
 
               <!-- Materials Table -->
@@ -285,7 +351,7 @@
                 <table class="w-full text-sm">
                   <thead class="bg-gray-50 dark:bg-gray-600 print:bg-gray-50">
                     <tr>
-                      <th class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 print:text-black border-b print:border-gray-300">Description</th>
+                      <th class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 print:text-black border-b print:border-gray-300">Particulars</th>
                       <th class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 print:text-black border-b print:border-gray-300">Unit</th>
                       <th class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 print:text-black border-b print:border-gray-300">Quantity</th>
                       <th class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 print:text-black border-b print:border-gray-300">Notes</th>
@@ -414,8 +480,18 @@ interface ProjectElement {
   id: string
   /** Reference to the element template this is based on */
   templateId: string
+  /** Element type identifier (e.g., 'stage', 'backdrop') */
+  elementType: string
   /** Display name for this element in the project */
   name: string
+  /** Element category for sourcing classification */
+  category: 'production' | 'hire' | 'outsourced'
+  /** Element dimensions */
+  dimensions: {
+    length: string
+    width: string
+    height: string
+  }
   /** Whether this element is included in the current project */
   isIncluded: boolean
   /** List of materials/components for this element */
@@ -486,6 +562,8 @@ interface MaterialTemplate {
   defaultQuantity: number
   /** Whether this material is typically included by default */
   isDefaultIncluded: boolean
+  /** Default material category for sourcing classification */
+  defaultMaterialCategory: 'production' | 'hire' | 'outsourced'
   /** Sort order within the element */
   order: number
 }
@@ -504,10 +582,10 @@ const DEFAULT_ELEMENT_TEMPLATES: ElementTemplate[] = [
     color: 'green',
     order: 1,
     defaultMaterials: [
-      { id: 'stage-boards', description: 'Stage Boards', unitOfMeasurement: 'Pcs', defaultQuantity: 8, isDefaultIncluded: true, order: 1 },
-      { id: 'stage-legs', description: 'Stage Legs', unitOfMeasurement: 'Pcs', defaultQuantity: 16, isDefaultIncluded: true, order: 2 },
-      { id: 'stage-screws', description: 'Stage Screws', unitOfMeasurement: 'Pcs', defaultQuantity: 32, isDefaultIncluded: true, order: 3 },
-      { id: 'stage-brackets', description: 'Stage Brackets', unitOfMeasurement: 'Pcs', defaultQuantity: 8, isDefaultIncluded: true, order: 4 }
+      { id: 'stage-boards', description: 'Stage Boards', unitOfMeasurement: 'Pcs', defaultQuantity: 8, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 1 },
+      { id: 'stage-legs', description: 'Stage Legs', unitOfMeasurement: 'Pcs', defaultQuantity: 16, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 2 },
+      { id: 'stage-screws', description: 'Stage Screws', unitOfMeasurement: 'Pcs', defaultQuantity: 32, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 3 },
+      { id: 'stage-brackets', description: 'Stage Brackets', unitOfMeasurement: 'Pcs', defaultQuantity: 8, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 4 }
     ]
   },
   {
@@ -519,9 +597,9 @@ const DEFAULT_ELEMENT_TEMPLATES: ElementTemplate[] = [
     color: 'blue',
     order: 2,
     defaultMaterials: [
-      { id: 'skirting-fabric', description: 'Skirting Fabric', unitOfMeasurement: 'Mtrs', defaultQuantity: 12, isDefaultIncluded: true, order: 1 },
-      { id: 'skirting-clips', description: 'Skirting Clips', unitOfMeasurement: 'Pcs', defaultQuantity: 24, isDefaultIncluded: true, order: 2 },
-      { id: 'velcro-strips', description: 'Velcro Strips', unitOfMeasurement: 'Mtrs', defaultQuantity: 6, isDefaultIncluded: false, order: 3 }
+      { id: 'skirting-fabric', description: 'Skirting Fabric', unitOfMeasurement: 'Mtrs', defaultQuantity: 12, isDefaultIncluded: true, defaultMaterialCategory: 'hire', order: 1 },
+      { id: 'skirting-clips', description: 'Skirting Clips', unitOfMeasurement: 'Pcs', defaultQuantity: 24, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 2 },
+      { id: 'velcro-strips', description: 'Velcro Strips', unitOfMeasurement: 'Mtrs', defaultQuantity: 6, isDefaultIncluded: false, defaultMaterialCategory: 'outsourced', order: 3 }
     ]
   },
   {
@@ -533,9 +611,9 @@ const DEFAULT_ELEMENT_TEMPLATES: ElementTemplate[] = [
     color: 'purple',
     order: 3,
     defaultMaterials: [
-      { id: 'backdrop-frame', description: 'Backdrop Frame', unitOfMeasurement: 'Pcs', defaultQuantity: 1, isDefaultIncluded: true, order: 1 },
-      { id: 'backdrop-fabric', description: 'Backdrop Fabric', unitOfMeasurement: 'sqm', defaultQuantity: 20, isDefaultIncluded: true, order: 2 },
-      { id: 'backdrop-weights', description: 'Backdrop Weights', unitOfMeasurement: 'Pcs', defaultQuantity: 4, isDefaultIncluded: true, order: 3 }
+      { id: 'backdrop-frame', description: 'Backdrop Frame', unitOfMeasurement: 'Pcs', defaultQuantity: 1, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 1 },
+      { id: 'backdrop-fabric', description: 'Backdrop Fabric', unitOfMeasurement: 'sqm', defaultQuantity: 20, isDefaultIncluded: true, defaultMaterialCategory: 'hire', order: 2 },
+      { id: 'backdrop-weights', description: 'Backdrop Weights', unitOfMeasurement: 'Pcs', defaultQuantity: 4, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 3 }
     ]
   },
   {
@@ -547,9 +625,9 @@ const DEFAULT_ELEMENT_TEMPLATES: ElementTemplate[] = [
     color: 'orange',
     order: 4,
     defaultMaterials: [
-      { id: 'arc-frame', description: 'Arc Frame', unitOfMeasurement: 'Pcs', defaultQuantity: 1, isDefaultIncluded: true, order: 1 },
-      { id: 'arc-flowers', description: 'Decorative Flowers', unitOfMeasurement: 'Pcs', defaultQuantity: 50, isDefaultIncluded: false, order: 2 },
-      { id: 'arc-fabric', description: 'Arc Fabric Draping', unitOfMeasurement: 'Mtrs', defaultQuantity: 8, isDefaultIncluded: true, order: 3 }
+      { id: 'arc-frame', description: 'Arc Frame', unitOfMeasurement: 'Pcs', defaultQuantity: 1, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 1 },
+      { id: 'arc-flowers', description: 'Decorative Flowers', unitOfMeasurement: 'Pcs', defaultQuantity: 50, isDefaultIncluded: false, defaultMaterialCategory: 'outsourced', order: 2 },
+      { id: 'arc-fabric', description: 'Arc Fabric Draping', unitOfMeasurement: 'Mtrs', defaultQuantity: 8, isDefaultIncluded: true, defaultMaterialCategory: 'hire', order: 3 }
     ]
   },
   {
@@ -561,9 +639,9 @@ const DEFAULT_ELEMENT_TEMPLATES: ElementTemplate[] = [
     color: 'teal',
     order: 5,
     defaultMaterials: [
-      { id: 'dance-floor-panels', description: 'Dance Floor Panels', unitOfMeasurement: 'sqm', defaultQuantity: 36, isDefaultIncluded: true, order: 1 },
-      { id: 'walkway-carpet', description: 'Walkway Carpet', unitOfMeasurement: 'Mtrs', defaultQuantity: 15, isDefaultIncluded: true, order: 2 },
-      { id: 'floor-tape', description: 'Floor Marking Tape', unitOfMeasurement: 'Mtrs', defaultQuantity: 20, isDefaultIncluded: false, order: 3 }
+      { id: 'dance-floor-panels', description: 'Dance Floor Panels', unitOfMeasurement: 'sqm', defaultQuantity: 36, isDefaultIncluded: true, defaultMaterialCategory: 'hire', order: 1 },
+      { id: 'walkway-carpet', description: 'Walkway Carpet', unitOfMeasurement: 'Mtrs', defaultQuantity: 15, isDefaultIncluded: true, defaultMaterialCategory: 'hire', order: 2 },
+      { id: 'floor-tape', description: 'Floor Marking Tape', unitOfMeasurement: 'Mtrs', defaultQuantity: 20, isDefaultIncluded: false, defaultMaterialCategory: 'outsourced', order: 3 }
     ]
   }
 ]
@@ -609,7 +687,14 @@ const initializeProjectElements = (): ProjectElement[] => {
   return DEFAULT_ELEMENT_TEMPLATES.map(template => ({
     id: `${template.id}-${Date.now()}`,
     templateId: template.id,
+    elementType: template.name,
     name: template.displayName,
+    category: 'production' as 'production' | 'hire' | 'outsourced', // Default category
+    dimensions: {
+      length: '',
+      width: '',
+      height: ''
+    },
     isIncluded: true, // Default to included, can be toggled
     materials: template.defaultMaterials.map(materialTemplate => ({
       id: `${materialTemplate.id}-${Date.now()}`,
@@ -659,6 +744,20 @@ const isViewModalOpen = ref(false)
 const isSaving = ref(false)
 const lastSaved = ref<Date | null>(null)
 
+// Collapsed state for elements (initialize with all elements collapsed)
+const collapsedElements = ref<Set<string>>(new Set())
+
+/**
+ * Initialize collapsed state with all elements collapsed by default
+ */
+const initializeCollapsedState = () => {
+  const elementIds = materialsData.projectElements.map(element => element.id)
+  collapsedElements.value = new Set(elementIds)
+}
+
+// Initialize all elements as collapsed by default
+initializeCollapsedState()
+
 /**
  * Open the modal for adding a new element
  */
@@ -684,10 +783,53 @@ const closeModal = () => {
 }
 
 /**
+ * Toggle collapsed state for an element
+ */
+const toggleElementCollapse = (elementId: string) => {
+  if (collapsedElements.value.has(elementId)) {
+    collapsedElements.value.delete(elementId)
+  } else {
+    collapsedElements.value.add(elementId)
+  }
+}
+
+/**
+ * Check if an element is collapsed
+ */
+const isElementCollapsed = (elementId: string): boolean => {
+  return collapsedElements.value.has(elementId)
+}
+
+/**
+ * Check if all elements are collapsed
+ */
+const allElementsCollapsed = computed(() => {
+  return materialsData.projectElements.length > 0 &&
+         materialsData.projectElements.every(element => collapsedElements.value.has(element.id))
+})
+
+/**
+ * Toggle all elements collapsed/expanded
+ */
+const toggleAllElements = () => {
+  if (allElementsCollapsed.value) {
+    // Expand all
+    collapsedElements.value.clear()
+  } else {
+    // Collapse all
+    materialsData.projectElements.forEach(element => {
+      collapsedElements.value.add(element.id)
+    })
+  }
+}
+
+/**
  * Add a new element to the project
  */
 const addElement = (element: ProjectElement) => {
   materialsData.projectElements.push(element)
+  // Collapse new element by default
+  collapsedElements.value.add(element.id)
   emit('save-materials', materialsData)
 }
 
@@ -851,6 +993,34 @@ const getStatusLabel = (status: string): string => {
     'cancelled': 'Cancelled',
   }
   return labels[status] || status
+}
+
+/**
+ * Get human-readable label for element category
+ * @param category - The element category
+ * @returns Human-readable category label
+ */
+const getElementCategoryLabel = (category: string): string => {
+  const labels: Record<string, string> = {
+    'production': 'Production',
+    'hire': 'Items for Hire',
+    'outsourced': 'Outsourced'
+  }
+  return labels[category] || category
+}
+
+/**
+ * Get CSS classes for element category display
+ * @param category - The element category
+ * @returns CSS class string for category styling
+ */
+const getElementCategoryClass = (category: string): string => {
+  const classes: Record<string, string> = {
+    'production': 'bg-green-100 text-green-800',
+    'hire': 'bg-blue-100 text-blue-800',
+    'outsourced': 'bg-orange-100 text-orange-800'
+  }
+  return classes[category] || 'bg-gray-100 text-gray-800'
 }
 
 /**

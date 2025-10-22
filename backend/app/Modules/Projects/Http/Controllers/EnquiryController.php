@@ -13,6 +13,24 @@ use App\Constants\Permissions;
 use App\Constants\EnquiryConstants;
 use App\Modules\Projects\Services\NotificationService;
 
+/**
+ * @OA\Schema(
+ *     schema="ProjectEnquiry",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="enquiry_number", type="string", example="ENQ-2024-0001"),
+ *     @OA\Property(property="title", type="string", example="Office Branding Project"),
+ *     @OA\Property(property="description", type="string", example="Complete branding solution for new office"),
+ *     @OA\Property(property="status", type="string", enum={"draft","pending","in_progress","quote_approved","converted_to_project","cancelled"}),
+ *     @OA\Property(property="priority", type="string", enum={"low","medium","high","urgent"}),
+ *     @OA\Property(property="client_id", type="integer"),
+ *     @OA\Property(property="contact_person", type="string", example="John Smith"),
+ *     @OA\Property(property="estimated_budget", type="number", format="float", nullable=true),
+ *     @OA\Property(property="date_received", type="string", format="date"),
+ *     @OA\Property(property="expected_delivery_date", type="string", format="date", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ */
 class EnquiryController extends Controller
 {
     protected $notificationService;
@@ -45,6 +63,59 @@ class EnquiryController extends Controller
         return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/projects/enquiries",
+     *     summary="Get all enquiries with pagination and filters",
+     *     tags={"Enquiries"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search by title, client name, or contact person",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by status",
+     *         @OA\Schema(type="string", enum={"draft","pending","in_progress","quote_approved","converted_to_project","cancelled"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="client_id",
+     *         in="query",
+     *         description="Filter by client ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="department_id",
+     *         in="query",
+     *         description="Filter by department ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Enquiries retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/ProjectEnquiry")),
+     *                 @OA\Property(property="current_page", type="integer"),
+     *                 @OA\Property(property="last_page", type="integer"),
+     *                 @OA\Property(property="per_page", type="integer"),
+     *                 @OA\Property(property="total", type="integer")
+     *             ),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function index(Request $request): JsonResponse
     {
 
@@ -82,6 +153,43 @@ class EnquiryController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/projects/enquiries",
+     *     summary="Create a new project enquiry",
+     *     tags={"Enquiries"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"date_received","client_id","title","contact_person","status"},
+     *             @OA\Property(property="date_received", type="string", format="date", example="2024-01-15"),
+     *             @OA\Property(property="expected_delivery_date", type="string", format="date", nullable=true, example="2024-02-15"),
+     *             @OA\Property(property="client_id", type="integer", example=1),
+     *             @OA\Property(property="title", type="string", example="Office Branding Project"),
+     *             @OA\Property(property="description", type="string", example="Complete branding solution for new office"),
+     *             @OA\Property(property="project_scope", type="string", example="Logo design, signage, and interior branding"),
+     *             @OA\Property(property="priority", type="string", enum={"low","medium","high","urgent"}, example="high"),
+     *             @OA\Property(property="contact_person", type="string", example="John Smith"),
+     *             @OA\Property(property="status", type="string", enum={"draft","pending","in_progress","quote_approved","converted_to_project","cancelled"}, example="pending"),
+     *             @OA\Property(property="department_id", type="integer", nullable=true, example=1),
+     *             @OA\Property(property="estimated_budget", type="number", format="float", nullable=true, example=50000.00),
+     *             @OA\Property(property="venue", type="string", nullable=true, example="Downtown Office Building"),
+     *             @OA\Property(property="assigned_po", type="integer", nullable=true, example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Enquiry created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/ProjectEnquiry")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function store(Request $request): JsonResponse
     {
 
@@ -155,6 +263,31 @@ class EnquiryController extends Controller
         ], 201);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/projects/enquiries/{enquiry}",
+     *     summary="Get enquiry details",
+     *     tags={"Enquiries"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="enquiry",
+     *         in="path",
+     *         required=true,
+     *         description="Enquiry ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Enquiry details retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/ProjectEnquiry"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Enquiry not found"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function show(ProjectEnquiry $enquiry): JsonResponse
     {
         return response()->json([
@@ -163,6 +296,44 @@ class EnquiryController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Put(
+     *     path="/api/projects/enquiries/{enquiry}",
+     *     summary="Update enquiry details",
+     *     tags={"Enquiries"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="enquiry",
+     *         in="path",
+     *         required=true,
+     *         description="Enquiry ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="title", type="string", example="Updated Office Branding Project"),
+     *             @OA\Property(property="description", type="string", example="Updated project description"),
+     *             @OA\Property(property="status", type="string", enum={"draft","pending","in_progress","quote_approved","converted_to_project","cancelled"}),
+     *             @OA\Property(property="priority", type="string", enum={"low","medium","high","urgent"}),
+     *             @OA\Property(property="estimated_budget", type="number", format="float"),
+     *             @OA\Property(property="expected_delivery_date", type="string", format="date"),
+     *             @OA\Property(property="contact_person", type="string", example="Jane Doe"),
+     *             @OA\Property(property="assigned_po", type="integer", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Enquiry updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/ProjectEnquiry")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=404, description="Enquiry not found"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function update(Request $request, ProjectEnquiry $enquiry): JsonResponse
     {
 
@@ -227,6 +398,30 @@ class EnquiryController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/projects/enquiries/{enquiry}",
+     *     summary="Delete enquiry",
+     *     tags={"Enquiries"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="enquiry",
+     *         in="path",
+     *         required=true,
+     *         description="Enquiry ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Enquiry deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Enquiry not found"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function destroy(ProjectEnquiry $enquiry): JsonResponse
     {
         $enquiry->delete();
@@ -247,6 +442,31 @@ class EnquiryController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/projects/enquiries/{enquiry}/approve-quote",
+     *     summary="Approve enquiry quote",
+     *     tags={"Enquiries"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="enquiry",
+     *         in="path",
+     *         required=true,
+     *         description="Enquiry ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Quote approved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/ProjectEnquiry")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Enquiry not found"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function approveQuote(Request $request, ProjectEnquiry $enquiry): JsonResponse
     {
         // Implementation for approving quote
@@ -262,6 +482,31 @@ class EnquiryController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/projects/enquiries/{enquiry}/convert",
+     *     summary="Convert enquiry to project",
+     *     tags={"Enquiries"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="enquiry",
+     *         in="path",
+     *         required=true,
+     *         description="Enquiry ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Enquiry converted to project successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/ProjectEnquiry")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Enquiry not found"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function convertToProject(Request $request, ProjectEnquiry $enquiry): JsonResponse
     {
         // Implementation for converting to project

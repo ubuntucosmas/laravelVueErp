@@ -53,6 +53,7 @@
         :task="task"
         :task-data="taskData"
         :enquiry-id="task.project_enquiry_id"
+        @update:taskData="handleTaskDataUpdate"
       />
 
       <!-- Editable form when in edit mode -->
@@ -107,7 +108,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const taskData = ref<Record<string, unknown> | null>(null)
+const taskData = ref<Record<string, unknown> | Record<string, unknown>[] | null>(null)
 const isLoading = ref(false)
 const error = ref('')
 const isEditMode = ref(false)
@@ -134,13 +135,25 @@ const dataDisplayComponents = {
 // Map task types to their editable components
 const editableComponents = {
   'site-survey': () => import('./SurveyTask.vue'),
+  'design': () => import('./DesignTask.vue'),
   // Add more task types here as needed
 }
 
 // Get the appropriate component for the task type
 const getDataComponent = (taskKey?: string) => {
-  if (!taskKey) return DefaultDataDisplay
-  return dataDisplayComponents[taskKey as keyof typeof dataDisplayComponents] || DefaultDataDisplay
+  if (!taskKey) {
+    console.log('TaskDataViewer: No task key provided, using DefaultDataDisplay')
+    return DefaultDataDisplay
+  }
+
+  const component = dataDisplayComponents[taskKey as keyof typeof dataDisplayComponents]
+  if (!component) {
+    console.warn('TaskDataViewer: No component found for task type:', taskKey, '- available types:', Object.keys(dataDisplayComponents), '- using DefaultDataDisplay')
+    return DefaultDataDisplay
+  }
+
+  console.log('TaskDataViewer: Using component for task type:', taskKey, '- component:', component.name || 'unnamed')
+  return component
 }
 
 // Get the appropriate editable component for the task type
@@ -156,7 +169,7 @@ const getEditableComponent = async (taskKey?: string) => {
 
 // Fetch task data based on task type
 const fetchTaskData = async () => {
-  console.log('TaskDataViewer: Starting data fetch for task', props.task?.id)
+  console.log('TaskDataViewer: Starting data fetch for task', props.task?.id, 'with type:', props.task?.type)
 
   if (!props.task?.id) {
     return
@@ -171,6 +184,9 @@ const fetchTaskData = async () => {
       throw new Error('Task type not defined')
     }
 
+    console.log('TaskDataViewer: Task key determined as:', taskKey)
+    console.log('TaskDataViewer: Available data display components:', Object.keys(dataDisplayComponents))
+
     let endpoint = ''
 
     // Define endpoints for different task types
@@ -178,14 +194,21 @@ const fetchTaskData = async () => {
       case 'site-survey':
         endpoint = `/api/projects/site-surveys?enquiry_task_id=${props.task.id}`
         break
+      case 'materials':
+        endpoint = `/api/projects/materials-requests?task_id=${props.task.id}`
+        console.log('TaskDataViewer: Materials task endpoint:', endpoint)
+        break
       case 'materials-request':
         endpoint = `/api/projects/materials-requests?task_id=${props.task.id}`
+        console.log('TaskDataViewer: Materials-request task endpoint:', endpoint)
         break
       case 'design':
         endpoint = `/api/projects/enquiry-tasks/${props.task.id}/design-assets`
+        console.log('TaskDataViewer: Design task endpoint:', endpoint)
         break
       // Add more task types here
       default:
+        console.warn('TaskDataViewer: No specific endpoint for task type:', taskKey, '- will use default display')
         throw new Error(`Data display not implemented for task type: ${taskKey}`)
     }
 
@@ -194,9 +217,26 @@ const fetchTaskData = async () => {
     console.log('TaskDataViewer: API response for task type', taskKey, ':', response.data)
     console.log('TaskDataViewer: Response data type:', typeof response.data, 'isArray:', Array.isArray(response.data))
 
-    if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-      taskData.value = response.data[0] // Usually the first/most recent record
-      console.log('TaskDataViewer: Set taskData to first array item:', taskData.value)
+    if (response.data && typeof response.data === 'object' && 'data' in response.data && Array.isArray((response.data as Record<string, unknown>).data)) {
+      // Handle paginated response (like design assets API)
+      const paginatedData = (response.data as Record<string, unknown>).data as Record<string, unknown>[]
+      if (paginatedData.length > 0) {
+        taskData.value = paginatedData // Full array of design assets
+        console.log('TaskDataViewer: Set taskData to paginated data array:', taskData.value)
+      } else {
+        taskData.value = null
+        console.log('TaskDataViewer: Set taskData to null (empty paginated response)')
+      }
+    } else if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+      // Handle direct array response
+      if (taskKey === 'site-survey') {
+        // Site survey expects a single object, not an array
+        taskData.value = response.data[0] as Record<string, unknown>
+        console.log('TaskDataViewer: Set taskData to first item of array for site-survey:', taskData.value)
+      } else {
+        taskData.value = response.data as Record<string, unknown>[] // Full array for other types
+        console.log('TaskDataViewer: Set taskData to array:', taskData.value)
+      }
     } else if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
       // Handle single object response
       taskData.value = response.data
@@ -236,6 +276,11 @@ watch(() => props.task?.id, () => {
     taskData.value = null
   }
 }, { immediate: true })
+
+// Handle task data updates from child components
+const handleTaskDataUpdate = (updatedData: Record<string, unknown>) => {
+  taskData.value = updatedData
+}
 
 // Toggle edit mode
 const toggleEditMode = () => {

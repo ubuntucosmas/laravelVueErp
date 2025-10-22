@@ -9,6 +9,38 @@ use Illuminate\Support\Facades\Auth;
 use App\Modules\Projects\Services\ProjectsDashboardService;
 use App\Constants\Permissions;
 
+/**
+ * @OA\Schema(
+ *     schema="DashboardMetrics",
+ *     @OA\Property(property="total_enquiries", type="integer", example=25),
+ *     @OA\Property(property="active_enquiries", type="integer", example=12),
+ *     @OA\Property(property="completed_enquiries", type="integer", example=8),
+ *     @OA\Property(property="pending_enquiries", type="integer", example=5),
+ *     @OA\Property(property="total_tasks", type="integer", example=45),
+ *     @OA\Property(property="completed_tasks", type="integer", example=32),
+ *     @OA\Property(property="overdue_tasks", type="integer", example=3),
+ *     @OA\Property(property="total_projects", type="integer", example=15)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ActivityItem",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="type", type="string", enum={"task_completed","enquiry_created","task_assigned","quote_approved"}),
+ *     @OA\Property(property="description", type="string", example="Task 'Site Survey' was completed"),
+ *     @OA\Property(property="user_name", type="string", example="John Doe"),
+ *     @OA\Property(property="created_at", type="string", format="date-time")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="AlertItem",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="type", type="string", enum={"overdue_task","upcoming_deadline","unassigned_task"}),
+ *     @OA\Property(property="title", type="string", example="Overdue Task Alert"),
+ *     @OA\Property(property="message", type="string", example="Task 'Design Review' is 2 days overdue"),
+ *     @OA\Property(property="priority", type="string", enum={"low","medium","high","urgent"}),
+ *     @OA\Property(property="created_at", type="string", format="date-time")
+ * )
+ */
 class DashboardController extends Controller
 {
     protected ProjectsDashboardService $dashboardService;
@@ -19,7 +51,22 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get enquiry metrics for dashboard
+     * @OA\Get(
+     *     path="/api/projects/dashboard/enquiry-metrics",
+     *     summary="Get enquiry metrics for dashboard",
+     *     tags={"Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Enquiry metrics retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/DashboardMetrics"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=500, description="Internal server error")
+     * )
      */
     public function enquiryMetrics(Request $request): JsonResponse
     {
@@ -47,7 +94,22 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get task metrics for dashboard
+     * @OA\Get(
+     *     path="/api/projects/dashboard/task-metrics",
+     *     summary="Get task metrics for dashboard",
+     *     tags={"Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Task metrics retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/DashboardMetrics"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=500, description="Internal server error")
+     * )
      */
     public function taskMetrics(Request $request): JsonResponse
     {
@@ -103,7 +165,28 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get recent activities for dashboard
+     * @OA\Get(
+     *     path="/api/projects/dashboard/recent-activities",
+     *     summary="Get recent activities for dashboard",
+     *     tags={"Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Number of activities to retrieve",
+     *         @OA\Schema(type="integer", default=10, minimum=1, maximum=50)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Recent activities retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/ActivityItem")),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=500, description="Internal server error")
+     * )
      */
     public function recentActivities(Request $request): JsonResponse
     {
@@ -160,7 +243,28 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get comprehensive dashboard data
+     * @OA\Get(
+     *     path="/api/projects/dashboard",
+     *     summary="Get comprehensive dashboard data",
+     *     tags={"Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Dashboard data retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="enquiry_metrics", ref="#/components/schemas/DashboardMetrics"),
+     *                 @OA\Property(property="task_metrics", ref="#/components/schemas/DashboardMetrics"),
+     *                 @OA\Property(property="project_metrics", ref="#/components/schemas/DashboardMetrics"),
+     *                 @OA\Property(property="recent_activities", type="array", @OA\Items(ref="#/components/schemas/ActivityItem")),
+     *                 @OA\Property(property="alerts", type="array", @OA\Items(ref="#/components/schemas/AlertItem"))
+     *             ),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=500, description="Internal server error")
+     * )
      */
     public function dashboard(Request $request): JsonResponse
     {
@@ -223,7 +327,35 @@ class DashboardController extends Controller
     }
 
     /**
-     * Export dashboard data to PDF
+     * @OA\Post(
+     *     path="/api/projects/dashboard/export/pdf",
+     *     summary="Export dashboard data to PDF",
+     *     tags={"Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="filters", type="object",
+     *                 @OA\Property(property="date_from", type="string", format="date"),
+     *                 @OA\Property(property="date_to", type="string", format="date"),
+     *                 @OA\Property(property="department_id", type="integer"),
+     *                 @OA\Property(property="status", type="string")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="PDF export generated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="file_path", type="string"),
+     *                 @OA\Property(property="download_url", type="string")
+     *             ),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=500, description="Internal server error")
+     * )
      */
     public function exportToPDF(Request $request): JsonResponse
     {
@@ -255,7 +387,35 @@ class DashboardController extends Controller
     }
 
     /**
-     * Export dashboard data to Excel
+     * @OA\Post(
+     *     path="/api/projects/dashboard/export/excel",
+     *     summary="Export dashboard data to Excel",
+     *     tags={"Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="filters", type="object",
+     *                 @OA\Property(property="date_from", type="string", format="date"),
+     *                 @OA\Property(property="date_to", type="string", format="date"),
+     *                 @OA\Property(property="department_id", type="integer"),
+     *                 @OA\Property(property="status", type="string")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Excel export generated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="file_path", type="string"),
+     *                 @OA\Property(property="download_url", type="string")
+     *             ),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=500, description="Internal server error")
+     * )
      */
     public function exportToExcel(Request $request): JsonResponse
     {

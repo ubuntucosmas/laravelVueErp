@@ -18,7 +18,7 @@ use App\Http\Controllers\SiteSurveyController;
 use App\Http\Controllers\DesignAssetController;
 use App\Constants\Permissions;
 
-// Authentication routes
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
