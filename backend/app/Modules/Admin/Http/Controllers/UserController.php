@@ -13,10 +13,78 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 
+/**
+ * @OA\Schema(
+ *     schema="User",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="John Doe"),
+ *     @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+ *     @OA\Property(property="is_active", type="boolean", example=true),
+ *     @OA\Property(property="department_id", type="integer", nullable=true),
+ *     @OA\Property(property="employee_id", type="integer", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ */
 class UserController
 {
     /**
-     * Display a listing of users.
+     * @OA\Get(
+     *     path="/api/admin/users",
+     *     summary="Get all users with pagination and filters",
+     *     tags={"Users"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         @OA\Schema(type="integer", default=15)
+     *     ),
+     *     @OA\Parameter(
+     *         name="department_id",
+     *         in="query",
+     *         description="Filter by department ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="role_id",
+     *         in="query",
+     *         description="Filter by role ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="is_active",
+     *         in="query",
+     *         description="Filter by active status",
+     *         @OA\Schema(type="boolean")
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search by name, email, or employee name",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Users retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User")),
+     *             @OA\Property(property="meta", type="object",
+     *                 @OA\Property(property="total", type="integer"),
+     *                 @OA\Property(property="per_page", type="integer"),
+     *                 @OA\Property(property="current_page", type="integer"),
+     *                 @OA\Property(property="last_page", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -79,7 +147,31 @@ class UserController
     }
 
     /**
-     * Get list of available employees for user creation.
+     * @OA\Get(
+     *     path="/api/admin/users/available-employees",
+     *     summary="Get list of available employees for user creation",
+     *     tags={"Users"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search by employee name or email",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Available employees retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="name", type="string"),
+     *                 @OA\Property(property="email", type="string"),
+     *                 @OA\Property(property="department", type="string", nullable=true)
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
      */
     public function availableEmployees(Request $request): JsonResponse
     {
@@ -118,7 +210,32 @@ class UserController
     }
 
     /**
-     * Store a newly created user from employee.
+     * @OA\Post(
+     *     path="/api/admin/users",
+     *     summary="Create a new user from employee",
+     *     tags={"Users"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"employee_id","password","role_ids"},
+     *             @OA\Property(property="employee_id", type="integer", example=1),
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="password_confirmation", type="string", example="password123"),
+     *             @OA\Property(property="role_ids", type="array", @OA\Items(type="integer"), example={1,2})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="User created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/User")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
      */
     public function store(Request $request): JsonResponse
     {
@@ -160,7 +277,28 @@ class UserController
     }
 
     /**
-     * Display the specified user.
+     * @OA\Get(
+     *     path="/api/admin/users/{user}",
+     *     summary="Get user details",
+     *     tags={"Users"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         required=true,
+     *         description="User ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User details retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/User")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="User not found"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
      */
     public function show(User $user): JsonResponse
     {
@@ -170,7 +308,41 @@ class UserController
     }
 
     /**
-     * Update the specified user.
+     * @OA\Put(
+     *     path="/api/admin/users/{user}",
+     *     summary="Update user details",
+     *     tags={"Users"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         required=true,
+     *         description="User ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="John Doe"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="newpassword123"),
+     *             @OA\Property(property="password_confirmation", type="string", example="newpassword123"),
+     *             @OA\Property(property="department_id", type="integer", nullable=true),
+     *             @OA\Property(property="is_active", type="boolean", example=true),
+     *             @OA\Property(property="role_ids", type="array", @OA\Items(type="integer"), example={1,2})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/User")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=404, description="User not found"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
      */
     public function update(Request $request, User $user): JsonResponse
     {
@@ -247,7 +419,24 @@ class UserController
     }
 
     /**
-     * Get list of project officers for enquiry assignment.
+     * @OA\Get(
+     *     path="/api/project-officers",
+     *     summary="Get list of project officers for enquiry assignment",
+     *     tags={"Users"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Project officers retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="name", type="string"),
+     *                 @OA\Property(property="email", type="string")
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
      */
     public function getProjectOfficers(Request $request): JsonResponse
     {
@@ -278,7 +467,28 @@ class UserController
     }
 
     /**
-     * Remove the specified user.
+     * @OA\Delete(
+     *     path="/api/admin/users/{user}",
+     *     summary="Delete user",
+     *     tags={"Users"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         required=true,
+     *         description="User ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="User not found"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
      */
     public function destroy(User $user): JsonResponse
     {

@@ -63,6 +63,7 @@
             :task="task"
             @update-status="handleStatusUpdate"
             @complete="handleComplete"
+            @save-design-data="handleSaveDesignData"
           />
         </div>
       </div>
@@ -71,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { watch } from 'vue'
 import type { EnquiryTask } from '../types/enquiry'
 import TaskRenderer from './tasks/TaskRenderer.vue'
 
@@ -96,6 +97,7 @@ const emit = defineEmits<{
   'close': []
   'update-status': [status: EnquiryTask['status']]
   'complete': []
+  'save-design-data': [taskId: number, data: any]
 }>()
 
 const closeModal = () => {
@@ -108,6 +110,12 @@ const handleStatusUpdate = (status: EnquiryTask['status']) => {
 
 const handleComplete = () => {
   emit('complete')
+}
+
+const handleSaveDesignData = (data: DesignAsset[]) => {
+  if (props.task) {
+    emit('save-design-data', props.task.id, data)
+  }
 }
 
 const getStatusColor = (status: string) => {
@@ -138,43 +146,4 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString()
 }
 
-const getTaskTypeIcon = (type: string) => {
-  const icons: Record<string, string> = {
-    'site-survey': 'bg-blue-500',
-    'design': 'bg-purple-500',
-    'materials': 'bg-green-500',
-    'budget': 'bg-yellow-500',
-    'quote': 'bg-indigo-500',
-    'quote_approval': 'bg-pink-500',
-    'procurement': 'bg-orange-500',
-    'conversion': 'bg-teal-500',
-    'production': 'bg-cyan-500',
-    'logistics': 'bg-lime-500',
-    'setup': 'bg-emerald-500',
-    'handover': 'bg-violet-500',
-    'setdown': 'bg-rose-500',
-    'report': 'bg-amber-500'
-  }
-  return icons[type] || 'bg-gray-500'
-}
-
-const getTaskTypeInitial = (type: string) => {
-  const initials: Record<string, string> = {
-    'site-survey': 'S',
-    'design': 'D',
-    'materials': 'M',
-    'budget': 'B',
-    'quote': 'Q',
-    'quote_approval': 'A',
-    'procurement': 'P',
-    'conversion': 'C',
-    'production': 'P',
-    'logistics': 'L',
-    'setup': 'S',
-    'handover': 'H',
-    'setdown': 'S',
-    'report': 'R'
-  }
-  return initials[type] || 'T'
-}
 </script>

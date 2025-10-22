@@ -1,427 +1,753 @@
 <template>
-  <div v-if="isVisible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-7xl w-full max-h-[95vh] overflow-hidden">
+  <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
       <!-- Modal Header -->
-      <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-        <div>
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-            {{ isDesignMode ? 'Design Concept and Material Specification' : 'Materials & Design Assets Management' }}
-          </h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {{ isDesignMode ? 'Comprehensive material list management for design workflow' : 'Manage materials and upload design assets for' }} {{ enquiry?.title }}
-            <span v-if="department" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 ml-2">
-              {{ getDepartmentTitle() }} Department
-            </span>
-          </p>
-          <div v-if="department" class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            {{ getDepartmentContext() }}
-          </div>
-        </div>
+      <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+          {{ isEditMode ? 'Edit Element' : 'Add New Element' }}
+        </h3>
         <button
           @click="closeModal"
           class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
 
-      <!-- Modal Content -->
-      <div class="p-4 overflow-y-auto max-h-[calc(95vh-180px)]">
-        <!-- Error Display -->
-        <div v-if="error" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <div class="flex items-center space-x-2">
-            <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-            </svg>
-            <span class="text-sm font-medium text-red-800 dark:text-red-200">Error</span>
-          </div>
-          <p class="text-sm text-red-700 dark:text-red-300 mt-1">{{ error }}</p>
-        </div>
-
-        <!-- Success Display -->
-        <div v-if="successMessage" class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-          <div class="flex items-center space-x-2">
-            <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <span class="text-sm font-medium text-green-800 dark:text-green-200">Success</span>
-          </div>
-          <p class="text-sm text-green-700 dark:text-green-300 mt-1">{{ successMessage }}</p>
-        </div>
-
-        <!-- Material List Management -->
-        <div class="space-y-4">
-          <!-- Form Validation Summary -->
-          <div v-if="hasValidationErrors" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <div class="flex items-center space-x-2 mb-2">
-              <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-              </svg>
-              <span class="text-sm font-medium text-red-800 dark:text-red-200">Please fix the following errors:</span>
-            </div>
-            <ul class="text-sm text-red-700 dark:text-red-300 space-y-1">
-              <li v-for="error in validationErrors" :key="error" class="flex items-start space-x-2">
-                <span class="text-red-500">•</span>
-                <span>{{ error }}</span>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Input Mode Toggle -->
-          <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center space-x-4">
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <!-- Element Information Section -->
+        <div class="mb-6">
+          <h4 class="text-md font-medium text-gray-700 dark:text-gray-300 mb-4">Element Information</h4>
+          
+          <!-- Element Type -->
+          <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Element Type *
+              </label>
               <button
-                @click="inputMode = 'simple'"
-                :class="[
-                  'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                  inputMode === 'simple'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                ]"
+                @click="showAddElementTypeModal = true"
+                type="button"
+                class="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center space-x-1"
               >
-                Simple Input
-              </button>
-              <button
-                @click="inputMode = 'detailed'"
-                :class="[
-                  'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                  inputMode === 'detailed'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                ]"
-              >
-                Detailed Form
-              </button>
-            </div>
-          </div>
-
-          <!-- Simple Input Mode -->
-          <div v-if="inputMode === 'simple'" class="space-y-4">
-            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <div class="flex items-center space-x-2 mb-3">
-                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
-                <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200">Quick Material Input</h4>
-              </div>
-              <p class="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                Enter materials one per line in this format: <code class="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded text-xs">Material Name - Quantity Unit - Price each</code>
-              </p>
-              <textarea
-                v-model="materialsText"
-                :class="[
-                  'w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors',
-                  materialsText.trim() === '' ? 'border-gray-300 dark:border-gray-600' : 'border-gray-300 dark:border-gray-600'
-                ]"
-                rows="8"
-                placeholder="Aluminum Frame 2x3m - 4 pcs - 15000
-LED Panel 50 inch - 2 pcs - 25000
-Carpet Tiles - 20 sqm - 5000
-Steel Structure - 1 set - 75000"
-                @input="parseMaterialsText"
-              ></textarea>
-              <div class="flex items-center justify-between mt-2">
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ parsedMaterialsCount }} materials parsed
-                </p>
-                <button
-                  @click="clearMaterialsText"
-                  class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                >
-                  Clear All
-                </button>
-              </div>
+                <span>Create New Type</span>
+              </button>
             </div>
-
-            <!-- Parsed Materials Preview -->
-            <div v-if="materialItems.length > 0" class="space-y-3">
-              <h4 class="font-medium text-gray-900 dark:text-white">Parsed Materials</h4>
-              <div v-for="(product, index) in materialItems" :key="product.id"
-                    class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center space-x-3">
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ product.elementName }}</span>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                          :class="product.category === 'production' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'">
-                      {{ product.category }}
-                    </span>
-                  </div>
-                  <button
-                    @click="removeMaterialItem(index)"
-                    class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                  </button>
-                </div>
-                <!-- Show sub-items -->
-                <div class="space-y-1 ml-4">
-                  <div v-for="(subItem, subIndex) in product.subItems" :key="subItem.id"
-                       class="flex items-center space-x-4 text-xs text-gray-600 dark:text-gray-400">
-                    <span>• {{ subItem.name }}</span>
-                    <span>Qty: {{ subItem.quantity }}</span>
-                    <span>Unit: {{ subItem.unit }}</span>
-                    <span>KES {{ subItem.unitPrice.toLocaleString() }}</span>
-                  </div>
-                </div>
-                <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
-                  <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
-                    Total: KES {{ getProductTotalCost(product).toLocaleString() }}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <select
+              v-model="elementForm.elementType"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              :class="{ 'border-red-500': errors.elementType }"
+            >
+              <option value="">Select Element Type</option>
+              <option v-for="type in availableElementTypes" :key="type.id" :value="type.name">
+                {{ type.displayName }}
+              </option>
+            </select>
+            <p v-if="errors.elementType" class="mt-1 text-sm text-red-600">{{ errors.elementType }}</p>
           </div>
 
-          <!-- Material Summary -->
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+          <!-- Element Dimensions -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Dimensions <span class="text-xs text-gray-500 dark:text-gray-400">(All measurements in millimeters - mm)</span>
+            </label>
+            <div class="grid grid-cols-3 gap-3">
               <div>
-                <div class="text-lg font-semibold text-blue-600 dark:text-blue-400">{{ materialItems.length }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400">Elements</div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Length (mm)</label>
+                <input
+                  v-model="elementForm.dimensions.length"
+                  type="number"
+                  step="1"
+                  min="0"
+                  placeholder="e.g., 4000"
+                  class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
               </div>
               <div>
-                <div class="text-lg font-semibold text-green-600 dark:text-green-400">{{ materialItems.reduce((total, product) => total + product.subItems.length, 0) }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400">Components</div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Width (mm)</label>
+                <input
+                  v-model="elementForm.dimensions.width"
+                  type="number"
+                  step="1"
+                  min="0"
+                  placeholder="e.g., 3000"
+                  class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
               </div>
               <div>
-                <div class="text-lg font-semibold text-purple-600 dark:text-purple-400">{{ productionItemsCount }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400">Production</div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Height (mm)</label>
+                <input
+                  v-model="elementForm.dimensions.height"
+                  type="number"
+                  step="1"
+                  min="0"
+                  placeholder="e.g., 1000"
+                  class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
               </div>
-              <div>
-                <div class="text-lg font-semibold text-indigo-600 dark:text-indigo-400">KES {{ totalMaterialCost.toLocaleString() }}</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400">Total Cost</div>
-              </div>
+            </div>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Enter dimensions in millimeters only (e.g., 4000mm = 4m, 1500mm = 1.5m)
+            </p>
+          </div>
+
+          <!-- Element Category -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Element Category *
+            </label>
+            <select
+              v-model="elementForm.category"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              :class="{ 'border-red-500': errors.category }"
+            >
+              <option value="">Select Category</option>
+              <option value="production">Production Materials (Built In-house)</option>
+              <option value="hire">Items for Hire (We hire to customer)</option>
+              <option value="outsourced">Outsourced (Items we don't have)</option>
+            </select>
+            <p v-if="errors.category" class="mt-1 text-sm text-red-600">{{ errors.category }}</p>
+          </div>
+
+          <!-- Element Description -->
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Description
+            </label>
+            <textarea
+              v-model="elementForm.description"
+              rows="2"
+              placeholder="Brief description of this element and what it includes"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Materials Section -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-md font-medium text-gray-700 dark:text-gray-300">Materials List</h4>
+            <button
+              @click="addMaterial"
+              class="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors flex items-center space-x-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              <span>Add Material</span>
+            </button>
+          </div>
+
+          <!-- Materials Table -->
+          <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th class="text-left py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">Particulars *</th>
+                    <th class="text-left py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">Unit *</th>
+                    <th class="text-left py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">Quantity *</th>
+                    <th class="text-left py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">Default Include</th>
+                    <th class="text-center py-3 px-4 text-gray-700 dark:text-gray-300 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(material, index) in elementForm.materials" :key="material.tempId" class="border-t border-gray-200 dark:border-gray-700">
+                    <!-- Particulars -->
+                    <td class="py-3 px-4">
+                      <input
+                        v-model="material.description"
+                        type="text"
+                        placeholder="e.g., Wooden Boards, Steel Screws"
+                        class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+                        :class="{ 'border-red-500': errors[`materials.${index}.description`] }"
+                      />
+                      <p v-if="errors[`materials.${index}.description`]" class="mt-1 text-xs text-red-600">
+                        {{ errors[`materials.${index}.description`] }}
+                      </p>
+                    </td>
+
+                    <!-- Unit of Measurement -->
+                    <td class="py-3 px-4">
+                      <select
+                        v-model="material.unitOfMeasurement"
+                        class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+                        :class="{ 'border-red-500': errors[`materials.${index}.unit`] }"
+                      >
+                        <option value="">Select Unit</option>
+                        <option value="Pcs">Pieces (Pcs)</option>
+                        <option value="Ltrs">Liters (Ltrs)</option>
+                        <option value="Mtrs">Meters (Mtrs)</option>
+                        <option value="sqm">Square Meters (sqm)</option>
+                        <option value="Kgs">Kilograms (Kgs)</option>
+                        <option value="Sets">Sets</option>
+                        <option value="Rolls">Rolls</option>
+                      </select>
+                      <p v-if="errors[`materials.${index}.unit`]" class="mt-1 text-xs text-red-600">
+                        {{ errors[`materials.${index}.unit`] }}
+                      </p>
+                    </td>
+
+                    <!-- Quantity -->
+                    <td class="py-3 px-4">
+                      <input
+                        v-model.number="material.defaultQuantity"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        placeholder="0"
+                        class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+                        :class="{ 'border-red-500': errors[`materials.${index}.quantity`] }"
+                      />
+                      <p v-if="errors[`materials.${index}.quantity`]" class="mt-1 text-xs text-red-600">
+                        {{ errors[`materials.${index}.quantity`] }}
+                      </p>
+                    </td>
+
+                    <!-- Default Include -->
+                    <td class="py-3 px-4 text-center">
+                      <input
+                        v-model="material.isDefaultIncluded"
+                        type="checkbox"
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="py-3 px-4 text-center">
+                      <button
+                        @click="removeMaterial(index)"
+                        class="text-red-500 hover:text-red-700 transition-colors"
+                        :disabled="elementForm.materials.length === 1"
+                        :class="{ 'opacity-50 cursor-not-allowed': elementForm.materials.length === 1 }"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="elementForm.materials.length === 0">
+                    <td colspan="5" class="py-8 text-center text-gray-500 dark:text-gray-400 italic">
+                      No materials added yet. Click "Add Material" to get started.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Modal Footer -->
-      <div class="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-        <div class="flex items-center space-x-4">
-          <button
-            @click="saveDraft"
-            :disabled="isSaving"
-            class="inline-flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
-            </svg>
-            <span>Save Draft</span>
-          </button>
-          <button
-            @click="saveMaterials"
-            :disabled="isSaving || hasValidationErrors"
-            class="inline-flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <svg v-if="isSaving" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-            </svg>
-            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span>{{ isSaving ? 'Saving...' : 'Save Materials' }}</span>
-          </button>
-          <button
-            @click="generateQuotation"
-            :disabled="materialItems.length === 0"
-            class="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <span>Generate Quotation</span>
-          </button>
-        </div>
+      <div class="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
         <button
           @click="closeModal"
-          class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+          class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           Cancel
         </button>
+        <button
+          @click="saveElement"
+          :disabled="!isFormValid"
+          class="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+        >
+          {{ isEditMode ? 'Update Element' : 'Add Element' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Add Element Type Modal -->
+    <div v-if="showAddElementTypeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            Create New Element Type
+          </h3>
+          <button
+            @click="closeAddElementTypeModal"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-4">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Type Name *
+            </label>
+            <input
+              v-model="newElementType.name"
+              type="text"
+              placeholder="e.g., Custom Stage Setup"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              :class="{ 'border-red-500': newElementTypeErrors.name }"
+            />
+            <p v-if="newElementTypeErrors.name" class="mt-1 text-sm text-red-600">{{ newElementTypeErrors.name }}</p>
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Category *
+            </label>
+            <select
+              v-model="newElementType.category"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              :class="{ 'border-red-500': newElementTypeErrors.category }"
+            >
+              <option value="">Select Category</option>
+              <option value="structure">Structure</option>
+              <option value="decoration">Decoration</option>
+              <option value="flooring">Flooring</option>
+              <option value="technical">Technical</option>
+              <option value="furniture">Furniture</option>
+              <option value="branding">Branding</option>
+              <option value="custom">Custom</option>
+            </select>
+            <p v-if="newElementTypeErrors.category" class="mt-1 text-sm text-red-600">{{ newElementTypeErrors.category }}</p>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex items-center justify-end space-x-3 p-4 border-t border-gray-200 dark:border-gray-700">
+          <button
+            @click="closeAddElementTypeModal"
+            class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            @click="saveNewElementType"
+            :disabled="!isNewElementTypeValid"
+            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+          >
+            Create Type
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 
+/**
+ * Props interface for the MaterialsModal component
+ */
 interface Props {
-  isVisible: boolean
-  enquiry?: any
-  department?: string
-  isDesignMode?: boolean
+  /** Whether the modal is open */
+  isOpen: boolean
+  /** Element data for editing (optional) */
+  editElement?: ProjectElement | null
 }
 
+/**
+ * Events emitted by the MaterialsModal component
+ */
+interface Emits {
+  /** Emitted when modal should be closed */
+  'close': []
+  /** Emitted when a new element is added */
+  'add-element': [element: ProjectElement]
+  /** Emitted when an existing element is updated */
+  'update-element': [element: ProjectElement]
+}
+
+/**
+ * Material form structure for the modal
+ */
+interface MaterialForm {
+  tempId: string
+  description: string
+  unitOfMeasurement: string
+  defaultQuantity: number
+  isDefaultIncluded: boolean
+}
+
+/**
+ * Element form structure for the modal
+ */
+interface ElementForm {
+  category: 'production' | 'hire' | 'outsourced' | ''
+  elementType: string
+  dimensions: {
+    length: string
+    width: string
+    height: string
+  }
+  description: string
+  materials: MaterialForm[]
+}
+
+/**
+ * Element type structure for standardized element types
+ */
+interface ElementType {
+  id: string
+  name: string
+  displayName: string
+  category: string
+}
+
+/**
+ * Project element structure (matching the main component)
+ */
+interface ProjectElement {
+  id: string
+  templateId: string
+  elementType: string
+  name: string
+  category: 'production' | 'hire' | 'outsourced'
+  dimensions: {
+    length: string
+    width: string
+    height: string
+  }
+  isIncluded: boolean
+  materials: MaterialItem[]
+  notes?: string
+  addedAt: Date
+}
+
+/**
+ * Material item structure (matching the main component)
+ */
+interface MaterialItem {
+  id: string
+  description: string
+  unitOfMeasurement: string
+  quantity: number
+  isIncluded: boolean
+  notes?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+// Component setup
 const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
-const emit = defineEmits<{
-  close: []
-  materialsUpdated: [data: any]
-}>()
+// Available element types (reactive so we can add new ones)
+const availableElementTypes = ref<ElementType[]>([
+  { id: 'stage', name: 'stage', displayName: 'Stage', category: 'structure' },
+  { id: 'backdrop', name: 'backdrop', displayName: 'Backdrop', category: 'decoration' },
+  { id: 'skirting', name: 'skirting', displayName: 'Stage Skirting', category: 'decoration' },
+  { id: 'entrance-arc', name: 'entrance-arc', displayName: 'Entrance Arc', category: 'decoration' },
+  { id: 'dance-floor', name: 'dance-floor', displayName: 'Dance Floor', category: 'flooring' },
+  { id: 'walkway', name: 'walkway', displayName: 'Walkway', category: 'flooring' },
+  { id: 'lighting', name: 'lighting', displayName: 'Lighting Setup', category: 'technical' },
+  { id: 'sound', name: 'sound', displayName: 'Sound System', category: 'technical' },
+  { id: 'seating', name: 'seating', displayName: 'Seating Arrangement', category: 'furniture' },
+  { id: 'tables', name: 'tables', displayName: 'Tables', category: 'furniture' },
+  { id: 'decor', name: 'decor', displayName: 'Decorative Elements', category: 'decoration' },
+  { id: 'signage', name: 'signage', displayName: 'Signage & Branding', category: 'branding' }
+])
 
-// Reactive data
-const inputMode = ref('simple')
-const materialsText = ref('')
-const materialItems = ref<any[]>([])
-const error = ref('')
-const successMessage = ref('')
-const isSaving = ref(false)
-const uploadedFiles = ref<any[]>([])
-const designNotes = ref('')
+// Form state
+const elementForm = reactive<ElementForm>({
+  category: '',
+  elementType: '',
+  dimensions: {
+    length: '',
+    width: '',
+    height: ''
+  },
+  description: '',
+  materials: []
+})
+
+// Modal state for adding new element types
+const showAddElementTypeModal = ref(false)
+
+// New element type form
+const newElementType = reactive({
+  name: '',
+  category: ''
+})
+
+// Validation errors
+const errors = reactive<Record<string, string>>({})
+const newElementTypeErrors = reactive<Record<string, string>>({})
 
 // Computed properties
-const parsedMaterialsCount = computed(() => materialItems.value.length)
+const isEditMode = computed(() => !!props.editElement)
 
-const totalMaterialCost = computed(() => {
-  return materialItems.value.reduce((total, product) => {
-    return total + getProductTotalCost(product)
-  }, 0)
+const isFormValid = computed(() => {
+  return elementForm.elementType.trim() !== '' && 
+         elementForm.category !== '' &&
+         elementForm.materials.length > 0 &&
+         elementForm.materials.every(m => 
+           m.description.trim() !== '' && 
+           m.unitOfMeasurement !== '' && 
+           m.defaultQuantity > 0
+         )
 })
 
-const productionItemsCount = computed(() => {
-  return materialItems.value.filter(item => item.category === 'production').length
+const isNewElementTypeValid = computed(() => {
+  return newElementType.name.trim() !== '' && newElementType.category !== ''
 })
 
-const hasValidationErrors = computed(() => {
-  return validationErrors.value.length > 0
-})
-
-const validationErrors = computed(() => {
-  const errors: string[] = []
-  // Add validation logic here
-  return errors
-})
-
-// Methods
-const closeModal = () => {
-  emit('close')
+/**
+ * Initialize form with default material
+ */
+const initializeForm = () => {
+  elementForm.category = ''
+  elementForm.elementType = ''
+  elementForm.dimensions = { length: '', width: '', height: '' }
+  elementForm.description = ''
+  elementForm.materials = [createEmptyMaterial()]
+  clearErrors()
 }
 
-const getDepartmentTitle = () => {
-  const titles: Record<string, string> = {
-    creatives: 'Creatives',
-    design: 'Design',
-    procurement: 'Procurement',
-    projects: 'Projects'
+/**
+ * Create an empty material form object
+ */
+const createEmptyMaterial = (): MaterialForm => ({
+  tempId: `temp-${Date.now()}-${Math.random()}`,
+  description: '',
+  unitOfMeasurement: '',
+  defaultQuantity: 1,
+  isDefaultIncluded: true
+})
+
+/**
+ * Add a new material to the form
+ */
+const addMaterial = () => {
+  elementForm.materials.push(createEmptyMaterial())
+}
+
+/**
+ * Remove a material from the form
+ */
+const removeMaterial = (index: number) => {
+  if (elementForm.materials.length > 1) {
+    elementForm.materials.splice(index, 1)
   }
-  return titles[props.department || ''] || 'Department'
 }
 
-const getDepartmentContext = () => {
-  const contexts: Record<string, string> = {
-    creatives: 'Focus on creative material specifications and design concepts',
-    design: 'Technical design specifications and material requirements',
-    procurement: 'Procurement planning and supplier coordination',
-    projects: 'Project management and material tracking'
+/**
+ * Validate the form and return validation status
+ */
+const validateForm = (): boolean => {
+  clearErrors()
+  let isValid = true
+
+  // Validate element category
+  if (!elementForm.category) {
+    errors.category = 'Element category is required'
+    isValid = false
   }
-  return contexts[props.department || ''] || ''
-}
 
-const parseMaterialsText = () => {
-  const lines = materialsText.value.split('\n').filter(line => line.trim())
-  const parsed: any[] = []
+  // Validate element type
+  if (!elementForm.elementType) {
+    errors.elementType = 'Element type is required'
+    isValid = false
+  }
 
-  lines.forEach((line, index) => {
-    const parts = line.split(' - ').map(p => p.trim())
-    if (parts.length >= 3) {
-      const [name, qtyUnit, price] = parts
-      const qtyParts = qtyUnit.split(' ')
-      const quantity = parseInt(qtyParts[0]) || 1
-      const unit = qtyParts[1] || 'pcs'
-      const unitPrice = parseFloat(price.replace(/[^\d.]/g, '')) || 0
-
-      parsed.push({
-        id: `parsed_${index}`,
-        elementName: name,
-        category: 'production',
-        subItems: [{
-          id: `sub_${index}`,
-          name: name,
-          quantity: quantity,
-          unit: unit,
-          unitPrice: unitPrice,
-          category: 'production',
-          comment: ''
-        }]
-      })
+  // Validate materials
+  elementForm.materials.forEach((material, index) => {
+    if (!material.description.trim()) {
+      errors[`materials.${index}.description`] = 'Particulars is required'
+      isValid = false
+    }
+    
+    if (!material.unitOfMeasurement) {
+      errors[`materials.${index}.unit`] = 'Unit is required'
+      isValid = false
+    }
+    
+    if (!material.defaultQuantity || material.defaultQuantity <= 0) {
+      errors[`materials.${index}.quantity`] = 'Quantity must be greater than 0'
+      isValid = false
     }
   })
 
-  materialItems.value = parsed
+  return isValid
 }
 
-const clearMaterialsText = () => {
-  materialsText.value = ''
-  materialItems.value = []
+/**
+ * Clear all validation errors
+ */
+const clearErrors = () => {
+  Object.keys(errors).forEach(key => delete errors[key])
 }
 
-const removeMaterialItem = (index: number) => {
-  materialItems.value.splice(index, 1)
-}
-
-const getProductTotalCost = (product: any) => {
-  return product.subItems.reduce((total: number, subItem: any) => {
-    return total + (subItem.quantity * subItem.unitPrice)
-  }, 0)
-}
-
-const saveDraft = () => {
-  // Save draft logic
-  successMessage.value = 'Draft saved successfully'
-  setTimeout(() => successMessage.value = '', 3000)
-}
-
-const saveMaterials = () => {
-  if (hasValidationErrors.value) return
-
-  isSaving.value = true
-  // Save materials logic
-  setTimeout(() => {
-    isSaving.value = false
-    successMessage.value = 'Materials saved successfully'
-    emit('materialsUpdated', {
-      materialItems: materialItems.value,
-      totalMaterialCost: totalMaterialCost.value
-    })
-    setTimeout(() => successMessage.value = '', 3000)
-  }, 1000)
-}
-
-const generateQuotation = () => {
-  // Generate quotation logic
-  successMessage.value = 'Quotation generated successfully'
-  setTimeout(() => successMessage.value = '', 3000)
-}
-
-const handleFileUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const files = target.files
-  if (files) {
-    Array.from(files).forEach(file => {
-      uploadedFiles.value.push({
-        name: file.name,
-        size: file.size
-      })
-    })
+/**
+ * Save the element (add or update)
+ */
+const saveElement = () => {
+  if (!validateForm()) {
+    return
   }
+
+  const now = new Date()
+  
+  if (isEditMode.value && props.editElement) {
+    // Update existing element
+    const selectedType = availableElementTypes.value.find(type => type.name === elementForm.elementType)
+    const updatedElement: ProjectElement = {
+      ...props.editElement,
+      elementType: elementForm.elementType,
+      name: selectedType?.displayName || elementForm.elementType,
+      category: elementForm.category as 'production' | 'hire' | 'outsourced',
+      dimensions: { ...elementForm.dimensions },
+      materials: elementForm.materials.map(material => ({
+        id: `${material.tempId}-${now.getTime()}`,
+        description: material.description,
+        unitOfMeasurement: material.unitOfMeasurement,
+        quantity: material.defaultQuantity,
+        isIncluded: material.isDefaultIncluded,
+        createdAt: now,
+        updatedAt: now
+      }))
+    }
+    
+    emit('update-element', updatedElement)
+  } else {
+    // Create new element
+    const selectedType = availableElementTypes.value.find(type => type.name === elementForm.elementType)
+    const newElement: ProjectElement = {
+      id: `custom-${now.getTime()}`,
+      templateId: `custom-${elementForm.elementType}`,
+      elementType: elementForm.elementType,
+      name: selectedType?.displayName || elementForm.elementType,
+      category: elementForm.category as 'production' | 'hire' | 'outsourced',
+      dimensions: { ...elementForm.dimensions },
+      isIncluded: true,
+      materials: elementForm.materials.map(material => ({
+        id: `${material.tempId}-${now.getTime()}`,
+        description: material.description,
+        unitOfMeasurement: material.unitOfMeasurement,
+        quantity: material.defaultQuantity,
+        isIncluded: material.isDefaultIncluded,
+        createdAt: now,
+        updatedAt: now
+      })),
+      notes: elementForm.description,
+      addedAt: now
+    }
+    
+    emit('add-element', newElement)
+  }
+  
+  closeModal()
 }
 
-const removeFile = (index: number) => {
-  uploadedFiles.value.splice(index, 1)
+/**
+ * Close the modal and reset form
+ */
+const closeModal = () => {
+  emit('close')
+  initializeForm()
 }
 
-// Watch for modal visibility changes
-watch(() => props.isVisible, (visible) => {
-  if (visible) {
-    // Reset state when modal opens
-    error.value = ''
-    successMessage.value = ''
+/**
+ * Load element data for editing
+ */
+const loadElementForEdit = (element: ProjectElement) => {
+  elementForm.category = element.category || 'production'
+  elementForm.elementType = element.elementType || ''
+  elementForm.dimensions = element.dimensions || { length: '', width: '', height: '' }
+  elementForm.description = element.notes || ''
+  elementForm.materials = element.materials.map(material => ({
+    tempId: `edit-${material.id}`,
+    description: material.description,
+    unitOfMeasurement: material.unitOfMeasurement,
+    defaultQuantity: material.quantity,
+    isDefaultIncluded: material.isIncluded
+  }))
+}
+
+/**
+ * Close the add element type modal and reset form
+ */
+const closeAddElementTypeModal = () => {
+  showAddElementTypeModal.value = false
+  newElementType.name = ''
+  newElementType.category = ''
+  Object.keys(newElementTypeErrors).forEach(key => delete newElementTypeErrors[key])
+}
+
+/**
+ * Validate new element type form
+ */
+const validateNewElementType = (): boolean => {
+  Object.keys(newElementTypeErrors).forEach(key => delete newElementTypeErrors[key])
+  let isValid = true
+
+  if (!newElementType.name.trim()) {
+    newElementTypeErrors.name = 'Type name is required'
+    isValid = false
+  }
+
+  if (!newElementType.category) {
+    newElementTypeErrors.category = 'Category is required'
+    isValid = false
+  }
+
+  // Check if type already exists
+  const existingType = availableElementTypes.value.find(type => 
+    type.name.toLowerCase() === newElementType.name.toLowerCase().replace(/\s+/g, '-')
+  )
+  if (existingType) {
+    newElementTypeErrors.name = 'This element type already exists'
+    isValid = false
+  }
+
+  return isValid
+}
+
+/**
+ * Save new element type
+ */
+const saveNewElementType = () => {
+  if (!validateNewElementType()) {
+    return
+  }
+
+  const newType: ElementType = {
+    id: `custom-${Date.now()}`,
+    name: newElementType.name.toLowerCase().replace(/\s+/g, '-'),
+    displayName: newElementType.name,
+    category: newElementType.category
+  }
+
+  // Add to available types
+  availableElementTypes.value.push(newType)
+  
+  // Select the new type in the main form
+  elementForm.elementType = newType.name
+  
+  closeAddElementTypeModal()
+}
+
+// Watch for edit element changes
+watch(() => props.editElement, (newElement) => {
+  if (newElement && props.isOpen) {
+    loadElementForEdit(newElement)
+  }
+}, { immediate: true })
+
+// Watch for modal open/close
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen && !props.editElement) {
+    initializeForm()
   }
 })
+
+// Initialize form on component mount
+initializeForm()
 </script>

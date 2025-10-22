@@ -3,7 +3,6 @@
 namespace App\Modules\Projects\Services;
 
 use App\Models\ProjectEnquiry;
-use App\Models\EnquiryDepartmentalTask;
 use App\Modules\Projects\Models\EnquiryTask;
 use App\Modules\Projects\Models\Phase;
 use Illuminate\Support\Facades\DB;
@@ -71,23 +70,23 @@ class ProjectsDashboardService
      */
     public function getTaskMetrics(): array
     {
-        // Enquiry Tasks (basic workflow tasks)
+        // All tasks are now consolidated into EnquiryTask
         $enquiryTasks = EnquiryTask::select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
 
-        // Departmental Tasks
-        $departmentalTasks = EnquiryDepartmentalTask::select('status', DB::raw('count(*) as count'))
+        // Departmental tasks are now part of EnquiryTask
+        $departmentalTasks = EnquiryTask::select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
 
-        $overdueTasks = EnquiryDepartmentalTask::where('due_date', '<', Carbon::now())
+        $overdueTasks = EnquiryTask::where('due_date', '<', Carbon::now())
             ->whereIn('status', ['pending', 'in_progress'])
             ->count();
 
-        $tasksByDepartment = EnquiryDepartmentalTask::with('department')
+        $tasksByDepartment = EnquiryTask::with('department')
             ->select('department_id', DB::raw('count(*) as count'))
             ->groupBy('department_id')
             ->with('department')
@@ -157,10 +156,10 @@ class ProjectsDashboardService
      */
     private function calculateTaskCompletionRate(): float
     {
-        $totalTasks = EnquiryDepartmentalTask::count();
+        $totalTasks = EnquiryTask::count();
         if ($totalTasks === 0) return 0;
 
-        $completedTasks = EnquiryDepartmentalTask::where('status', 'completed')->count();
+        $completedTasks = EnquiryTask::where('status', 'completed')->count();
 
         return round(($completedTasks / $totalTasks) * 100, 2);
     }
@@ -236,7 +235,7 @@ class ProjectsDashboardService
             });
 
         // Recent task updates
-        $recentTasks = EnquiryDepartmentalTask::with(['enquiry.client', 'department'])
+        $recentTasks = EnquiryTask::with(['enquiry.client', 'department'])
             ->where('updated_at', '>', Carbon::now()->subDays(7))
             ->orderBy('updated_at', 'desc')
             ->limit($limit)
@@ -285,7 +284,7 @@ class ProjectsDashboardService
         $alerts = [];
 
         // Overdue tasks
-        $overdueTasks = EnquiryDepartmentalTask::with(['enquiry.client', 'department'])
+        $overdueTasks = EnquiryTask::with(['enquiry.client', 'department'])
             ->where('due_date', '<', Carbon::now())
             ->whereIn('status', ['pending', 'in_progress'])
             ->get()
@@ -300,7 +299,7 @@ class ProjectsDashboardService
             });
 
         // Upcoming deadlines (next 3 days)
-        $upcomingDeadlines = EnquiryDepartmentalTask::with(['enquiry.client', 'department'])
+        $upcomingDeadlines = EnquiryTask::with(['enquiry.client', 'department'])
             ->where('due_date', '>', Carbon::now())
             ->where('due_date', '<=', Carbon::now()->addDays(3))
             ->whereIn('status', ['pending', 'in_progress'])
@@ -476,13 +475,13 @@ class ProjectsDashboardService
             ->pluck('count', 'status')
             ->toArray();
 
-        $departmentalTasks = EnquiryDepartmentalTask::whereIn('enquiry_id', $enquiryIds)
+        $departmentalTasks = EnquiryTask::whereIn('project_enquiry_id', $enquiryIds)
             ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
 
-        $overdueTasks = EnquiryDepartmentalTask::whereIn('enquiry_id', $enquiryIds)
+        $overdueTasks = EnquiryTask::whereIn('project_enquiry_id', $enquiryIds)
             ->where('due_date', '<', Carbon::now())
             ->whereIn('status', ['pending', 'in_progress'])
             ->count();
@@ -529,10 +528,10 @@ class ProjectsDashboardService
      */
     private function calculateFilteredTaskCompletionRate(array $enquiryIds): float
     {
-        $totalTasks = EnquiryDepartmentalTask::whereIn('enquiry_id', $enquiryIds)->count();
+        $totalTasks = EnquiryTask::whereIn('project_enquiry_id', $enquiryIds)->count();
         if ($totalTasks === 0) return 0;
 
-        $completedTasks = EnquiryDepartmentalTask::whereIn('enquiry_id', $enquiryIds)
+        $completedTasks = EnquiryTask::whereIn('project_enquiry_id', $enquiryIds)
             ->where('status', 'completed')
             ->count();
 

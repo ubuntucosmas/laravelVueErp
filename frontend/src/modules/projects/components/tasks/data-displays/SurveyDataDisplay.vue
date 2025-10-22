@@ -1383,8 +1383,12 @@ const saveEdit = async (tab: keyof typeof isEditing) => {
     const surveyId = props.taskData.id as number
     const payload = {
       ...formData.value,
-      // Include updated_at for optimistic concurrency control
-      updated_at: props.taskData.updated_at
+      // Ensure action_items is properly formatted as an array
+      action_items: Array.isArray(formData.value.action_items)
+        ? formData.value.action_items
+        : formData.value.action_items
+          ? String(formData.value.action_items).split('\n').filter(item => item.trim())
+          : []
     }
 
     console.log('[DEBUG] SurveyDataDisplay.saveEdit - Making PATCH request:', {

@@ -2,7 +2,6 @@
 
 namespace App\Modules\Projects\Http\Controllers;
 
-use App\Models\EnquiryDepartmentalTask;
 use App\Modules\Projects\Models\EnquiryTask;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -14,6 +13,24 @@ use App\Modules\Projects\Services\NotificationService;
 use App\Models\TaskAssignmentHistory;
 use App\Constants\Permissions;
 
+/**
+ * @OA\Schema(
+ *     schema="EnquiryTask",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="title", type="string", example="Site Survey Task"),
+ *     @OA\Property(property="type", type="string", example="site-survey"),
+ *     @OA\Property(property="status", type="string", enum={"pending","in_progress","completed","cancelled"}, example="in_progress"),
+ *     @OA\Property(property="priority", type="string", enum={"low","medium","high","urgent"}, example="high"),
+ *     @OA\Property(property="project_enquiry_id", type="integer"),
+ *     @OA\Property(property="department_id", type="integer"),
+ *     @OA\Property(property="assigned_user_id", type="integer", nullable=true),
+ *     @OA\Property(property="assigned_by", type="integer", nullable=true),
+ *     @OA\Property(property="due_date", type="string", format="date", nullable=true),
+ *     @OA\Property(property="estimated_hours", type="number", format="float", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ */
 class TaskController extends Controller
 {
     protected EnquiryWorkflowService $workflowService;
@@ -26,7 +43,51 @@ class TaskController extends Controller
     }
 
     /**
-     * Get all enquiry tasks across all enquiries
+     * @OA\Get(
+     *     path="/api/projects/tasks",
+     *     summary="Get all enquiry tasks with filtering and search",
+     *     tags={"Tasks"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by task status",
+     *         @OA\Schema(type="string", enum={"pending","in_progress","completed","cancelled"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="priority",
+     *         in="query",
+     *         description="Filter by task priority",
+     *         @OA\Schema(type="string", enum={"low","medium","high","urgent"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="assigned_user_id",
+     *         in="query",
+     *         description="Filter by assigned user ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="enquiry_id",
+     *         in="query",
+     *         description="Filter by enquiry ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search by task title or enquiry title",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Tasks retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/EnquiryTask")),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
      */
     public function getAllEnquiryTasks(Request $request): JsonResponse
     {
@@ -81,7 +142,29 @@ class TaskController extends Controller
     }
 
     /**
-     * Get enquiry tasks for a specific enquiry
+     * @OA\Get(
+     *     path="/api/projects/enquiries/{enquiryId}/tasks",
+     *     summary="Get tasks for a specific enquiry",
+     *     tags={"Tasks"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="enquiryId",
+     *         in="path",
+     *         required=true,
+     *         description="Enquiry ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Enquiry tasks retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/EnquiryTask")),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Enquiry not found")
+     * )
      */
     public function getEnquiryTasks(int $enquiryId): JsonResponse
     {
@@ -125,7 +208,7 @@ class TaskController extends Controller
         }
 
         try {
-            $query = EnquiryDepartmentalTask::with('enquiry', 'department', 'assignedUser', 'creator');
+            $query = EnquiryTask::with('enquiry', 'department', 'assignedUser', 'creator');
 
             // Filter by enquiry if provided
             if ($request->has('enquiry_id')) {
@@ -166,7 +249,38 @@ class TaskController extends Controller
     }
 
     /**
-     * Update task status
+     * @OA\Put(
+     *     path="/api/projects/tasks/{taskId}/status",
+     *     summary="Update task status",
+     *     tags={"Tasks"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="taskId",
+     *         in="path",
+     *         required=true,
+     *         description="Task ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(property="status", type="string", enum={"pending","in_progress","completed","cancelled"}, example="completed"),
+     *             @OA\Property(property="notes", type="string", example="Task completed successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Task status updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/EnquiryTask"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Task not found"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
      */
     public function updateTaskStatus(Request $request, int $taskId): JsonResponse
     {
@@ -191,7 +305,7 @@ class TaskController extends Controller
         }
 
         try {
-            $task = EnquiryDepartmentalTask::findOrFail($taskId);
+            $task = EnquiryTask::findOrFail($taskId);
 
             // Check if task belongs to user's department
             $user = Auth::user();
@@ -246,7 +360,7 @@ class TaskController extends Controller
         }
 
         try {
-            $task = EnquiryDepartmentalTask::findOrFail($taskId);
+            $task = EnquiryTask::findOrFail($taskId);
 
             // Check if task belongs to user's department
             $user = Auth::user();
@@ -275,7 +389,29 @@ class TaskController extends Controller
     }
 
     /**
-     * Get task details
+     * @OA\Get(
+     *     path="/api/projects/tasks/{taskId}",
+     *     summary="Get task details",
+     *     tags={"Tasks"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="taskId",
+     *         in="path",
+     *         required=true,
+     *         description="Task ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Task details retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/EnquiryTask"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Task not found")
+     * )
      */
     public function show(int $taskId): JsonResponse
     {
@@ -288,7 +424,7 @@ class TaskController extends Controller
         }
 
         try {
-            $task = EnquiryDepartmentalTask::with('enquiry', 'department', 'assignedUser', 'creator')
+            $task = EnquiryTask::with('enquiry', 'department', 'assignedUser', 'creator')
                 ->findOrFail($taskId);
 
             // Check if task belongs to user's department
@@ -340,7 +476,7 @@ class TaskController extends Controller
         }
 
         try {
-            $task = EnquiryDepartmentalTask::findOrFail($taskId);
+            $task = EnquiryTask::findOrFail($taskId);
 
             // Check if task belongs to user's department
             $user = Auth::user();
@@ -371,7 +507,40 @@ class TaskController extends Controller
     }
 
     /**
-     * Assign task to user (for EnquiryTask)
+     * @OA\Post(
+     *     path="/api/projects/tasks/{taskId}/assign",
+     *     summary="Assign task to user",
+     *     tags={"Tasks"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="taskId",
+     *         in="path",
+     *         required=true,
+     *         description="Task ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"assigned_user_id"},
+     *             @OA\Property(property="assigned_user_id", type="integer", example=2),
+     *             @OA\Property(property="priority", type="string", enum={"low","medium","high","urgent"}, example="high"),
+     *             @OA\Property(property="due_date", type="string", format="date", example="2024-02-15"),
+     *             @OA\Property(property="notes", type="string", example="Please complete by end of week")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Task assigned successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/EnquiryTask"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized - Only Project Managers can assign tasks"),
+     *     @OA\Response(response=404, description="Task not found"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
      */
     public function assignEnquiryTask(Request $request, int $taskId): JsonResponse
     {
@@ -475,7 +644,38 @@ class TaskController extends Controller
     }
 
     /**
-     * Reassign task to a different user
+     * @OA\Post(
+     *     path="/api/projects/tasks/{taskId}/reassign",
+     *     summary="Reassign task to a different user",
+     *     tags={"Tasks"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="taskId",
+     *         in="path",
+     *         required=true,
+     *         description="Task ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"new_assigned_user_id"},
+     *             @OA\Property(property="new_assigned_user_id", type="integer", example=3),
+     *             @OA\Property(property="reason", type="string", example="Previous assignee is on leave")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Task reassigned successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/EnquiryTask"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized - Only Project Managers can reassign tasks"),
+     *     @OA\Response(response=404, description="Task not found"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
      */
     public function reassignEnquiryTask(Request $request, int $taskId): JsonResponse
     {
@@ -533,7 +733,39 @@ class TaskController extends Controller
     }
 
     /**
-     * Update enquiry task details
+     * @OA\Put(
+     *     path="/api/projects/tasks/{taskId}",
+     *     summary="Update task details",
+     *     tags={"Tasks"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="taskId",
+     *         in="path",
+     *         required=true,
+     *         description="Task ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="title", type="string", example="Updated Task Title"),
+     *             @OA\Property(property="priority", type="string", enum={"low","medium","high","urgent"}, example="urgent"),
+     *             @OA\Property(property="due_date", type="string", format="date", example="2024-02-20"),
+     *             @OA\Property(property="notes", type="string", example="Updated task notes"),
+     *             @OA\Property(property="status", type="string", enum={"pending","in_progress","completed"}, example="in_progress")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Task updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/EnquiryTask"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Task not found"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
      */
     public function updateEnquiryTask(Request $request, int $taskId): JsonResponse
     {
@@ -562,6 +794,7 @@ class TaskController extends Controller
 
         try {
             $task = EnquiryTask::findOrFail($taskId);
+            $user = Auth::user();
 
             $oldStatus = $task->status;
 

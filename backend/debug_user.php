@@ -29,7 +29,7 @@ foreach($tasks as $task) {
 }
 
 echo "\n=== DEPARTMENTAL TASKS ===\n";
-$deptTasks = DB::table('enquiry_departmental_tasks')->select('id', 'project_enquiry_id', 'department_id', 'status', 'assigned_user_id')->get();
+$deptTasks = DB::table('enquiry_tasks')->select('id', 'project_enquiry_id', 'department_id', 'status', 'assigned_user_id', 'title')->get();
 foreach($deptTasks as $task) {
     echo $task->id . ': Enquiry: ' . $task->project_enquiry_id . ' - Dept: ' . $task->department_id . ' - Status: ' . $task->status . ' - Assigned: ' . ($task->assigned_user_id ?? 'None') . "\n";
 }

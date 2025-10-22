@@ -32,16 +32,38 @@
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
               Completed
             </span>
+            <button
+              v-if="taskData"
+              @click="toggleEditMode"
+              class="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              Edit
+            </button>
           </div>
         </div>
       </div>
 
       <!-- Dynamic Data Display based on task type -->
       <component
+        v-if="!isEditMode"
         :is="getDataComponent(task.type)"
         :task="task"
         :task-data="taskData"
         :enquiry-id="task.project_enquiry_id"
+        @update:taskData="handleTaskDataUpdate"
+      />
+
+      <!-- Editable form when in edit mode -->
+      <component
+        v-else
+        :is="getEditableComponent(task.type)"
+        :task="task"
+        :readonly="false"
+        @update-status="$emit('update-status', $event)"
+        @complete="$emit('complete')"
       />
     </div>
 
@@ -86,9 +108,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const taskData = ref<Record<string, unknown> | null>(null)
+const taskData = ref<Record<string, unknown> | Record<string, unknown>[] | null>(null)
 const isLoading = ref(false)
 const error = ref('')
+const isEditMode = ref(false)
 
 // Map task types to their data display components
 const dataDisplayComponents = {
@@ -109,26 +132,46 @@ const dataDisplayComponents = {
   // Add more task types here as needed
 }
 
+// Map task types to their editable components
+const editableComponents = {
+  'site-survey': () => import('./SurveyTask.vue'),
+  'design': () => import('./DesignTask.vue'),
+  // Add more task types here as needed
+}
+
 // Get the appropriate component for the task type
 const getDataComponent = (taskKey?: string) => {
-  if (!taskKey) return DefaultDataDisplay
-  return dataDisplayComponents[taskKey as keyof typeof dataDisplayComponents] || DefaultDataDisplay
+  if (!taskKey) {
+    console.log('TaskDataViewer: No task key provided, using DefaultDataDisplay')
+    return DefaultDataDisplay
+  }
+
+  const component = dataDisplayComponents[taskKey as keyof typeof dataDisplayComponents]
+  if (!component) {
+    console.warn('TaskDataViewer: No component found for task type:', taskKey, '- available types:', Object.keys(dataDisplayComponents), '- using DefaultDataDisplay')
+    return DefaultDataDisplay
+  }
+
+  console.log('TaskDataViewer: Using component for task type:', taskKey, '- component:', component.name || 'unnamed')
+  return component
+}
+
+// Get the appropriate editable component for the task type
+const getEditableComponent = async (taskKey?: string) => {
+  if (!taskKey) return null
+  const componentImport = editableComponents[taskKey as keyof typeof editableComponents]
+  if (componentImport) {
+    const module = await componentImport()
+    return module.default
+  }
+  return null
 }
 
 // Fetch task data based on task type
 const fetchTaskData = async () => {
-  console.log('[DEBUG] TaskDataViewer.fetchTaskData - STARTING DATA FETCH')
-  console.log('[DEBUG] TaskDataViewer.fetchTaskData - Task verification:', {
-    taskExists: !!props.task,
-    taskId: props.task?.id,
-    taskType: props.task?.type,
-    taskStatus: props.task?.status,
-    projectEnquiryId: props.task?.project_enquiry_id,
-    isCompleted: props.task?.status === 'completed'
-  })
+  console.log('TaskDataViewer: Starting data fetch for task', props.task?.id, 'with type:', props.task?.type)
 
   if (!props.task?.id) {
-    console.log('[DEBUG] TaskDataViewer.fetchTaskData - NO TASK ID, SKIPPING')
     return
   }
 
@@ -137,98 +180,80 @@ const fetchTaskData = async () => {
 
   try {
     const taskKey = props.task.type
-    console.log('[DEBUG] TaskDataViewer.fetchTaskData - Task key determined:', taskKey)
-
     if (!taskKey) {
-      console.error('[DEBUG] TaskDataViewer.fetchTaskData - ERROR: Task type not defined')
       throw new Error('Task type not defined')
     }
 
+    console.log('TaskDataViewer: Task key determined as:', taskKey)
+    console.log('TaskDataViewer: Available data display components:', Object.keys(dataDisplayComponents))
+
     let endpoint = ''
-    console.log('[DEBUG] TaskDataViewer.fetchTaskData - Determining endpoint for task type:', taskKey)
 
     // Define endpoints for different task types
     switch (taskKey) {
       case 'site-survey':
         endpoint = `/api/projects/site-surveys?enquiry_task_id=${props.task.id}`
-        console.log('[DEBUG] TaskDataViewer.fetchTaskData - Using site-survey endpoint:', endpoint)
+        break
+      case 'materials':
+        endpoint = `/api/projects/materials-requests?task_id=${props.task.id}`
+        console.log('TaskDataViewer: Materials task endpoint:', endpoint)
         break
       case 'materials-request':
         endpoint = `/api/projects/materials-requests?task_id=${props.task.id}`
-        console.log('[DEBUG] TaskDataViewer.fetchTaskData - Using materials-request endpoint:', endpoint)
+        console.log('TaskDataViewer: Materials-request task endpoint:', endpoint)
+        break
+      case 'design':
+        endpoint = `/api/projects/enquiry-tasks/${props.task.id}/design-assets`
+        console.log('TaskDataViewer: Design task endpoint:', endpoint)
         break
       // Add more task types here
       default:
-        console.error('[DEBUG] TaskDataViewer.fetchTaskData - ERROR: No endpoint for task type:', taskKey)
+        console.warn('TaskDataViewer: No specific endpoint for task type:', taskKey, '- will use default display')
         throw new Error(`Data display not implemented for task type: ${taskKey}`)
     }
 
-    console.log('[DEBUG] TaskDataViewer.fetchTaskData - Final endpoint to call:', endpoint)
-    console.log('[DEBUG] TaskDataViewer.fetchTaskData - Making API request...')
-
     const response = await api.get(endpoint)
 
-    console.log('[DEBUG] TaskDataViewer.fetchTaskData - API Response received:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers,
-      dataType: typeof response.data,
-      isArray: Array.isArray(response.data),
-      dataLength: Array.isArray(response.data) ? response.data.length : 'N/A',
-      dataKeys: response.data && typeof response.data === 'object' ? Object.keys(response.data) : 'N/A',
-      fullData: response.data
-    })
+    console.log('TaskDataViewer: API response for task type', taskKey, ':', response.data)
+    console.log('TaskDataViewer: Response data type:', typeof response.data, 'isArray:', Array.isArray(response.data))
 
-    if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-      taskData.value = response.data[0] // Usually the first/most recent record
-      console.log('[DEBUG] TaskDataViewer.fetchTaskData - SUCCESS: Task data set from array:', {
-        dataIndex: 0,
-        dataKeys: taskData.value ? Object.keys(taskData.value) : [],
-        sampleData: taskData.value ? {
-          id: (taskData.value as any).id,
-          site_visit_date: (taskData.value as any).site_visit_date,
-          client_name: (taskData.value as any).client_name,
-          location: (taskData.value as any).location
-        } : null
-      })
+    if (response.data && typeof response.data === 'object' && 'data' in response.data && Array.isArray((response.data as Record<string, unknown>).data)) {
+      // Handle paginated response (like design assets API)
+      const paginatedData = (response.data as Record<string, unknown>).data as Record<string, unknown>[]
+      if (paginatedData.length > 0) {
+        taskData.value = paginatedData // Full array of design assets
+        console.log('TaskDataViewer: Set taskData to paginated data array:', taskData.value)
+      } else {
+        taskData.value = null
+        console.log('TaskDataViewer: Set taskData to null (empty paginated response)')
+      }
+    } else if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+      // Handle direct array response
+      if (taskKey === 'site-survey') {
+        // Site survey expects a single object, not an array
+        taskData.value = response.data[0] as Record<string, unknown>
+        console.log('TaskDataViewer: Set taskData to first item of array for site-survey:', taskData.value)
+      } else {
+        taskData.value = response.data as Record<string, unknown>[] // Full array for other types
+        console.log('TaskDataViewer: Set taskData to array:', taskData.value)
+      }
     } else if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
       // Handle single object response
       taskData.value = response.data
-      console.log('[DEBUG] TaskDataViewer.fetchTaskData - SUCCESS: Task data set from single object:', {
-        dataKeys: taskData.value ? Object.keys(taskData.value) : [],
-        sampleData: taskData.value ? {
-          id: (taskData.value as any).id,
-          site_visit_date: (taskData.value as any).site_visit_date,
-          client_name: (taskData.value as any).client_name,
-          location: (taskData.value as any).location
-        } : null
-      })
+      console.log('TaskDataViewer: Set taskData to object:', taskData.value)
     } else {
       taskData.value = null
-      console.log('[DEBUG] TaskDataViewer.fetchTaskData - NO DATA FOUND: Response data is empty or invalid:', {
-        responseData: response.data,
-        isEmptyArray: Array.isArray(response.data) && response.data.length === 0,
-        isNullOrUndefined: response.data == null
-      })
+      console.log('TaskDataViewer: Set taskData to null')
     }
   } catch (err: unknown) {
-    console.error('[DEBUG] TaskDataViewer.fetchTaskData - ERROR during data fetch:', err)
     const errorObj = err as { response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> }; statusText?: string }; message?: string }
-    console.error('[DEBUG] TaskDataViewer.fetchTaskData - Error details:', {
-      status: errorObj.response?.status,
-      statusText: errorObj.response?.statusText,
-      responseData: errorObj.response?.data,
-      message: errorObj.message
-    })
 
     const errorMessage = errorObj.response?.data?.message ||
-                         (errorObj.response?.data?.errors ? Object.values(errorObj.response.data.errors).flat().join(', ') : null) ||
-                         errorObj.message ||
-                         'Failed to load task data'
+                          (errorObj.response?.data?.errors ? Object.values(errorObj.response.data.errors).flat().join(', ') : null) ||
+                          errorObj.message ||
+                          'Failed to load task data'
     error.value = errorMessage
-    console.error('[DEBUG] TaskDataViewer.fetchTaskData - Final error message set:', errorMessage)
   } finally {
-    console.log('[DEBUG] TaskDataViewer.fetchTaskData - COMPLETED - Setting loading to false')
     isLoading.value = false
   }
 }
@@ -244,42 +269,33 @@ const formatDate = (dateString: string) => {
 }
 
 // Watch for task changes
-watch(() => props.task?.id, (newTaskId, oldTaskId) => {
-  console.log('[DEBUG] TaskDataViewer.watch(task.id) - TASK ID CHANGED:', {
-    oldTaskId: oldTaskId,
-    newTaskId: newTaskId,
-    taskStatus: props.task?.status,
-    taskType: props.task?.type,
-    projectEnquiryId: props.task?.project_enquiry_id,
-    isCompleted: props.task?.status === 'completed'
-  })
-
+watch(() => props.task?.id, () => {
   if (props.task?.status === 'completed') {
-    console.log('[DEBUG] TaskDataViewer.watch(task.id) - Task is completed, fetching data...')
     fetchTaskData()
   } else {
-    console.log('[DEBUG] TaskDataViewer.watch(task.id) - Task not completed, clearing data')
     taskData.value = null
   }
 }, { immediate: true })
 
-// Watch for task status changes
-watch(() => props.task?.status, (newStatus, oldStatus) => {
-  console.log('[DEBUG] TaskDataViewer.watch(task.status) - TASK STATUS CHANGED:', {
-    oldStatus: oldStatus,
-    newStatus: newStatus,
-    taskId: props.task?.id,
-    taskType: props.task?.type,
-    projectEnquiryId: props.task?.project_enquiry_id,
-    isCompleted: newStatus === 'completed'
-  })
+// Handle task data updates from child components
+const handleTaskDataUpdate = (updatedData: Record<string, unknown>) => {
+  taskData.value = updatedData
+}
 
+// Toggle edit mode
+const toggleEditMode = () => {
+  isEditMode.value = !isEditMode.value
+}
+
+// Watch for task status changes
+watch(() => props.task?.status, (newStatus) => {
   if (newStatus === 'completed') {
-    console.log('[DEBUG] TaskDataViewer.watch(task.status) - Status changed to completed, fetching data...')
     fetchTaskData()
+    // Reset edit mode when task status changes
+    isEditMode.value = false
   } else {
-    console.log('[DEBUG] TaskDataViewer.watch(task.status) - Status not completed, clearing data')
     taskData.value = null
+    isEditMode.value = false
   }
 })
 </script>

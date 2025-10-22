@@ -24,49 +24,10 @@ export interface ProjectEnquiry {
   quote_approved_by?: number;
   estimated_budget?: number;
   created_by: number;
-  // Design data from Design & Concept Development task
-  designData?: {
-    project_type: string;
-    brand_name?: string;
-    logo_provided?: boolean;
-    primary_color?: string;
-    secondary_color?: string;
-    accent_colors?: string;
-    typography?: string;
-    brand_guidelines?: string;
-    stage_type?: string;
-    stage_dimensions?: string;
-    stage_height?: string;
-    stage_material?: string;
-    lighting_requirements?: string;
-    backdrop_design?: string;
-    flooring_type?: string;
-    booth_type?: string;
-    booth_size?: string;
-    booth_height?: string;
-    booth_configuration?: string;
-    display_elements?: string;
-    interactive_elements?: string;
-    signage_types?: string[];
-    banner_sizes?: string;
-    digital_signage?: boolean;
-    custom_badges?: boolean;
-    directional_signs?: boolean;
-    materials_list?: string;
-    fabrication_notes?: string;
-    assembly_requirements?: string;
-    transportation_notes?: string;
-    weight_limitations?: string;
-    design_style?: string;
-    requirements?: string;
-    references?: string;
-    notes?: string;
-  };
   // Relations
   client?: {
     id: number;
     full_name: string;
-    FullName?: string;
   };
   department?: {
     id: number;
@@ -98,16 +59,22 @@ export interface TaskAssignmentHistory {
 
 export interface EnquiryTask {
   id: number;
-  enquiry_id: number;
-  project_enquiry_id?: number;
+  project_enquiry_id: number;
   department_id?: number;
   title: string;
+  task_description?: string;
   type: string;
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   priority?: 'low' | 'medium' | 'high' | 'urgent';
+  estimated_hours?: number;
+  actual_hours?: number;
   due_date?: string;
-  assigned_at?: string;
+  started_at?: string;
+  completed_at?: string;
+  submitted_at?: string;
   notes?: string;
+  task_order?: number;
+  assigned_user_id?: number;
   created_by: number;
   created_at: string;
   updated_at: string;
@@ -120,7 +87,12 @@ export interface EnquiryTask {
     id: number;
     name: string;
   };
-  // Note: API returns relationship objects under snake_case keys
+  assignedUser?: {
+    id: number;
+    name: string;
+  };
+  // Backward compatibility fields
+  assigned_at?: string;
   assigned_by?: {
     id: number;
     name: string;
@@ -258,7 +230,8 @@ export interface CreateSiteSurveyData {
   client_approval_date?: string;
 }
 
-export interface UpdateSiteSurveyData extends Partial<CreateSiteSurveyData> {}
+// Consolidated task interface - now all tasks use the same structure
+export type UpdateSiteSurveyData = Partial<CreateSiteSurveyData>
 
 export interface DashboardMetrics {
   enquiry_metrics: {
@@ -269,11 +242,12 @@ export interface DashboardMetrics {
     department_distribution: Record<string, number>;
   };
   task_metrics: {
-    enquiry_tasks: Record<string, number>;
-    departmental_tasks: Record<string, number>;
+    // Consolidated task metrics - all tasks now use the same system
+    tasks: Record<string, number>;
     total_tasks: number;
     overdue_tasks: number;
     tasks_by_department: Record<string, number>;
+    tasks_by_type: Record<string, number>;
     completion_rate: number;
   };
   project_metrics: {

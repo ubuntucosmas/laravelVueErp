@@ -2,7 +2,7 @@
 
 namespace App\Modules\Projects\Http\Controllers;
 
-use App\Models\EnquiryDepartmentalTask;
+use App\Modules\Projects\Models\EnquiryTask;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -13,7 +13,7 @@ class PhaseDepartmentalTaskController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = EnquiryDepartmentalTask::with('enquiry', 'department', 'assignedUser');
+        $query = EnquiryTask::with('enquiry', 'department', 'assignedUser');
 
         // Filter by enquiry if provided
         if ($request->has('enquiry_id')) {
@@ -57,7 +57,7 @@ class PhaseDepartmentalTaskController extends Controller
             ], 422);
         }
 
-        $task = EnquiryDepartmentalTask::create([
+        $task = EnquiryTask::create([
             'project_enquiry_id' => $request->project_enquiry_id,
             'department_id' => $request->department_id,
             'task_name' => $request->task_name,
@@ -75,7 +75,7 @@ class PhaseDepartmentalTaskController extends Controller
         ], 201);
     }
 
-    public function show(EnquiryDepartmentalTask $task): JsonResponse
+    public function show(EnquiryTask $task): JsonResponse
     {
         return response()->json([
             'data' => $task->load('enquiry', 'department', 'assignedUser'),
@@ -83,7 +83,7 @@ class PhaseDepartmentalTaskController extends Controller
         ]);
     }
 
-    public function update(Request $request, EnquiryDepartmentalTask $task): JsonResponse
+    public function update(Request $request, EnquiryTask $task): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'task_name' => 'sometimes|required|string|max:255',
@@ -116,7 +116,7 @@ class PhaseDepartmentalTaskController extends Controller
         ]);
     }
 
-    public function destroy(EnquiryDepartmentalTask $task): JsonResponse
+    public function destroy(EnquiryTask $task): JsonResponse
     {
         $task->delete();
 
@@ -125,7 +125,7 @@ class PhaseDepartmentalTaskController extends Controller
         ]);
     }
 
-    public function performAction(Request $request, EnquiryDepartmentalTask $task): JsonResponse
+    public function performAction(Request $request, EnquiryTask $task): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'action' => 'required|string|in:start,complete,cancel,reassign',
@@ -173,7 +173,7 @@ class PhaseDepartmentalTaskController extends Controller
 
     public function getStats(Request $request): JsonResponse
     {
-        $query = EnquiryDepartmentalTask::query();
+        $query = EnquiryTask::query();
 
         if ($request->has('enquiry_id')) {
             $query->where('project_enquiry_id', $request->enquiry_id);

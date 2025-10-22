@@ -429,12 +429,22 @@ const closeTaskModal = () => {
 const handleTaskModalStatusUpdate = async (status: EnquiryTask['status']) => {
   if (selectedTask.value) {
     await updateTaskStatus(selectedTask.value, status)
+    // Update the selectedTask to reflect the new status
+    selectedTask.value = { ...selectedTask.value, status }
+
+    // Also update the task in the main tasks list
+    const taskIndex = enquiryTasks.value.findIndex(t => t.id === selectedTask.value!.id)
+    if (taskIndex > -1) {
+      enquiryTasks.value[taskIndex] = { ...enquiryTasks.value[taskIndex], status }
+    }
   }
 }
 
-const handleTaskModalComplete = () => {
+const handleTaskModalComplete = async () => {
   if (selectedTask.value) {
-    updateTaskStatus(selectedTask.value, 'completed')
+    await updateTaskStatus(selectedTask.value, 'completed')
+    // Update the selectedTask to reflect the new status
+    selectedTask.value = { ...selectedTask.value, status: 'completed' }
   }
   closeTaskModal()
 }

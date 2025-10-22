@@ -42,8 +42,12 @@ const permissions = ref<UserPermissionList | null>(null)
 export function useAuth() {
 
   const login = async (email: string, password: string) => {
+    console.log('Login attempt started for email:', email)
     try {
+      console.log('Sending login request to /api/login')
       const response = await api.post('/api/login', { email, password })
+      console.log('Login response status:', response.status)
+      console.log('Login response data:', response.data)
       if (response.status === 200 && response.data.token) {
         setAuthToken(response.data.token)
         console.log('Auth token stored in localStorage')
@@ -52,12 +56,16 @@ export function useAuth() {
         localStorage.setItem('isLoggedIn', 'true')
         console.log('Login successful, user authenticated')
         return true
+      } else {
+        console.log('Login failed: No token in response or status not 200')
+        return false
       }
     } catch (error) {
-      console.error('Login failed:', error)
+      console.error('Login failed with error:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
       throw error
     }
-    return false
   }
 
   const register = async (name: string, email: string, password: string, password_confirmation?: string) => {

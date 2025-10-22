@@ -1,11 +1,19 @@
 <template>
   <div class="task-renderer">
+    <!-- Show TaskDataViewer for completed tasks -->
+    <TaskDataViewer
+      v-if="task.status === 'completed'"
+      :task="task"
+    />
+    <!-- Show editable task form for incomplete tasks -->
     <component
+      v-else
       :is="taskComponent"
       :task="task"
-      :readonly="task.status === 'completed'"
+      :readonly="false"
       @update-status="handleStatusUpdate"
       @complete="handleComplete"
+      @save-design-data="handleSaveDesignData"
     />
   </div>
 </template>
@@ -13,6 +21,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { EnquiryTask } from '../../types/enquiry'
+import TaskDataViewer from './TaskDataViewer.vue'
 import SurveyTask from './SurveyTask.vue'
 import DesignTask from './DesignTask.vue'
 import MaterialsTask from './MaterialsTask.vue'
@@ -38,6 +47,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'update-status': [status: EnquiryTask['status']]
   'complete': []
+  'save-design-data': [data: DesignAsset[]]
 }>()
 
 const taskComponent = computed(() => {
@@ -81,5 +91,9 @@ const handleStatusUpdate = (status: EnquiryTask['status']) => {
 
 const handleComplete = () => {
   emit('complete')
+}
+
+const handleSaveDesignData = (data: any[]) => {
+  emit('save-design-data', data)
 }
 </script>

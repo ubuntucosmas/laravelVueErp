@@ -3,7 +3,6 @@
 namespace App\Modules\Projects\Services;
 
 use App\Models\ProjectEnquiry;
-use App\Models\EnquiryDepartmentalTask;
 use App\Modules\Projects\Models\EnquiryTask;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -46,7 +45,7 @@ class ProjectsReportingService
      */
     public function generateTaskAnalytics(array $filters = []): array
     {
-        $query = EnquiryDepartmentalTask::query();
+        $query = EnquiryTask::query();
 
         // Apply date filters
         if (isset($filters['start_date'])) {
@@ -247,7 +246,7 @@ class ProjectsReportingService
         $startDate = $filters['start_date'] ?? Carbon::now()->subMonths(6);
         $endDate = $filters['end_date'] ?? Carbon::now();
 
-        $trends = EnquiryDepartmentalTask::select(
+        $trends = EnquiryTask::select(
                 DB::raw('DATE_FORMAT(completed_at, "%Y-%m") as month'),
                 DB::raw('count(*) as completed_count')
             )
