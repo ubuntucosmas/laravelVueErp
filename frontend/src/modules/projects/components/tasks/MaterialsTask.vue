@@ -1,6 +1,30 @@
 <template>
   <div class="materials-task-content">
-    <!-- Project Header Section -->
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center py-12">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <span class="ml-2 text-gray-600 dark:text-gray-400">Loading materials data...</span>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <svg class="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span class="text-red-800 dark:text-red-200">{{ error }}</span>
+      </div>
+      <button
+        @click="loadMaterialsData"
+        class="mt-2 px-3 py-1 bg-red-100 hover:bg-red-200 dark:bg-red-800 dark:hover:bg-red-700 text-red-800 dark:text-red-200 rounded text-sm transition-colors"
+      >
+        Retry
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div v-else>
+      <!-- Project Header Section -->
     <div class="mb-6">
       <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         Materials Task - {{ task.title }}
@@ -413,13 +437,15 @@
       @add-element="addElement"
       @update-element="updateElement"
     />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import type { EnquiryTask } from '../../types/enquiry'
 import MaterialsModal from '../MaterialsModal.vue'
+import { MaterialsService } from '../../services/materialsService'
 
 /**
  * Props interface for the MaterialsTask component
@@ -433,17 +459,15 @@ interface Props {
  * Events emitted by the MaterialsTask component
  */
 interface Emits {
-  /** Emitted when task status needs to be updated */
-  'update-status': [status: EnquiryTask['status']]
-  /** Emitted when materials data is saved */
-  'save-materials': [data: MaterialsTaskData]
+   /** Emitted when task status needs to be updated */
+   'update-status': [status: EnquiryTask['status']]
 }
 
 /**
  * Core data structure for materials task management
  * Contains project information, elements list, and available element templates
  */
-interface MaterialsTaskData {
+interface MaterialsTaskDataLocal {
   /** Project header information */
   projectInfo: ProjectInfo
   /** List of project elements (Stage, Backdrop, etc.) */
@@ -562,89 +586,10 @@ interface MaterialTemplate {
   defaultQuantity: number
   /** Whether this material is typically included by default */
   isDefaultIncluded: boolean
-  /** Default material category for sourcing classification */
-  defaultMaterialCategory: 'production' | 'hire' | 'outsourced'
   /** Sort order within the element */
   order: number
 }
 
-/**
- * Default element templates available for projects
- * These templates define the main elements that can be included in projects
- */
-const DEFAULT_ELEMENT_TEMPLATES: ElementTemplate[] = [
-  {
-    id: 'stage',
-    name: 'stage',
-    displayName: 'STAGE',
-    description: 'Main stage structure and components',
-    category: 'structure',
-    color: 'green',
-    order: 1,
-    defaultMaterials: [
-      { id: 'stage-boards', description: 'Stage Boards', unitOfMeasurement: 'Pcs', defaultQuantity: 8, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 1 },
-      { id: 'stage-legs', description: 'Stage Legs', unitOfMeasurement: 'Pcs', defaultQuantity: 16, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 2 },
-      { id: 'stage-screws', description: 'Stage Screws', unitOfMeasurement: 'Pcs', defaultQuantity: 32, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 3 },
-      { id: 'stage-brackets', description: 'Stage Brackets', unitOfMeasurement: 'Pcs', defaultQuantity: 8, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 4 }
-    ]
-  },
-  {
-    id: 'stage-skirting',
-    name: 'stage-skirting',
-    displayName: 'STAGE SKIRTING',
-    description: 'Stage skirting and decorative elements',
-    category: 'decoration',
-    color: 'blue',
-    order: 2,
-    defaultMaterials: [
-      { id: 'skirting-fabric', description: 'Skirting Fabric', unitOfMeasurement: 'Mtrs', defaultQuantity: 12, isDefaultIncluded: true, defaultMaterialCategory: 'hire', order: 1 },
-      { id: 'skirting-clips', description: 'Skirting Clips', unitOfMeasurement: 'Pcs', defaultQuantity: 24, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 2 },
-      { id: 'velcro-strips', description: 'Velcro Strips', unitOfMeasurement: 'Mtrs', defaultQuantity: 6, isDefaultIncluded: false, defaultMaterialCategory: 'outsourced', order: 3 }
-    ]
-  },
-  {
-    id: 'stage-backdrop',
-    name: 'stage-backdrop',
-    displayName: 'STAGE BACKDROP',
-    description: 'Backdrop structure and materials',
-    category: 'decoration',
-    color: 'purple',
-    order: 3,
-    defaultMaterials: [
-      { id: 'backdrop-frame', description: 'Backdrop Frame', unitOfMeasurement: 'Pcs', defaultQuantity: 1, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 1 },
-      { id: 'backdrop-fabric', description: 'Backdrop Fabric', unitOfMeasurement: 'sqm', defaultQuantity: 20, isDefaultIncluded: true, defaultMaterialCategory: 'hire', order: 2 },
-      { id: 'backdrop-weights', description: 'Backdrop Weights', unitOfMeasurement: 'Pcs', defaultQuantity: 4, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 3 }
-    ]
-  },
-  {
-    id: 'entrance-arc',
-    name: 'entrance-arc',
-    displayName: 'ENTRANCE ARC',
-    description: 'Entrance archway and decorations',
-    category: 'decoration',
-    color: 'orange',
-    order: 4,
-    defaultMaterials: [
-      { id: 'arc-frame', description: 'Arc Frame', unitOfMeasurement: 'Pcs', defaultQuantity: 1, isDefaultIncluded: true, defaultMaterialCategory: 'production', order: 1 },
-      { id: 'arc-flowers', description: 'Decorative Flowers', unitOfMeasurement: 'Pcs', defaultQuantity: 50, isDefaultIncluded: false, defaultMaterialCategory: 'outsourced', order: 2 },
-      { id: 'arc-fabric', description: 'Arc Fabric Draping', unitOfMeasurement: 'Mtrs', defaultQuantity: 8, isDefaultIncluded: true, defaultMaterialCategory: 'hire', order: 3 }
-    ]
-  },
-  {
-    id: 'walkway-dance-floor',
-    name: 'walkway-dance-floor',
-    displayName: 'WALKWAY AND DANCE FLOOR',
-    description: 'Walkway and dance floor components',
-    category: 'flooring',
-    color: 'teal',
-    order: 5,
-    defaultMaterials: [
-      { id: 'dance-floor-panels', description: 'Dance Floor Panels', unitOfMeasurement: 'sqm', defaultQuantity: 36, isDefaultIncluded: true, defaultMaterialCategory: 'hire', order: 1 },
-      { id: 'walkway-carpet', description: 'Walkway Carpet', unitOfMeasurement: 'Mtrs', defaultQuantity: 15, isDefaultIncluded: true, defaultMaterialCategory: 'hire', order: 2 },
-      { id: 'floor-tape', description: 'Floor Marking Tape', unitOfMeasurement: 'Mtrs', defaultQuantity: 20, isDefaultIncluded: false, defaultMaterialCategory: 'outsourced', order: 3 }
-    ]
-  }
-]
 
 /**
  * Common units of measurement available for materials
@@ -670,9 +615,9 @@ const initializeProjectInfo = (): ProjectInfo => {
   const enquiry = props.task.enquiry
 
   return {
-    projectId: enquiry?.enquiry_number || `ENQ-${props.task.enquiry_id}`,
+    projectId: enquiry?.enquiry_number || `ENQ-${props.task.id}`,
     enquiryTitle: enquiry?.title || 'Untitled Project',
-    clientName: enquiry?.client?.full_name || enquiry?.client?.FullName || enquiry?.contact_person || 'Unknown Client',
+    clientName: enquiry?.client?.full_name || enquiry?.contact_person || 'Unknown Client',
     eventVenue: enquiry?.venue || 'Venue TBC',
     setupDate: enquiry?.expected_delivery_date || 'Date TBC',
     setDownDate: 'TBC'
@@ -680,44 +625,41 @@ const initializeProjectInfo = (): ProjectInfo => {
 }
 
 /**
- * Initialize project elements from available templates
- * Creates project elements based on templates with default materials
+ * Load materials data from backend
  */
-const initializeProjectElements = (): ProjectElement[] => {
-  return DEFAULT_ELEMENT_TEMPLATES.map(template => ({
-    id: `${template.id}-${Date.now()}`,
-    templateId: template.id,
-    elementType: template.name,
-    name: template.displayName,
-    category: 'production' as 'production' | 'hire' | 'outsourced', // Default category
-    dimensions: {
-      length: '',
-      width: '',
-      height: ''
-    },
-    isIncluded: true, // Default to included, can be toggled
-    materials: template.defaultMaterials.map(materialTemplate => ({
-      id: `${materialTemplate.id}-${Date.now()}`,
-      description: materialTemplate.description,
-      unitOfMeasurement: materialTemplate.unitOfMeasurement,
-      quantity: materialTemplate.defaultQuantity,
-      isIncluded: materialTemplate.isDefaultIncluded,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    })),
-    addedAt: new Date()
-  }))
+const loadMaterialsData = async () => {
+  try {
+    error.value = null
+    isLoading.value = true
+    const data = await MaterialsService.getMaterialsData(props.task.id)
+    Object.assign(materialsData, data)
+    initializeCollapsedState()
+  } catch (err: any) {
+    error.value = err.response?.data?.message || 'Failed to load materials data'
+    console.error('Failed to load materials data:', err)
+    // Keep existing project info but clear elements - no dummy data fallback
+    materialsData.projectElements = []
+    materialsData.availableElements = []
+  } finally {
+    isLoading.value = false
+  }
 }
 
 /**
  * Reactive materials data structure
- * Initialized with auto-populated project info and default elements
+ * Will be loaded from backend or initialized with project info only
  */
-const materialsData = reactive<MaterialsTaskData>({
+const materialsData = reactive<MaterialsTaskDataLocal>({
   projectInfo: initializeProjectInfo(),
-  projectElements: initializeProjectElements(),
-  availableElements: [...DEFAULT_ELEMENT_TEMPLATES]
+  projectElements: [],
+  availableElements: []
 })
+
+// Loading and error states
+const isLoading = ref(true)
+const isSaving = ref(false)
+const error = ref<string | null>(null)
+const lastSaved = ref<Date | null>(null)
 
 /**
  * Watch for changes in the task prop and update project info accordingly
@@ -740,10 +682,6 @@ const editingElement = ref<ProjectElement | null>(null)
 // View modal state
 const isViewModalOpen = ref(false)
 
-// Save state
-const isSaving = ref(false)
-const lastSaved = ref<Date | null>(null)
-
 // Collapsed state for elements (initialize with all elements collapsed)
 const collapsedElements = ref<Set<string>>(new Set())
 
@@ -757,6 +695,11 @@ const initializeCollapsedState = () => {
 
 // Initialize all elements as collapsed by default
 initializeCollapsedState()
+
+// Load data on component mount
+onMounted(() => {
+  loadMaterialsData()
+})
 
 /**
  * Open the modal for adding a new element
@@ -830,7 +773,8 @@ const addElement = (element: ProjectElement) => {
   materialsData.projectElements.push(element)
   // Collapse new element by default
   collapsedElements.value.add(element.id)
-  emit('save-materials', materialsData)
+  // Auto-save to backend when element is added
+  saveMaterialsList()
 }
 
 /**
@@ -840,7 +784,8 @@ const updateElement = (updatedElement: ProjectElement) => {
   const index = materialsData.projectElements.findIndex(el => el.id === updatedElement.id)
   if (index !== -1) {
     materialsData.projectElements[index] = updatedElement
-    emit('save-materials', materialsData)
+    // Auto-save to backend when element is updated
+    saveMaterialsList()
   }
 }
 
@@ -850,20 +795,87 @@ const updateElement = (updatedElement: ProjectElement) => {
 const saveMaterialsList = async () => {
   isSaving.value = true
   try {
-    // Simulate API call - replace with actual API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    error.value = null
 
-    emit('save-materials', materialsData)
+    // Validate data before submission
+    if (!validateMaterialsData()) {
+      return
+    }
+
+    const savedData = await MaterialsService.saveMaterialsData(props.task.id, materialsData)
+    Object.assign(materialsData, savedData)
     lastSaved.value = new Date()
-
-    // You could add a toast notification here
     console.log('Materials list saved successfully')
-  } catch (error) {
-    console.error('Failed to save materials list:', error)
-    // You could add error handling/toast notification here
+  } catch (err: any) {
+    // Handle different types of errors
+    if (err.response?.status === 422) {
+      // Validation errors from backend
+      error.value = 'Validation failed: ' + (err.response.data.errors ?
+        Object.values(err.response.data.errors).flat().join(', ') :
+        err.response.data.message)
+    } else if (err.response?.status === 401 || err.response?.status === 403) {
+      // Authentication/authorization errors
+      error.value = 'Authentication failed. Please log in again.'
+    } else if (err.message && err.message.includes('Validation failed')) {
+      // Frontend validation errors
+      error.value = err.message
+    } else {
+      // Network or other errors
+      error.value = err.response?.data?.message || err.message || 'Failed to save materials list'
+    }
+    console.error('Failed to save materials list:', err)
   } finally {
     isSaving.value = false
   }
+}
+
+/**
+ * Validate materials data before submission
+ */
+const validateMaterialsData = (): boolean => {
+  const errors: string[] = []
+
+  // Check if there are any elements
+  if (!materialsData.projectElements || materialsData.projectElements.length === 0) {
+    errors.push('At least one project element is required')
+  }
+
+  // Validate each element
+  materialsData.projectElements.forEach((element, index) => {
+    if (!element.elementType) {
+      errors.push(`Element ${index + 1}: Element type is required`)
+    }
+    if (!element.name?.trim()) {
+      errors.push(`Element ${index + 1}: Element name is required`)
+    }
+    if (!['production', 'hire', 'outsourced'].includes(element.category)) {
+      errors.push(`Element ${index + 1}: Invalid category`)
+    }
+
+    // Validate materials
+    if (!element.materials || element.materials.length === 0) {
+      errors.push(`Element ${index + 1}: At least one material is required`)
+    } else {
+      element.materials.forEach((material, materialIndex) => {
+        if (!material.description?.trim()) {
+          errors.push(`Element ${index + 1}, Material ${materialIndex + 1}: Description is required`)
+        }
+        if (!material.unitOfMeasurement) {
+          errors.push(`Element ${index + 1}, Material ${materialIndex + 1}: Unit of measurement is required`)
+        }
+        if (typeof material.quantity !== 'number' || material.quantity < 0) {
+          errors.push(`Element ${index + 1}, Material ${materialIndex + 1}: Valid quantity is required`)
+        }
+      })
+    }
+  })
+
+  if (errors.length > 0) {
+    error.value = 'Validation failed: ' + errors.join('; ')
+    return false
+  }
+
+  return true
 }
 
 /**
@@ -954,7 +966,7 @@ const getIncludedMaterialsCount = (element: ProjectElement): number => {
  * @returns CSS class string for element header styling
  */
 const getElementHeaderClass = (templateId: string): string => {
-  const template = DEFAULT_ELEMENT_TEMPLATES.find(t => t.id === templateId)
+  const template = materialsData.availableElements.find(t => t.id === templateId)
   const colorClasses: Record<string, string> = {
     'green': 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
     'blue': 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',

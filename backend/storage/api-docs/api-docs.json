@@ -129,6 +129,363 @@
                 ]
             }
         },
+        "/api/projects/tasks/{taskId}/materials": {
+            "get": {
+                "tags": [
+                    "Materials"
+                ],
+                "summary": "Get materials data for a task",
+                "description": "Retrieves materials data including project elements and their materials for a specific task",
+                "operationId": "7cd3717d654dd7e70dd052665be9b669",
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "description": "Task ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Materials data retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MaterialsData"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Materials data retrieved successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve materials data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Materials"
+                ],
+                "summary": "Save materials data for a task",
+                "description": "Saves or updates materials data including project elements and their materials for a specific task",
+                "operationId": "73ae631da1d43781b5b11b0c57ea05d8",
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "description": "Task ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "projectInfo",
+                                    "projectElements"
+                                ],
+                                "properties": {
+                                    "projectInfo": {
+                                        "description": "Project information",
+                                        "type": "object"
+                                    },
+                                    "projectElements": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/ProjectElementInput"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Materials data saved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MaterialsData"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Materials data saved successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to save materials data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/projects/element-templates": {
+            "get": {
+                "tags": [
+                    "Materials"
+                ],
+                "summary": "Get element templates",
+                "description": "Retrieves all active element templates with their default materials",
+                "operationId": "de8573e6d1ab9fb94a47b64a36f1665e",
+                "responses": {
+                    "200": {
+                        "description": "Element templates retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ElementTemplate"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Element templates retrieved successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve element templates",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Materials"
+                ],
+                "summary": "Create element template",
+                "description": "Creates a new element template with default materials",
+                "operationId": "594e3c955cc0174d021716373d30fb83",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "displayName",
+                                    "category",
+                                    "defaultMaterials"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Template name (unique)",
+                                        "type": "string",
+                                        "example": "stage_platform"
+                                    },
+                                    "displayName": {
+                                        "description": "Display name",
+                                        "type": "string",
+                                        "example": "Stage Platform"
+                                    },
+                                    "description": {
+                                        "description": "Template description",
+                                        "type": "string"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "enum": [
+                                            "structure",
+                                            "decoration",
+                                            "flooring",
+                                            "technical",
+                                            "furniture",
+                                            "branding",
+                                            "custom"
+                                        ],
+                                        "example": "structure"
+                                    },
+                                    "color": {
+                                        "description": "Template color",
+                                        "type": "string",
+                                        "example": "blue"
+                                    },
+                                    "defaultMaterials": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/ElementTemplateMaterialInput"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Element template created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ElementTemplate"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Element template created successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create element template",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/admin/users": {
             "get": {
                 "tags": [
@@ -2524,6 +2881,327 @@
     },
     "components": {
         "schemas": {
+            "ElementMaterial": {
+                "title": "Element Material",
+                "description": "A material used in a project element",
+                "properties": {
+                    "id": {
+                        "description": "Material ID",
+                        "type": "integer"
+                    },
+                    "description": {
+                        "description": "Material description",
+                        "type": "string"
+                    },
+                    "unitOfMeasurement": {
+                        "description": "Unit of measurement",
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "description": "Material quantity",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "isIncluded": {
+                        "description": "Whether material is included",
+                        "type": "boolean"
+                    },
+                    "notes": {
+                        "description": "Material notes",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "createdAt": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updatedAt": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ElementMaterialInput": {
+                "title": "Element Material Input",
+                "description": "Input data for creating/updating an element material",
+                "properties": {
+                    "description": {
+                        "description": "Material description",
+                        "type": "string"
+                    },
+                    "unitOfMeasurement": {
+                        "description": "Unit of measurement",
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "description": "Material quantity",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "isIncluded": {
+                        "description": "Whether material is included",
+                        "type": "boolean"
+                    },
+                    "notes": {
+                        "description": "Material notes",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ElementTemplate": {
+                "title": "Element Template",
+                "description": "A template for project elements with default materials",
+                "properties": {
+                    "id": {
+                        "description": "Template ID (name)",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "Template name",
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "description": "Display name",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "Template description",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "category": {
+                        "description": "Template category",
+                        "type": "string",
+                        "enum": [
+                            "structure",
+                            "decoration",
+                            "flooring",
+                            "technical",
+                            "furniture",
+                            "branding",
+                            "custom"
+                        ]
+                    },
+                    "color": {
+                        "description": "Template color",
+                        "type": "string"
+                    },
+                    "order": {
+                        "description": "Sort order",
+                        "type": "integer"
+                    },
+                    "defaultMaterials": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ElementTemplateMaterial"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ElementTemplateMaterial": {
+                "title": "Element Template Material",
+                "description": "Default material for an element template",
+                "properties": {
+                    "id": {
+                        "description": "Material ID",
+                        "type": "integer"
+                    },
+                    "description": {
+                        "description": "Material description",
+                        "type": "string"
+                    },
+                    "unitOfMeasurement": {
+                        "description": "Unit of measurement",
+                        "type": "string"
+                    },
+                    "defaultQuantity": {
+                        "description": "Default quantity",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "isDefaultIncluded": {
+                        "description": "Whether material is included by default",
+                        "type": "boolean"
+                    },
+                    "order": {
+                        "description": "Sort order",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ElementTemplateMaterialInput": {
+                "title": "Element Template Material Input",
+                "description": "Input data for creating/updating a template material",
+                "properties": {
+                    "description": {
+                        "description": "Material description",
+                        "type": "string"
+                    },
+                    "unitOfMeasurement": {
+                        "description": "Unit of measurement",
+                        "type": "string"
+                    },
+                    "defaultQuantity": {
+                        "description": "Default quantity",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "isDefaultIncluded": {
+                        "description": "Whether material is included by default",
+                        "type": "boolean"
+                    },
+                    "order": {
+                        "description": "Sort order",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ProjectElement": {
+                "title": "Project Element",
+                "description": "A project element with its materials",
+                "properties": {
+                    "id": {
+                        "description": "Element ID",
+                        "type": "integer"
+                    },
+                    "templateId": {
+                        "description": "Template ID",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "elementType": {
+                        "description": "Element type",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "Element name",
+                        "type": "string"
+                    },
+                    "category": {
+                        "description": "Element category",
+                        "type": "string",
+                        "enum": [
+                            "production",
+                            "hire",
+                            "outsourced"
+                        ]
+                    },
+                    "dimensions": {
+                        "description": "Element dimensions",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "isIncluded": {
+                        "description": "Whether element is included",
+                        "type": "boolean"
+                    },
+                    "notes": {
+                        "description": "Element notes",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "materials": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ElementMaterial"
+                        }
+                    },
+                    "addedAt": {
+                        "description": "When element was added",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ProjectElementInput": {
+                "title": "Project Element Input",
+                "description": "Input data for creating/updating a project element",
+                "properties": {
+                    "id": {
+                        "description": "Element ID",
+                        "type": "string"
+                    },
+                    "templateId": {
+                        "description": "Template ID",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "elementType": {
+                        "description": "Element type",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "Element name",
+                        "type": "string"
+                    },
+                    "category": {
+                        "description": "Element category",
+                        "type": "string",
+                        "enum": [
+                            "production",
+                            "hire",
+                            "outsourced"
+                        ]
+                    },
+                    "dimensions": {
+                        "description": "Element dimensions",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "isIncluded": {
+                        "description": "Whether element is included",
+                        "type": "boolean"
+                    },
+                    "notes": {
+                        "description": "Element notes",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "materials": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ElementMaterialInput"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "MaterialsData": {
+                "title": "Materials Data",
+                "description": "Materials data for a task including project information and elements",
+                "properties": {
+                    "projectInfo": {
+                        "description": "Project information",
+                        "type": "object"
+                    },
+                    "projectElements": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProjectElement"
+                        }
+                    },
+                    "availableElements": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ElementTemplate"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "User": {
                 "properties": {
                     "id": {
@@ -2920,6 +3598,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Materials",
+            "description": "Materials management endpoints"
+        },
         {
             "name": "Authentication",
             "description": "Authentication"
