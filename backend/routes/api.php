@@ -128,6 +128,16 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('permission:' . Permissions::ENQUIRY_DELETE);
     });
 
+    // Materials management routes
+    Route::prefix('projects/tasks/{taskId}/materials')->group(function () {
+        Route::get('/', [App\Http\Controllers\MaterialsController::class, 'getMaterialsData']);
+        Route::post('/', [App\Http\Controllers\MaterialsController::class, 'saveMaterialsData']);
+    });
+
+    // Element templates
+    Route::get('projects/element-templates', [App\Http\Controllers\MaterialsController::class, 'getElementTemplates']);
+    Route::post('projects/element-templates', [App\Http\Controllers\MaterialsController::class, 'createElementTemplate']);
+
     // Projects Module Routes
     Route::prefix('projects')->group(function () {
         // Dashboard routes

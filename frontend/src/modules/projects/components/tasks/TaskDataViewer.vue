@@ -136,6 +136,7 @@ const dataDisplayComponents = {
 const editableComponents = {
   'site-survey': () => import('./SurveyTask.vue'),
   'design': () => import('./DesignTask.vue'),
+  'materials': () => import('./MaterialsTask.vue'),
   // Add more task types here as needed
 }
 
@@ -195,11 +196,11 @@ const fetchTaskData = async () => {
         endpoint = `/api/projects/site-surveys?enquiry_task_id=${props.task.id}`
         break
       case 'materials':
-        endpoint = `/api/projects/materials-requests?task_id=${props.task.id}`
+        endpoint = `/api/projects/tasks/${props.task.id}/materials`
         console.log('TaskDataViewer: Materials task endpoint:', endpoint)
         break
       case 'materials-request':
-        endpoint = `/api/projects/materials-requests?task_id=${props.task.id}`
+        endpoint = `/api/projects/tasks/${props.task.id}/materials`
         console.log('TaskDataViewer: Materials-request task endpoint:', endpoint)
         break
       case 'design':
