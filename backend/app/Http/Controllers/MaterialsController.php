@@ -86,6 +86,65 @@ class MaterialsController extends Controller
     }
 
     /**
+     * Get materials data by enquiry ID
+     * This is useful for budget tasks to import materials from the materials task
+     *
+     * @OA\Get(
+     *     path="/api/projects/enquiries/{enquiryId}/materials",
+     *     tags={"Materials"},
+     *     summary="Get materials data by enquiry ID",
+     *     description="Retrieves materials data for an enquiry by finding the materials task",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="enquiryId",
+     *         in="path",
+     *         required=true,
+     *         description="Enquiry ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Materials data retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/MaterialsData"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Materials task not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
+     */
+    public function getMaterialsByEnquiry(int $enquiryId): JsonResponse
+    {
+        try {
+            // Find materials task for this enquiry
+            $materialsTask = \App\Modules\Projects\Models\EnquiryTask::where('project_enquiry_id', $enquiryId)
+                ->where('type', 'materials')
+                ->first();
+
+            if (!$materialsTask) {
+                return response()->json([
+                    'message' => 'Materials task not found for this enquiry',
+                    'data' => null
+                ], 404);
+            }
+
+            // Get materials data using the materials task ID
+            return $this->getMaterialsData($materialsTask->id);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to retrieve materials data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Save materials data for a task
      *
      * @OA\Post(

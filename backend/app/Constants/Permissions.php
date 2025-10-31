@@ -92,6 +92,13 @@ class Permissions
     const FINANCE_REPORTS_VIEW = 'finance.reports.view';
     const FINANCE_ANALYTICS_VIEW = 'finance.analytics.view';
 
+    const FINANCE_PETTY_CASH_VIEW = 'finance.petty_cash.view';
+    const FINANCE_PETTY_CASH_CREATE = 'finance.petty_cash.create';
+    const FINANCE_PETTY_CASH_UPDATE = 'finance.petty_cash.update';
+    const FINANCE_PETTY_CASH_VOID = 'finance.petty_cash.void';
+    const FINANCE_PETTY_CASH_CREATE_TOP_UP = 'finance.petty_cash.create_top_up';
+    const FINANCE_PETTY_CASH_ADMIN = 'finance.petty_cash.admin';
+
     // ===========================================
     // HR PERMISSIONS
     // ===========================================
@@ -190,6 +197,8 @@ class Permissions
             self::FINANCE_QUOTE_APPROVE, self::FINANCE_QUOTE_DELETE, self::FINANCE_INVOICE_CREATE,
             self::FINANCE_INVOICE_READ, self::FINANCE_INVOICE_UPDATE, self::FINANCE_INVOICE_DELETE,
             self::FINANCE_REPORTS_VIEW, self::FINANCE_ANALYTICS_VIEW,
+            self::FINANCE_PETTY_CASH_VIEW, self::FINANCE_PETTY_CASH_CREATE, self::FINANCE_PETTY_CASH_UPDATE,
+            self::FINANCE_PETTY_CASH_VOID, self::FINANCE_PETTY_CASH_CREATE_TOP_UP, self::FINANCE_PETTY_CASH_ADMIN,
 
             // HR Permissions
             self::HR_VIEW_EMPLOYEES, self::HR_MANAGE_PAYROLL, self::HR_CREATE_POSITION, self::HR_MANAGE_ATTENDANCE,
@@ -252,6 +261,8 @@ class Permissions
                 self::FINANCE_QUOTE_APPROVE, self::FINANCE_QUOTE_DELETE, self::FINANCE_INVOICE_CREATE,
                 self::FINANCE_INVOICE_READ, self::FINANCE_INVOICE_UPDATE, self::FINANCE_INVOICE_DELETE,
                 self::FINANCE_REPORTS_VIEW, self::FINANCE_ANALYTICS_VIEW,
+                self::FINANCE_PETTY_CASH_VIEW, self::FINANCE_PETTY_CASH_CREATE, self::FINANCE_PETTY_CASH_UPDATE,
+                self::FINANCE_PETTY_CASH_VOID, self::FINANCE_PETTY_CASH_CREATE_TOP_UP, self::FINANCE_PETTY_CASH_ADMIN,
             ],
             'hr' => [
                 self::HR_VIEW_EMPLOYEES, self::HR_MANAGE_PAYROLL, self::HR_CREATE_POSITION, self::HR_MANAGE_ATTENDANCE,

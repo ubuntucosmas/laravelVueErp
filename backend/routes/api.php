@@ -16,6 +16,9 @@ use App\Modules\Projects\Http\Controllers\TaskController;
 use App\Modules\Projects\Http\Controllers\PhaseDepartmentalTaskController;
 use App\Http\Controllers\SiteSurveyController;
 use App\Http\Controllers\DesignAssetController;
+
+use App\Modules\Finance\PettyCash\Controllers\PettyCashController;
+use App\Modules\Finance\PettyCash\Controllers\PettyCashTopUpController;
 use App\Constants\Permissions;
 
 
@@ -134,9 +137,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [App\Http\Controllers\MaterialsController::class, 'saveMaterialsData']);
     });
 
+    // Budget management routes
+    Route::prefix('projects/tasks/{taskId}/budget')->group(function () {
+        Route::get('/', [App\Http\Controllers\BudgetController::class, 'getBudgetData']);;
+        Route::post('/', [App\Http\Controllers\BudgetController::class, 'saveBudgetData']);
+        Route::post('/submit-approval', [App\Http\Controllers\BudgetController::class, 'submitForApproval']);
+        Route::post('/import-materials', [App\Http\Controllers\BudgetController::class, 'importMaterials']);
+        Route::get('/check-materials-update', [App\Http\Controllers\BudgetController::class, 'checkMaterialsUpdate']);
+    });
+
     // Element templates
     Route::get('projects/element-templates', [App\Http\Controllers\MaterialsController::class, 'getElementTemplates']);
     Route::post('projects/element-templates', [App\Http\Controllers\MaterialsController::class, 'createElementTemplate']);
+
+    // Get materials by enquiry ID (for budget import)
+    Route::get('projects/enquiries/{enquiryId}/materials', [App\Http\Controllers\MaterialsController::class, 'getMaterialsByEnquiry']);
 
     // Projects Module Routes
     Route::prefix('projects')->group(function () {
@@ -181,22 +196,14 @@ Route::middleware('auth:sanctum')->group(function () {
         }); // No permission for debugging
 
         // Enquiry management
-        Route::get('enquiries', [EnquiryController::class, 'index'])
-            ->middleware('permission:' . Permissions::ENQUIRY_READ);
-        Route::get('enquiries/{enquiry}', [EnquiryController::class, 'show'])
-            ->middleware('permission:' . Permissions::ENQUIRY_READ);
-        Route::post('enquiries', [EnquiryController::class, 'store'])
-            ->middleware('permission:' . Permissions::ENQUIRY_CREATE);
-        Route::put('enquiries/{enquiry}', [EnquiryController::class, 'update'])
-             ->middleware('permission:' . Permissions::ENQUIRY_UPDATE);
-        Route::delete('enquiries/{enquiry}', [EnquiryController::class, 'destroy'])
-             ->middleware('permission:' . Permissions::ENQUIRY_DELETE);
-        Route::put('enquiries/{enquiry}/phases/{phase}', [EnquiryController::class, 'updatePhase'])
-             ->middleware('permission:' . Permissions::ENQUIRY_UPDATE);
-        Route::post('enquiries/{enquiry}/approve-quote', [EnquiryController::class, 'approveQuote'])
-            ->middleware('permission:' . Permissions::ENQUIRY_UPDATE);
-        Route::post('enquiries/{enquiry}/convert', [EnquiryController::class, 'convertToProject'])
-            ->middleware('permission:' . Permissions::ENQUIRY_CONVERT);
+        Route::get('enquiries', [EnquiryController::class, 'index']);
+        Route::get('enquiries/{enquiry}', [EnquiryController::class, 'show']);
+        Route::post('enquiries', [EnquiryController::class, 'store']);
+        Route::put('enquiries/{enquiry}', [EnquiryController::class, 'update']);
+        Route::delete('enquiries/{enquiry}', [EnquiryController::class, 'destroy']);
+        Route::put('enquiries/{enquiry}/phases/{phase}', [EnquiryController::class, 'updatePhase']);
+        Route::post('enquiries/{enquiry}/approve-quote', [EnquiryController::class, 'approveQuote']);
+        Route::post('enquiries/{enquiry}/convert', [EnquiryController::class, 'convertToProject']);
         // Manual project creation for existing enquiries (debugging)
         Route::post('enquiries/{enquiry}/create-project', function (\App\Models\Enquiry $enquiry) {
             $workflowService = new \App\Modules\Projects\Services\EnquiryWorkflowService();
@@ -267,4 +274,44 @@ Route::middleware('auth:sanctum')->group(function () {
             return response()->json(['message' => 'Notification deleted successfully']);
         });
     });
+
+    // Finance Module Routes
+    Route::prefix('finance')->group(function () {
+        // Petty Cash Module Routes
+        Route::prefix('petty-cash')->group(function () {
+            // Disbursement management routes
+            Route::get('disbursements', [PettyCashController::class, 'index']);
+            Route::post('disbursements', [PettyCashController::class, 'store']);
+            Route::get('disbursements/{id}', [PettyCashController::class, 'show']);
+            Route::put('disbursements/{id}', [PettyCashController::class, 'update']);
+            Route::post('disbursements/{id}/void', [PettyCashController::class, 'void']);
+
+            // Top-up management routes
+            Route::get('top-ups', [PettyCashTopUpController::class, 'index']);
+            Route::post('top-ups', [PettyCashTopUpController::class, 'store']);
+            Route::get('top-ups/{id}', [PettyCashTopUpController::class, 'show']);
+            Route::get('top-ups/available', [PettyCashTopUpController::class, 'available'])
+                ->withoutMiddleware(['auth:sanctum']);
+            Route::get('top-ups/{id}/available-balance', [PettyCashTopUpController::class, 'availableBalance']);
+
+            // Balance and transaction routes
+            Route::get('balance', [PettyCashController::class, 'balance']);
+            Route::get('balance/trends', [PettyCashTopUpController::class, 'trends']);
+            Route::post('balance/check', [PettyCashTopUpController::class, 'checkBalance']);
+            Route::post('balance/recalculate', [PettyCashController::class, 'recalculateBalance']);
+
+            // Transaction and reporting routes
+            Route::get('transactions', [PettyCashController::class, 'transactions']);
+            Route::get('recent', [PettyCashController::class, 'recent']);
+            Route::get('search', [PettyCashController::class, 'search']);
+            Route::get('summary', [PettyCashController::class, 'summary']);
+            Route::get('analytics', [PettyCashController::class, 'analytics']);
+
+            // Statistics and validation routes
+            Route::get('statistics', [PettyCashTopUpController::class, 'statistics']);
+            Route::get('payment-methods', [PettyCashTopUpController::class, 'paymentMethods']);
+            Route::post('validate/top-up', [PettyCashTopUpController::class, 'validate']);
+        });
+    });
 });
+

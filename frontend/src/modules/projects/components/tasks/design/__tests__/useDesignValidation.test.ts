@@ -43,7 +43,7 @@ describe('useDesignValidation', () => {
       const result = validation.validateFile(file)
 
       expect(result.isValid).toBe(false)
-      expect(result.errors).toContain('File size (100 MB) exceeds maximum allowed size')
+      expect(result.errors).toContain('File size (100 MB) exceeds maximum allowed size (50 MB)')
     })
 
     it('should reject unsupported file type', () => {
@@ -158,7 +158,7 @@ describe('useDesignValidation', () => {
 
       const result = validation.validateAssetMetadata(metadata)
 
-      expect(result.warnings).toContain('Description is quite long')
+      expect(result.warnings).toContain('Description is quite long, consider keeping it under 1000 characters')
     })
 
     it('should validate tags', () => {

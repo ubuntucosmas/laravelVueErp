@@ -82,6 +82,16 @@ export class MaterialsService {
   }
 
   /**
+   * Get materials data by enquiry ID
+   * This finds the materials task for the enquiry and returns its data
+   * Useful for budget tasks to import materials from the materials task
+   */
+  static async getMaterialsByEnquiry(enquiryId: number): Promise<MaterialsTaskData> {
+    const response = await axios.get(`/api/projects/enquiries/${enquiryId}/materials`)
+    return response.data.data
+  }
+
+  /**
     * Save materials data for a task
     */
   static async saveMaterialsData(taskId: number, data: MaterialsTaskData): Promise<MaterialsTaskData> {
@@ -153,7 +163,7 @@ export class MaterialsService {
   /**
    * Transform frontend data to match backend expectations
    */
-  private static transformDataForBackend(data: MaterialsTaskData): any {
+  private static transformDataForBackend(data: MaterialsTaskData): unknown {
     return {
       projectInfo: data.projectInfo,
       projectElements: data.projectElements.map(element => ({

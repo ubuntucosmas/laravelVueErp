@@ -8,6 +8,7 @@ import { hrRoutes } from './hr'
 import { projectsRoutes } from './projects'
 import { clientServiceRoutes } from './clientservice'
 import { creativesRoutes } from './creatives'
+import { financeRoutes } from './finance'
 
 // Combine all routes
 const routes: RouteRecordRaw[] = [
@@ -17,6 +18,7 @@ const routes: RouteRecordRaw[] = [
   ...projectsRoutes,
   ...clientServiceRoutes,
   ...creativesRoutes,
+  ...financeRoutes,
 ]
 
 const router = createRouter({
@@ -102,6 +104,50 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
+  // Check finance access
+  if (to.meta.requiresFinanceAccess) {
+    const { canAccessFinance } = await import('@/utils/routerGuards')
+
+    if (!(await canAccessFinance())) {
+      console.log('Access denied to finance - redirecting to appropriate dashboard')
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        // Redirect to HR dashboard as safe fallback
+        next('/hr')
+      } else {
+        next('/login')
+      }
+      return
+    }
+  }
+
+  // Check specific finance permissions
+  if (to.meta.requiresPermission) {
+    const { fetchUserData } = await import('@/utils/routerGuards')
+    const { userPermissions } = await fetchUserData()
+
+    if (!userPermissions?.includes(to.meta.requiresPermission as string)) {
+      console.log(`Access denied - missing permission: ${to.meta.requiresPermission}`)
+      next('/access-denied')
+      return
+    }
+  }
+
+  // Check budget access for project budget tasks
+  if (to.path.includes('/budget') && to.path.includes('/tasks/')) {
+    const { fetchUserData } = await import('@/utils/routerGuards')
+    const { userPermissions } = await fetchUserData()
+
+    // Check if user has budget read permission
+    const hasBudgetAccess = userPermissions?.includes('finance.budget.read') ||
+                           userPermissions?.includes('finance.budget.update')
+
+    if (!hasBudgetAccess) {
+      console.log('Access denied to budget functionality - user lacks budget permissions')
+      next('/access-denied')
+      return
+    }
+  }
 
   next()
 })
