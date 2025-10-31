@@ -139,7 +139,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Budget management routes
     Route::prefix('projects/tasks/{taskId}/budget')->group(function () {
-        Route::get('/', [App\Http\Controllers\BudgetController::class, 'getBudgetData']);
+        Route::get('/', [App\Http\Controllers\BudgetController::class, 'getBudgetData']);;
         Route::post('/', [App\Http\Controllers\BudgetController::class, 'saveBudgetData']);
         Route::post('/submit-approval', [App\Http\Controllers\BudgetController::class, 'submitForApproval']);
         Route::post('/import-materials', [App\Http\Controllers\BudgetController::class, 'importMaterials']);

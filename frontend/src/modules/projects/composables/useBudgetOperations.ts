@@ -198,7 +198,7 @@ export function useBudgetOperations(state: any, task: any, emit: any) {
     state.formData.expenses.push({
       id: `expense-${Date.now()}`,
       description: '',
-      category: '',
+      category: 'miscellaneous', // Set default category to avoid validation errors
       amount: 0,
       isAddition: false,
     })
@@ -369,21 +369,49 @@ export function useBudgetOperations(state: any, task: any, emit: any) {
     state.error = null
 
     try {
-      const budgetData: BudgetData = {
-        projectInfo: state.formData.projectInfo,
-        materials: state.formData.materials,
-        labour: state.formData.labour,
-        expenses: state.formData.expenses,
-        logistics: state.formData.logistics,
-        budgetSummary: {
+      // Calculate totals directly from form data to ensure they're accurate
+      const materialsTotal = state.formData.materials?.reduce((total, element) => {
+        return total + (element.materials?.reduce((sum, material) => sum + (material.totalPrice || 0), 0) || 0)
+      }, 0) || 0
+
+      const labourTotal = state.formData.labour?.reduce((total, item) => total + (item.amount || 0), 0) || 0
+      const expensesTotal = state.formData.expenses?.reduce((total, item) => total + (item.amount || 0), 0) || 0
+      const logisticsTotal = state.formData.logistics?.reduce((total, item) => total + (item.amount || 0), 0) || 0
+      const grandTotal = materialsTotal + labourTotal + expensesTotal + logisticsTotal
+
+      console.log('Budget submission totals:', {
+        materialsTotal,
+        labourTotal,
+        expensesTotal,
+        logisticsTotal,
+        grandTotal,
+        stateTotals: {
           materialsTotal: state.materialsTotal,
           labourTotal: state.labourTotal,
           expensesTotal: state.expensesTotal,
           logisticsTotal: state.logisticsTotal,
           grandTotal: state.grandTotal,
+        }
+      })
+
+      const budgetData: BudgetData = {
+        projectInfo: state.formData.projectInfo,
+        materials: state.formData.materials || [],
+        labour: state.formData.labour || [],
+        expenses: state.formData.expenses || [],
+        logistics: state.formData.logistics || [],
+        budgetSummary: {
+          materialsTotal,
+          labourTotal,
+          expensesTotal,
+          logisticsTotal,
+          grandTotal,
         },
-        status: 'approved',
+        status: 'pending_approval',
+        taskId: task.id,
       }
+
+      console.log('Budget data being sent:', budgetData)
 
       // Additional data integrity validation before final submission
       const integrityErrors = validateDataIntegrity(budgetData)
@@ -403,8 +431,33 @@ export function useBudgetOperations(state: any, task: any, emit: any) {
       setTimeout(() => {
         emit('task-completed')
       }, 1500)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to submit budget'
+    } catch (err: any) {
+      console.error('Budget submission error:', err)
+      console.error('Error response:', err.response?.data)
+      console.error('Error status:', err.response?.status)
+      console.error('Error headers:', err.response?.headers)
+
+      let errorMessage = 'Failed to submit budget'
+
+      // Try to get detailed error from response
+      if (err.response?.data) {
+        const responseData = err.response.data
+
+        if (responseData.errors) {
+          // Laravel validation errors
+          const errorDetails = Object.entries(responseData.errors)
+            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join('; ')
+          errorMessage = `Validation failed: ${errorDetails}`
+        } else if (responseData.message) {
+          errorMessage = responseData.message
+        } else if (responseData.error) {
+          errorMessage = responseData.error
+        }
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+
       state.error = errorMessage
 
       // Provide recovery suggestions for common submission errors

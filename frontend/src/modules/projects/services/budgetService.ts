@@ -9,8 +9,10 @@ export interface BudgetMaterialItem {
   isIncluded: boolean
   unitPrice: number
   totalPrice: number
-  isAddition: boolean
+  isAddition?: boolean
   addedAt?: Date
+  category?: string
+  notes?: string
 }
 
 export interface BudgetElement {
@@ -19,7 +21,7 @@ export interface BudgetElement {
   elementType: string
   name: string
   category: 'production' | 'hire' | 'outsourced'
-  dimensions: {
+  dimensions?: {
     length: string
     width: string
     height: string
@@ -27,19 +29,19 @@ export interface BudgetElement {
   isIncluded: boolean
   materials: BudgetMaterialItem[]
   notes?: string
-  addedAt: Date
+  addedAt?: Date
 }
 
 export interface LabourType {
   id: string
   category: string
   type: string
-  description: string
+  description?: string
   unit: string
   quantity: number
   unitRate: number
   amount: number
-  isAddition: boolean
+  isAddition?: boolean
 }
 
 export interface ExpenseItem {
@@ -47,20 +49,20 @@ export interface ExpenseItem {
   description: string
   category: string
   amount: number
-  isAddition: boolean
+  isAddition?: boolean
   addedAt?: Date
 }
 
 export interface LogisticsItem {
   id: string
-  vehicleReg: string
+  vehicleReg?: string
   description: string
   category: string
-  unit: string
+  unit?: string
   quantity: number
   unitRate: number
   amount: number
-  isAddition: boolean
+  isAddition?: boolean
   addedAt?: Date
 }
 
@@ -102,6 +104,7 @@ export interface BudgetData {
   budgetSummary: BudgetSummary
   status: 'draft' | 'pending_approval' | 'approved' | 'rejected'
   materialsImportInfo?: MaterialsImportInfo
+  taskId?: number // Added for backend validation
   createdAt?: Date
   updatedAt?: Date
 }

@@ -78,7 +78,7 @@ class BudgetController extends Controller
             'projectInfo.eventVenue' => 'required|string|max:255',
             'projectInfo.setupDate' => 'required|string',
             'projectInfo.setDownDate' => 'nullable|string',
-            'materials' => 'required|array',
+            'materials' => 'present|array', // Changed from required to present to allow empty arrays
             'materials.*.id' => 'required|string',
             'materials.*.elementType' => 'required|string|max:255',
             'materials.*.name' => 'required|string|max:255',
@@ -92,7 +92,7 @@ class BudgetController extends Controller
             'materials.*.materials.*.isIncluded' => 'required|boolean',
             'materials.*.materials.*.unitPrice' => 'required|numeric|min:0',
             'materials.*.materials.*.totalPrice' => 'required|numeric|min:0',
-            'labour' => 'required|array',
+            'labour' => 'present|array', // Changed from required to present to allow empty arrays
             'labour.*.id' => 'required|string',
             'labour.*.category' => 'required|in:Production,Installation,Technical,Supervision,Other',
             'labour.*.type' => 'required|string|max:255',
@@ -101,12 +101,12 @@ class BudgetController extends Controller
             'labour.*.quantity' => 'required|numeric|min:0.01',
             'labour.*.unitRate' => 'required|numeric|min:0',
             'labour.*.amount' => 'required|numeric|min:0',
-            'expenses' => 'required|array',
+            'expenses' => 'present|array', // Changed from required to present to allow empty arrays
             'expenses.*.id' => 'required|string',
             'expenses.*.description' => 'required|string|max:500',
             'expenses.*.category' => 'required|string|max:255',
             'expenses.*.amount' => 'required|numeric|min:0.01',
-            'logistics' => 'required|array',
+            'logistics' => 'present|array', // Changed from required to present to allow empty arrays
             'logistics.*.id' => 'required|string',
             'logistics.*.vehicleReg' => 'nullable|string|max:50',
             'logistics.*.description' => 'required|string|max:500',
@@ -121,7 +121,8 @@ class BudgetController extends Controller
             'budgetSummary.expensesTotal' => 'required|numeric|min:0',
             'budgetSummary.logisticsTotal' => 'required|numeric|min:0',
             'budgetSummary.grandTotal' => 'required|numeric|min:0',
-            'status' => 'required|in:draft,pending_approval,approved,rejected'
+            'status' => 'required|in:draft,pending_approval,approved,rejected',
+            'taskId' => 'nullable|integer' // Added taskId validation
         ]);
 
         if ($validator->fails()) {
@@ -833,7 +834,7 @@ class BudgetController extends Controller
 
             $validTransitions = [
                 'draft' => ['pending_approval'],
-                'pending_approval' => ['approved', 'rejected', 'draft'],
+                'pending_approval' => ['approved', 'rejected', 'draft', 'pending_approval'], // Allow resubmission
                 'approved' => [], // Final state
                 'rejected' => ['draft'] // Can resubmit
             ];
