@@ -70,7 +70,7 @@ let cachedUserPermissions: string[] | null = null
 let cacheTimestamp: number = 0
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
-async function fetchUserData(): Promise<{ user: User | null, permissions: UserPermissions | null, userPermissions: string[] | null }> {
+export async function fetchUserData(): Promise<{ user: User | null, permissions: UserPermissions | null, userPermissions: string[] | null }> {
   const now = Date.now()
 
   // Return cached data if still valid
@@ -162,6 +162,24 @@ export async function canAccessCreatives(): Promise<boolean> {
 
   // Check creatives view permission
   return hasPermission(user, userPermissions, PERMISSIONS.CREATIVES_VIEW)
+}
+
+export async function canAccessFinance(): Promise<boolean> {
+  const { user, userPermissions } = await fetchUserData()
+  if (!user) return false
+
+  // Super Admin can access everything
+  if (user.roles?.includes('Super Admin')) return true
+
+  // Check finance view permission (any finance permission grants access)
+  const financePermissions = [
+    'finance.view',
+    'finance.budget.view',
+    'finance.budget.read',
+    'finance.budget.update'
+  ]
+
+  return financePermissions.some(permission => hasPermission(user, userPermissions, permission))
 }
 
 

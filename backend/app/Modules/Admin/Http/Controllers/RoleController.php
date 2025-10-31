@@ -14,6 +14,17 @@ class RoleController
      */
     public function index(Request $request): JsonResponse
     {
+        // Debug logging for permission check
+        $user = auth()->user();
+        \Log::info('RoleController@index - User attempting to fetch roles', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'user_permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+            'user_roles' => $user->roles->pluck('name')->toArray(),
+            'has_role_read' => $user->hasPermissionTo('role.read'),
+            'request_data' => $request->all()
+        ]);
+
         $query = Role::query();
 
         // Apply search filter

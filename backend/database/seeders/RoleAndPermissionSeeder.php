@@ -68,7 +68,8 @@ class RoleAndPermissionSeeder extends Seeder
         $accountsRole->givePermissionTo([
             Permissions::FINANCE_VIEW, Permissions::FINANCE_INVOICE_CREATE, Permissions::FINANCE_INVOICE_READ,
             Permissions::FINANCE_INVOICE_UPDATE, Permissions::FINANCE_INVOICE_DELETE,
-            Permissions::FINANCE_REPORTS_VIEW, Permissions::PROJECT_READ, Permissions::USER_READ,
+            Permissions::FINANCE_REPORTS_VIEW, Permissions::FINANCE_PETTY_CASH_VIEW, Permissions::FINANCE_PETTY_CASH_CREATE,
+            Permissions::PROJECT_READ, Permissions::USER_READ,
             Permissions::DASHBOARD_FINANCE
         ]);
 
@@ -78,7 +79,8 @@ class RoleAndPermissionSeeder extends Seeder
             Permissions::FINANCE_BUDGET_UPDATE, Permissions::FINANCE_BUDGET_APPROVE,
             Permissions::FINANCE_BUDGET_DELETE, Permissions::FINANCE_QUOTE_CREATE, Permissions::FINANCE_QUOTE_READ,
             Permissions::FINANCE_QUOTE_UPDATE, Permissions::FINANCE_QUOTE_APPROVE,
-            Permissions::FINANCE_QUOTE_DELETE, Permissions::PROJECT_READ, Permissions::PROJECT_UPDATE,
+            Permissions::FINANCE_QUOTE_DELETE, Permissions::FINANCE_PETTY_CASH_ADMIN,
+            Permissions::PROJECT_READ, Permissions::PROJECT_UPDATE,
             Permissions::USER_READ, Permissions::DASHBOARD_FINANCE
         ]);
 

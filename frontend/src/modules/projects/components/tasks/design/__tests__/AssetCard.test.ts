@@ -23,7 +23,7 @@ describe('AssetCard', () => {
     preview: 'https://example.com/preview.jpg',
     category: 'artwork',
     status: 'approved',
-    uploadedAt: '2024-01-15T10:00:00Z',
+    uploadedAt: new Date('2024-01-15T10:00:00Z'),
     uploadedBy: 'John Doe',
     uploadedById: 1,
     description: 'A test image',

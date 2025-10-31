@@ -302,6 +302,67 @@
                 ]
             }
         },
+        "/api/projects/enquiries/{enquiryId}/materials": {
+            "get": {
+                "tags": [
+                    "Materials"
+                ],
+                "summary": "Get materials data by enquiry ID",
+                "description": "Retrieves materials data for an enquiry by finding the materials task",
+                "operationId": "01d5f25a78949d3291737659b44cde3a",
+                "parameters": [
+                    {
+                        "name": "enquiryId",
+                        "in": "path",
+                        "description": "Enquiry ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Materials data retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MaterialsData"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Materials task not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/projects/element-templates": {
             "get": {
                 "tags": [

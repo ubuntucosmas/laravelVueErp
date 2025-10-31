@@ -172,11 +172,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
-import { permissionCache } from '../services/PermissionCache'
 import PermissionGuard from '../components/PermissionGuard.vue'
 
 const router = useRouter()
-const { user } = useAuth()
+const { user, permissions } = useAuth()
 
 const accessibleDepartments = ref<number[]>([])
 const effectivePermissions = ref<string[]>([])
@@ -201,8 +200,9 @@ const formatDate = (dateString?: string) => {
 
 onMounted(async () => {
   // Load user permissions and accessible departments
-  accessibleDepartments.value = await permissionCache.getAccessibleDepartments()
-  const permissions = await permissionCache.getPermissions()
-  effectivePermissions.value = permissions?.effective_permissions || []
+  if (permissions.value) {
+    accessibleDepartments.value = permissions.value.permissions?.accessible_departments || []
+    effectivePermissions.value = permissions.value.user_permissions || []
+  }
 })
 </script>

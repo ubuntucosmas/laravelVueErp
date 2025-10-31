@@ -160,6 +160,27 @@ export function useRouteGuard() {
     return hasPermission(PERMISSIONS.CREATIVES_VIEW)
   }
 
+  const canAccessFinance = (): boolean => {
+    if (!isLoggedIn.value || !user.value) {
+      return false
+    }
+
+    // Super Admin can access everything
+    if (user.value.roles?.includes('Super Admin')) {
+      return true
+    }
+
+    // Check finance permissions (any finance permission grants access)
+    const financePermissions = [
+      'finance.view',
+      'finance.budget.view',
+      'finance.budget.read',
+      'finance.budget.update'
+    ]
+
+    return financePermissions.some(permission => hasPermission(permission))
+  }
+
 
   const canAccessProjectsDashboard = (): boolean => {
     if (!isLoggedIn.value || !user.value) {
@@ -220,6 +241,12 @@ export function useRouteGuard() {
     // Creatives/Designers go to Design dashboard
     if (userRoles.includes('Designer')) {
       router.push('/creatives/design')
+      return
+    }
+
+    // Finance goes to finance dashboard
+    if (userRoles.includes('Accounts') || userRoles.includes('Costing')) {
+      router.push('/finance')
       return
     }
 
@@ -371,6 +398,15 @@ export function useRouteGuard() {
       )
     }
 
+    // Add finance routes for authorized users (skip for Super Admin as they're already included in departments)
+    if (canAccessFinance() && !userRoles.includes('Super Admin')) {
+      routes.push(
+        { name: 'finance-dashboard', path: '/finance', label: 'Finance Dashboard', icon: '💰' },
+        { name: 'finance-petty-cash', path: '/finance/petty-cash', label: 'Petty Cash', icon: '💵' },
+        { name: 'finance-petty-cash-reports', path: '/finance/petty-cash/reports', label: 'Petty Cash Reports', icon: '📊' }
+      )
+    }
+
 
     // Add Projects department dashboard for users who work in Projects department (skip for Super Admin)
     if (canAccessProjectsDashboard() && !userRoles.includes('Super Admin')) {
@@ -415,6 +451,10 @@ export function useRouteGuard() {
       return 'Creatives Panel'
     }
 
+    if (canAccessFinance()) {
+      return 'Finance Panel'
+    }
+
 
     // Department fallback
     if (permissions.value?.permissions?.user_department) {
@@ -457,6 +497,10 @@ export function useRouteGuard() {
       return 'Creative Design & Production'
     }
 
+    if (canAccessFinance()) {
+      return 'Financial Management'
+    }
+
 
     // Department fallback
     if (permissions.value?.permissions?.user_department) {
@@ -473,6 +517,7 @@ export function useRouteGuard() {
     canAccessProjectsDashboard,
     canAccessClientService,
     canAccessCreatives,
+    canAccessFinance,
     redirectToAppropriateRoute,
     getAllowedRoutes,
     getPanelTitle,
